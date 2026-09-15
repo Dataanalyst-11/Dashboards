@@ -528,6 +528,12 @@ footer span.highlight { color: #ba9305; font-weight: 600; }
 </div>
 <script src="config.js"></script>
 <script>
+/* 
+  MASTER TEMPLATE SAMPLE:
+  I have truncated this heavily so the code doesn't break.
+  Replace the object below with your full master template.
+  Ensure the format is exactly: "ROUTE_NAME": ["MAIN_ROUTE", "SALES_PERSON", "BRANCH_CODE"]
+*/
 const masterTemplate = {
   "TAVETA": ["TAVETA", "NO FCRO", "VOI"],
   "MWATATE": ["MWATATE", "NO FCRO", "VOI"],
@@ -2000,13 +2006,13 @@ const parseDate = v => {
 };
 const inRange = (d, s, e) => !!d && d >= s && d <= e;
 const norm = n => String(n || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const normBranch = name => String(name || "").toUpperCase().replace(/BRANCH|WHOLESALE|PHILMED|ARMS/g, "").trim();
 const rangeDays = (s, e) => {
   const sd = new Date(s + "T00:00:00"), ed = new Date(e + "T00:00:00");
   if (isNaN(sd) || isNaN(ed)) return 30;
   return Math.max(1, Math.round((ed - sd) / 864e5) + 1);
 };
 
-// NEW LOGIC: Calculate working days excluding Saturdays (averagely 26 days for a 30-day month)
 const getWorkingDaysExcludingSaturday = (s, e) => {
   let count = 0;
   const start = new Date(s + "T00:00:00"), end = new Date(e + "T00:00:00");
@@ -2068,7 +2074,6 @@ const syncDateInputs = preset => {
 
 const toggleCustom = show => $("customDateRange").classList.toggle("visible", show);
 
-// ENSURE NO BRANCHES ARE FILTERED - ADDED WOTE AND MIGORI
 const branchNames = {
   "orgbranch-683976e3994a072a600cbd7a": "Head Office",
   "orgbranch-684558f576bd774c32f00d8e": "Naivasha",
@@ -2233,12 +2238,13 @@ function addFetchedRange(start, end) {
   S.fetchedRanges = merged;
 }
 
-// UPDATING aggregateRoutes to use working days (excluding Saturdays) and Daily Target as source of truth
 function aggregateRoutes(startDate, endDate, selectedBranchId) {
   const groups = new Map(), rDays = rangeDays(startDate, endDate), wDays = getWorkingDaysExcludingSaturday(startDate, endDate), lastTargets = {};
-  const selName = selectedBranchId ? (branchNames[selectedBranchId] || "").toLowerCase() : "";
+  const selName = selectedBranchId ? (branchNames[selectedBranchId] || "") : "";
+
+  // Initialize empty groups for ALL routes in master template, completely ignoring the selected branch.
+  // This ensures actual sales and targets are fully aggregated independently of the branch filter.
   for (const [tpl, [main, sp, branch]] of Object.entries(masterTemplate)) {
-    if (selName && branch.toLowerCase() !== selName) continue;
     const key = `${branch.toLowerCase()}||${sp.toLowerCase()}||${tpl.toLowerCase()}`;
     groups.set(key, {
       branchName: branch,
@@ -2255,19 +2261,20 @@ function aggregateRoutes(startDate, endDate, selectedBranchId) {
     });
   }
   const tplKeys = Object.keys(masterTemplate);
+
+  // Process all rows from the API, matching them to the master template.
+  // We ignore the branch ID provided by the API, and strictly use the route name to map the sales to the correct route.
   for (const row of S.routes) {
     const d = getRecordDate(row);
     if (!inRange(d, startDate, endDate)) continue;
+
     let branchId = getBranchIdFromRow(row), branchName = getBranchNameFromRow(row);
-    if (selName) {
-      const selBn = branchNames[selectedBranchId] || "";
-      if (branchId && branchId !== selectedBranchId && branchName.toLowerCase() !== selBn.toLowerCase()) continue;
-      if (!branchId && branchName.toLowerCase() !== selBn.toLowerCase()) continue;
-    }
     let routeName = getRouteName(row);
     if (!routeName) continue;
+
     let sp = getSP(row), mainRoute = getMainRoute(row);
     const rk = norm(routeName);
+
     let mk = tplKeys.find(k => norm(k) === rk);
     if (!mk) {
       const sn = rk.replace(/HQ$|HEADOFFICE$|PHILTON$|KENDIA$|BRANCH$/g, "");
@@ -2276,15 +2283,19 @@ function aggregateRoutes(startDate, endDate, selectedBranchId) {
         return sk === sn || sk.includes(sn) || sn.includes(sk);
       });
     }
+
     if (mk) {
       const t = masterTemplate[mk];
       sp = t[1];
       mainRoute = t[0];
-      branchName = t[2];
+      branchName = t[2]; // Ensure the branch name comes strictly from the master template
       routeName = mk;
     }
+
+    // Capture targets and assign to the correct route key
     const mt = getMonthlyTarget(row);
     if (mt > 0) lastTargets[norm(routeName)] = mt;
+
     const key = `${branchName.toLowerCase()}||${sp.toLowerCase()}||${routeName.toLowerCase()}`;
     if (!groups.has(key)) groups.set(key, {
       branchName,
@@ -2299,6 +2310,7 @@ function aggregateRoutes(startDate, endDate, selectedBranchId) {
       orders: 0,
       days: 0
     });
+
     const g = groups.get(key);
     g.monthlyTarget = mt > 0 ? mt : g.monthlyTarget;
     g.weeklyTarget = getWeeklyTarget(row) > 0 ? getWeeklyTarget(row) : g.weeklyTarget;
@@ -2307,10 +2319,12 @@ function aggregateRoutes(startDate, endDate, selectedBranchId) {
     g.orders += getOrders(row);
     g.days += 1;
   }
-  return [...groups.values()].map(g => {
+
+  // Map into final array structure
+  let result = [...groups.values()].map(g => {
     const rk = norm(g.routeName);
     const mt = g.monthlyTarget || lastTargets[rk] || 0;
-    const dt = g.dailyTarget > 0 ? g.dailyTarget : (mt > 0 ? mt / 30 : 0); // Ensure we have a daily target (fallback to monthly/30 if missing)
+    const dt = g.dailyTarget > 0 ? g.dailyTarget : (mt > 0 ? mt / 30 : 0);
     const rangeTarget = dt * wDays; // Range target is strictly Daily Target * Working Days (excl Saturdays)
     return {
       ...g,
@@ -2322,6 +2336,14 @@ function aggregateRoutes(startDate, endDate, selectedBranchId) {
       totalDaysCustomers: g.orders
     };
   });
+
+  // Apply Branch Filter AFTER aggregating all sales, so actual sales are independent of API branch grouping.
+  if (selName) {
+    const normSel = normBranch(selName);
+    result = result.filter(r => normBranch(r.branchName) === normSel);
+  }
+
+  return result;
 }
 
 const ID_KAWANGWARE = "orgbranch-684593b176bd774c32f150c6";
