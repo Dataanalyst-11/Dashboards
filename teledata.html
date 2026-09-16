@@ -1163,13 +1163,26 @@
     return !!dateKey && dateKey >= startDate && dateKey <= endDate;
   }
 
-  function getDaysInRange(startDate, endDate) {
+    function getDaysInRange(startDate, endDate) {
     if (!startDate || !endDate) return 0;
-    const start = new Date(startDate + "T00:00:00");
+    
+    let count = 0;
+    // Create dates safely to avoid timezone shifting issues
+    let currentDate = new Date(startDate + "T00:00:00");
     const end = new Date(endDate + "T00:00:00");
-    const diffMs = end - start;
-    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(diffDays, 0);
+    
+    // Loop through each day in the range
+    while (currentDate <= end) {
+      // 0 = Sunday, 6 = Saturday
+      // If it's NOT Saturday, count it as a working day
+      if (currentDate.getDay() !== 6) {
+        count++;
+      }
+      // Move to the next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return count;
   }
 
   /* ── Branch names & IDs ────────────────────────────────────── */
@@ -1524,14 +1537,15 @@
 
   /* ── Client-side range aggregation ───────────────────────── */
 
-  // Aggregates Individual Telesales. 
+     // Aggregates Individual Telesales. 
   // NOTE: Multiplier is NOT applied here. Individual targets always remain raw.
+  // FIX: Excludes any row where netDailySales is <= 0.
   function aggregateSalesPeople(startDate, endDate, selectedBranchId) {
-    const groups = new Map();
+    // ── Step 1: Aggregate per (salesperson + branch + date) to get daily totals ──
+    const dailyMap = new Map();
 
     for (const row of allRawData) {
       const rowDate = getRecordDate(row);
-
       if (!isDateInRange(rowDate, startDate, endDate)) continue;
 
       const branchId = getBranchIdFromRow(row);
@@ -1539,7 +1553,6 @@
 
       if (selectedBranchId) {
         const selectedName = branchNames[selectedBranchId] || "";
-
         if (
           branchId &&
           branchId !== selectedBranchId &&
@@ -1566,43 +1579,80 @@
 
       if (!name) continue;
 
-      const key = `${name.toLowerCase()}||${branchName.toLowerCase()}`;
+      // Strictly exclude values <= 0 from being added to the net sales
+      const rowNetSales = getNetSales(row);
+      if (rowNetSales <= 0) continue; // <-- Skips this row entirely if sales are 0 or negative
 
-      if (!groups.has(key)) {
-        groups.set(key, {
+      const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
+
+      if (!dailyMap.has(dailyKey)) {
+        dailyMap.set(dailyKey, {
           salesPersonName: name,
           branchName,
           orgBranchId: branchId || getBranchIdByName(branchName),
+          date: rowDate,
           netValue: 0,
           target: 0,
-          orders: 0,
-          daysSet: new Set()
+          orders: 0
         });
       }
 
-      const g = groups.get(key);
-      const rawTarget = getSalesTarget(row);
-
-      g.netValue += getNetSales(row);
-      g.target += rawTarget; // No multiplier, individual targets remain raw.
-      g.orders += getCustomerOrders(row);
-      if (rowDate) g.daysSet.add(rowDate);
+      const d = dailyMap.get(dailyKey);
+      
+      // Summing only positive raw daily values for this specific day
+      d.netValue += rowNetSales;             // Sums row.netDailySales
+      d.target   += getSalesTarget(row);     // Sums row.dailySalesTarget
+      d.orders   += getCustomerOrders(row);
     }
 
-    return [...groups.values()]
+    // ── Step 2: Roll daily totals up to per-salesperson totals ──
+    // Only days where the rep had POSITIVE sales (>0) count toward performance.
+    const personMap = new Map();
+
+    for (const d of dailyMap.values()) {
+      // Safety check: ensure the daily aggregated net value is still > 0
+      if (d.netValue <= 0) continue;
+
+      const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
+
+      if (!personMap.has(personKey)) {
+        personMap.set(personKey, {
+          salesPersonName: d.salesPersonName,
+          branchName: d.branchName,
+          orgBranchId: d.orgBranchId,
+          netValue: 0,
+          target: 0,
+          orders: 0,
+          daysWorked: 0
+        });
+      }
+
+      const p = personMap.get(personKey);
+
+      // Add the strictly positive daily values to the person's total
+      p.netValue   += d.netValue;
+      p.orders     += d.orders;
+      p.target     += d.target;
+      p.daysWorked += 1;
+    }
+
+    // ── Step 3: Compute score from raw summations and filter ──
+    return [...personMap.values()]
       .map(g => ({
         salesPersonName: g.salesPersonName,
         branchName: g.branchName,
         orgBranchId: g.orgBranchId,
-        netValue: g.netValue,
-        target: g.target,
+        netValue: g.netValue,             // Total netDailySales (strictly > 0 only)
+        target: g.target,                 // Total dailySalesTarget (only for positive days)
         orders: g.orders,
-        days: g.daysSet ? g.daysSet.size : 0,
+        days: g.daysWorked,               // Count of days where netDailySales > 0
+        // Calculate percentage directly from the sums
         score: g.target > 0 ? (g.netValue / g.target) * 100 : 0,
         totalDaysCustomers: g.orders
       }))
-      .filter(g => g.score > 0);
+      .filter(g => g.score > 0); // Keeps only reps who actually achieved > 0%
   }
+
 
   // Aggregates Branches. 
   // NOTE: Multiplier IS applied here. Branch targets will reflect special/double gifting rules.
