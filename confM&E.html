@@ -266,7 +266,7 @@ function burl(p) {
     let b = config.API_URL;
     if (!b) return ""; 
     if (!b.endsWith('/')) b += '/';
-    const endpoint = currentCompany === "pharma" ? "order-confirmer-reports" : "list-order-confirmer-reports";
+    const endpoint = currentCompany === "pharma" ? "order-confirmer-reports" : "order-tracking/list-order-confirmer-reports";
     return b + endpoint + (p ? '?' + p : '');
 }
 
