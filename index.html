@@ -98,7 +98,7 @@
         }
         .dashboard-card:hover::before { height: 8px; }
 
-        /* Icons */
+        /* Standard Circular Icons */
         .icon-box {
             width: 80px; height: 80px;
             display: flex; align-items: center; justify-content: center;
@@ -109,7 +109,53 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: transform 0.4s ease, background 0.4s ease;
         }
-        .dashboard-card:hover .icon-box { transform: rotate(10deg) scale(1.1); }
+        
+        /* Special wider box specifically for the wide BEI BORA logo */
+        .bb-icon-box {
+            width: 100%;
+            max-width: 140px; 
+            height: 80px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            margin-bottom: 25px;
+            background: #ffffff; /* White background so the logo stands out */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px; /* Slightly rounded rectangle instead of circle */
+            padding: 8px;
+            transition: transform 0.4s ease;
+        }
+        .bb-icon-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Prevents logo from stretching/distorting */
+        }
+
+        /* Special box for the vertical PHILMED logo */
+        .pharma-icon-box {
+            width: 110px; 
+            height: 130px; /* Adjusted height to fit the full logo + slogan comfortably */
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            margin-bottom: 25px;
+            background: #ffffff; 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px; 
+            padding: 10px;
+            transition: transform 0.4s ease;
+        }
+        .pharma-icon-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .dashboard-card:hover .icon-box, 
+        .dashboard-card:hover .bb-icon-box,
+        .dashboard-card:hover .pharma-icon-box { 
+            transform: rotate(10deg) scale(1.1); 
+        }
 
         .dashboard-card h2 { font-size: 1.5rem; margin-bottom: 15px; font-weight: 600; }
         .dashboard-card p { font-size: 0.95rem; color: #94a3b8; font-weight: 300; line-height: 1.6; margin-bottom: 25px; }
@@ -158,18 +204,24 @@
     <div class="container">
         <!-- TEL Dashboard -->
         <a href="https://dataanalyst-11.github.io/Dashboards/teledata.html" class="dashboard-card tel">
-            <div class="icon-box">📈</div>
+            <div class="pharma-icon-box">
+                <img src="https://z-cdn-media.chatglm.cn/files/cdc17bb5-1f83-4c99-8267-a64bb6c78ddc.png?auth_key=1889636787-4308baa007b74a1382b92fc2e697fd5a-0-fe7b90233fa3ac6f347866e1782682ee" alt="Philmed Limited Logo">
+            </div>
             <h2>PHARMA TELLESALES</h2>
             <p>Tellesales Performance Metrics and Visual Data Trends.</p>
             <div class="view-btn">Open Dashboard</div>
         </a>
-        <!-- TEL Dashboard -->
+
+        <!-- BB TEL Dashboard -->
         <a href="https://dataanalyst-11.github.io/Dashboards/BBtelesale.html" class="dashboard-card tel">
-            <div class="icon-box">📈</div>
+            <div class="bb-icon-box">
+                <img src="https://z-cdn-media.chatglm.cn/files/5a88d214-6899-40b6-8ac9-226c82bddd0b.png?auth_key=1889636328-98913485704247debec302877e386136-0-bb487c9273243169f539faf8bfc5b6ef" alt="BEI BORA Distributors Limited Logo">
+            </div>
             <h2>BEI BORA TELLESALES</h2>
             <p>Tellesales Performance Metrics and Visual Data Trends.</p>
             <div class="view-btn">Open Dashboard</div>
         </a>
+
          <!-- Cashiers Dashboard -->
         <a href="https://dataanalyst-11.github.io/Dashboards/allCashiers.html" class="dashboard-card route">
             <div class="icon-box">💰💸</div>
@@ -177,6 +229,7 @@
             <p>Track Cashiers Perfomance.</p>
             <div class="view-btn">Open Dashboard</div>
         </a>
+
         <!-- STRM Dashboard -->
         <a href="STRM.HTML" class="dashboard-card strm">
             <div class="icon-box">🛒</div>
