@@ -1264,7 +1264,7 @@
     "orgbranch-6aa9ea8000b47a2a2218b504"  // Mombasa Retail
   ]);
 
-  // Branches explicitly listed as Retails (Fixed Target: 50,000 daily)
+  // Branches explicitly listed as Retails (Fixed Target: 50,000 daily, except High Value)
   const RETAIL_BRANCH_IDS = new Set([
     "orgbranch-6aa9ea8000b47a2a2218b97d", // Silvergates Rongai
     "orgbranch-6aa9ea8000b47a2a2218b6bb", // NANYUKI CHEMIST
@@ -1276,9 +1276,10 @@
     "orgbranch-6aa9ea7f00b47a2a2218ae9e", // Arms Narok Retail
     "orgbranch-6aa9ea8000b47a2a2218b7dc", // PHARMAWEB WOTE
     "orgbranch-6aa9ea8000b47a2a2218b79d", // PHARMAWEB MIGORI
+    "orgbranch-6aa9ea8000b47a2a2218b934", // Silvergates Health Solutions
     "orgbranch-6aa9ea8000b47a2a2218b724", // Nolimit Healthcare (High Value 80k override)
-    "orgbranch-6aa9ea8000b47a2a2218b504" // Mombasa Retail (High Value 80k override)
-   
+    "orgbranch-6aa9ea8000b47a2a2218b504", // Mombasa Retail (High Value 80k override)
+    "orgbranch-6aa9ea7f00b47a2a2218b1ba"  // Kawangware Retail 2
   ]);
 
   // Branches explicitly listed as Semi Wholesales (Fixed Target: 150,000 daily)
@@ -1287,12 +1288,10 @@
     "orgbranch-6aa9ea8000b47a2a2218b587", // Mwiki
     "orgbranch-6aa9ea8000b47a2a2218b4c8", // Mihang'o
     "orgbranch-6aa9ea8000b47a2a2218b372", // Kitui Retail
-    "orgbranch-6aa9ea8000b47a2a2218b934", // Silvergates Health Solutions
-    "orgbranch-6aa9ea8000b47a2a2218b873",  // Rongai Retail
-    "orgbranch-6aa9ea7f00b47a2a2218b1ba"  // Kawangware Retail 2
+    "orgbranch-6aa9ea8000b47a2a2218b873"  // Rongai Retail
   ]);
 
-  // Everything else is Wholesale (No logic applied, just raw API target)
+  // Everything else is Wholesale (Calculated Target logic applied)
   const WHOLESALE_BRANCH_IDS = new Set(
     Object.keys(branchNames).filter(id => 
       !RETAIL_BRANCH_IDS.has(id) && !SEMI_WHOLESALE_BRANCH_IDS.has(id)
@@ -1395,6 +1394,67 @@
     }
 
     return "";
+  }
+
+  /* ── Special Branch IDs Target Mapping (For Wholesale Logic) ──────────────────── */
+
+  const ID_KAWANGWARE = "orgbranch-684593b176bd774c32f150c6";
+  const ID_RONGAI = "orgbranch-685002137d3c6f75c8c1db4f";
+  const ID_KITENGEELA = "orgbranch-68455bea76bd774c32f031cc";
+  const ID_KITUI = "orgbranch-6850015d7d3c6f75c8c1d680";
+
+  /* ── Target Multiplier Logic (Special & Double Gifting) ─────────── */
+  // Only Applies to Wholesale Branches
+  function getTargetMultiplier(dateStr, branchId) {
+    const dateSelectVal = document.getElementById("dateSelect").value;
+    const todayStr = formatDate(getToday());
+    
+    if (dateSelectVal !== "today" || dateStr !== todayStr) return 1;
+
+    const dateObj = new Date(dateStr + "T00:00:00");
+    const dayOfWeek = dateObj.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+
+    function isLastWeekdayOfMonth(date, targetDay) {
+      if (date.getDay() !== targetDay) return false;
+      const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      return date.getDate() + 7 > lastDayOfMonth.getDate();
+    }
+
+    // 1. Check Double Gifting FIRST (Overrides Special Targets)
+    if (dayOfWeek === 2 && isLastWeekdayOfMonth(dateObj, 2) && branchId === ID_KITUI) return 1.5;
+    if (dayOfWeek === 3 && isLastWeekdayOfMonth(dateObj, 3) && branchId === ID_KAWANGWARE) return 1.5;
+    if (dayOfWeek === 5 && isLastWeekdayOfMonth(dateObj, 5) && (branchId === ID_KITENGEELA || branchId === ID_RONGAI)) return 1.5;
+    
+    if (dayOfWeek === 4 && isLastWeekdayOfMonth(dateObj, 4)) {
+      if (![ID_KITUI, ID_KAWANGWARE, ID_KITENGEELA, ID_RONGAI].includes(branchId)) return 1.5;
+    }
+
+    // 2. Check Special Targets
+    if (dayOfWeek === 1) return 0.7;
+
+    if (dayOfWeek === 2) {
+      if (branchId === ID_KAWANGWARE || branchId === ID_RONGAI) return 0.6;
+      return 0.8;
+    }
+
+    if (dayOfWeek === 3) {
+      if (branchId === ID_KAWANGWARE || branchId === ID_RONGAI) return 0.8;
+      return 0.6;
+    }
+
+    if (dayOfWeek === 4) {
+      if (branchId === ID_KITENGEELA || branchId === ID_KAWANGWARE || branchId === ID_RONGAI) return 0.6;
+      return 0.8;
+    }
+
+    if (dayOfWeek === 5) {
+      if (branchId === ID_KAWANGWARE || branchId === ID_RONGAI || branchId === ID_KITENGEELA) return 0.8;
+      return 0.6;
+    }
+
+    if (dayOfWeek === 0) return 0.6;
+
+    return 1.0;
   }
 
   /* ── Toast ───────────────────────────────────────────────── */
@@ -1667,8 +1727,11 @@
         finalTarget = 80000;
       } else if (RETAIL_BRANCH_IDS.has(branchId)) {
         finalTarget = 50000;
+      } else {
+        // Wholesales use the multiplier logic from the initial code
+        const multiplier = getTargetMultiplier(date, branchId);
+        finalTarget = Number(target) * multiplier;
       }
-      // Wholesales do not use logic, just use raw target from API
 
       d.target += finalTarget;
       d.rawTarget += Number(target) || 0;
