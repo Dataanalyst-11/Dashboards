@@ -70,7 +70,6 @@
     position: relative;
   }
 
-  /* ── Loading overlay on header filters ─────────────────── */
   .header-loading-overlay {
     position: absolute;
     inset: 0;
@@ -99,7 +98,6 @@
     animation: spin 0.7s linear infinite;
   }
 
-  /* ── Shared Select Style ────────────────────────────────── */
   .filter-select {
     position: relative;
   }
@@ -144,7 +142,6 @@
   .date-selector select { min-width: 160px; }
   .branch-selector select { min-width: 240px; }
 
-  /* ── Custom Date Range Picker ───────────────────────────── */
   .custom-date-range {
     display: flex;
     align-items: center;
@@ -260,7 +257,6 @@
     fill: #64748b;
   }
 
-  /* ── View Toggle ─────────────────────────────────────────── */
   .view-toggle {
     display: flex;
     background: #0f172a;
@@ -286,7 +282,6 @@
   .view-toggle button.active { background: #ba9305; color: #020617; }
   .view-toggle button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ── View Containers ─────────────────────────────────────── */
   #telesalesView,
   #branchView {
     flex: 1;
@@ -296,7 +291,6 @@
 
   #branchView { display: none; }
 
-  /* ── Stat Cards ─────────────────────────────────────────── */
   .stats-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -365,7 +359,6 @@
   .perf-medium { color: #facc15 !important; }
   .perf-low { color: #ef4444 !important; }
 
-  /* ── Telesales: Branch Perf Bar ──────────────────────────── */
   .branch-perf-section { padding: 20px 32px 0; }
 
   .branch-perf-card {
@@ -435,7 +428,6 @@
   
   .perf-bar-labels span.active-marker { color: #f8fafc; }
 
-  /* ── Telesales: Table ───────────────────────────────────── */
   .table-section {
     flex: 1;
     padding: 20px 32px 24px;
@@ -609,7 +601,6 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .sort-hint { font-size: 11px; color: #475569; font-weight: 400; text-transform: none; letter-spacing: 0; }
 
-  /* ── Branch View: Grid ──────────────────────────────────── */
   .branch-grid-header {
     display: flex;
     align-items: center;
@@ -716,7 +707,6 @@
     grid-column: 1 / -1;
   }
 
-  /* ── Days Worked Info (in table) ─────────────────────────── */
   .days-worked-info {
     font-size: 10px;
     color: #64748b;
@@ -726,7 +716,6 @@
     white-space: nowrap;
   }
 
-  /* ── Branch Deficit Info (in branch cards) ────────────────── */
   .branch-deficit-info {
     margin-top: 6px;
     font-size: 11px;
@@ -735,7 +724,6 @@
   .branch-deficit-info .deficit-val { color: #ef4444; font-weight: 700; }
   .branch-deficit-info .surplus-val { color: #22c55e; font-weight: 700; }
 
-  /* ── Footer / Toast ─────────────────────────────────────── */
   footer {
     text-align: center;
     padding: 20px;
@@ -770,7 +758,33 @@
   .toast.toast-warn { border-left-color: #f59e0b; }
   .toast.toast-retry { border-left-color: #38bdf8; }
 
-  /* ── Responsive ──────────────────────────────────────────── */
+  /* Group Switch Toggle styling */
+  .group-toggle {
+    display: flex;
+    background: #0f172a;
+    border-radius: 10px;
+    padding: 3px;
+    border: 2px solid #334155;
+  }
+
+  .group-toggle button {
+    padding: 8px 18px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .group-toggle button:hover { color: #94a3b8; }
+  .group-toggle button.active { background: #ba9305; color: #020617; }
+
   @media (max-width: 1100px) {
     .branch-summary-row { grid-template-columns: 1fr 1fr; }
   }
@@ -816,6 +830,7 @@
       border-top: 1px solid #334155;
     }
     .date-range-input-wrap input[type="date"] { width: 100%; }
+    .group-toggle button { padding: 8px 10px; font-size: 11px; }
   }
 </style>
 </head>
@@ -961,19 +976,18 @@
     <div class="stat-card">
       <div class="stat-label">Special Targets Performance</div>
       <div class="stat-value" id="bsOverallPct">—</div>
-      <div class="stat-sub">aggregated all branches</div>
+      <div class="stat-sub" id="bsOverallPctSub">aggregated all branches</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Total Net Sales</div>
       <div class="stat-value" id="bsTotalSales">—</div>
-      <div class="stat-sub">across all branches</div>
+      <div class="stat-sub" id="bsTotalSalesSub">across all branches</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Branches Achieved</div>
       <div class="stat-value perf-high" id="bsOnTrack">—</div>
       <div class="stat-sub" id="bsOnTrackSub">at 80% or above</div>
     </div>
-    <!-- 4th Card Modified to show Actual Score (Raw Target %) -->
     <div class="stat-card">
       <div class="stat-label">Actual Score (Raw)</div>
       <div class="stat-value" id="bsRawPerf">—</div>
@@ -984,10 +998,18 @@
   <div class="branch-grid-wrap">
     <div class="branch-grid-header">
       <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-        <span class="table-title">All Branches</span>
+        <span class="table-title" id="branchGridTitle">All Branches</span>
         <span class="table-count" id="branchCount">0 branches</span>
       </div>
-      <input type="text" class="search-box" id="branchSearchBox" placeholder="Search branch...">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div class="group-toggle" id="branchGroupToggle">
+          <!-- Made Wholesale default active -->
+          <button id="btnWholesale" class="active" onclick="switchBranchGroup('wholesale')">Wholesales</button>
+          <button id="btnSemiWholesale" onclick="switchBranchGroup('semi')">Semi Wholesales</button>
+          <button id="btnRetail" onclick="switchBranchGroup('retail')">Retails</button>
+        </div>
+        <input type="text" class="search-box" id="branchSearchBox" placeholder="Search branch...">
+      </div>
     </div>
     <div class="branch-grid" id="branchGrid">
       <div class="no-branch-data">Loading branch data...</div>
@@ -1012,7 +1034,7 @@
      ============================================================ */
 
   const AUTO_REFRESH_MS = 600000; // 10 minutes
-  const DATA_LOOKBACK_DAYS = 365; // One API pull covers the client-side date filters.
+  const DATA_LOOKBACK_DAYS = 365;
   const API_TOKEN = window.API_CONFIG.API_TOKEN;
 
   let currentSort = { key: "score", dir: "desc" };
@@ -1163,22 +1185,17 @@
     return !!dateKey && dateKey >= startDate && dateKey <= endDate;
   }
 
-    function getDaysInRange(startDate, endDate) {
+  function getDaysInRange(startDate, endDate) {
     if (!startDate || !endDate) return 0;
     
     let count = 0;
-    // Create dates safely to avoid timezone shifting issues
     let currentDate = new Date(startDate + "T00:00:00");
     const end = new Date(endDate + "T00:00:00");
     
-    // Loop through each day in the range
     while (currentDate <= end) {
-      // 0 = Sunday, 6 = Saturday
-      // If it's NOT Saturday, count it as a working day
       if (currentDate.getDay() !== 6) {
         count++;
       }
-      // Move to the next day
       currentDate.setDate(currentDate.getDate() + 1);
     }
     
@@ -1217,14 +1234,74 @@
     "orgbranch-69f7511b83ba28b7dda7ccd1": "Ol Kalou",
     "orgbranch-6a8c509e44cec8b9b30ec559": "Wote",
     "orgbranch-6a840bfb1936a960f8ec3e7a": "Migori",
-    "orgbranch-6a14177260c3a453acb56ceb": "Nanyuki"
+    "orgbranch-6a14177260c3a453acb56ceb": "Nanyuki",
+    "orgbranch-6aa9ea8000b47a2a2218ba4c": "Umoja",
+    "orgbranch-6aa9ea8000b47a2a2218b587": "Mwiki",
+    "orgbranch-6aa9ea8000b47a2a2218b97d": "Silvergates Rongai",
+    "orgbranch-6aa9ea8000b47a2a2218b6bb": "NANYUKI CHEMIST",
+    "orgbranch-6aa9ea8000b47a2a2218b8fc": "Silvergate Jacaranda",
+    "orgbranch-6aa9ea7f00b47a2a2218b166": "Kawangware Retail",
+    "orgbranch-6aa9ea8000b47a2a2218b9d6": "Silvergates Imara",
+    "orgbranch-6aa9ea7f00b47a2a2218ae55": "Arms Agrovet",
+    "orgbranch-6aa9ea8000b47a2a2218b4c8": "Mihang'o",
+    "orgbranch-6aa9ea7f00b47a2a2218aedf": "Arms Ol Kalou",
+    "orgbranch-6aa9ea7f00b47a2a2218ae9e": "Arms Narok Retail",
+    "orgbranch-6aa9ea8000b47a2a2218b7dc": "PHARMAWEB WOTE",
+    "orgbranch-6aa9ea8000b47a2a2218b79d": "PHARMAWEB MIGORI",
+    "orgbranch-6aa9ea8000b47a2a2218b504": "Mombasa Retail",
+    "orgbranch-6aa9ea8000b47a2a2218b372": "Kitui Retail",
+    "orgbranch-6aa9ea8000b47a2a2218b934": "Silvergates Health Solutions",
+    "orgbranch-6aa9ea8000b47a2a2218b724": "Nolimit Healthcare",
+    "orgbranch-6aa9ea8000b47a2a2218b873": "Rongai Retail",
+    "orgbranch-6aa9ea7f00b47a2a2218b1ba": "Kawangware Retail 2"
   };
 
-  // Special Branch IDs Target Mapping
-  const ID_KAWANGWARE = "orgbranch-684593b176bd774c32f150c6";
-  const ID_RONGAI = "orgbranch-685002137d3c6f75c8c1db4f";
-  const ID_KITENGEELA = "orgbranch-68455bea76bd774c32f031cc";
-  const ID_KITUI = "orgbranch-6850015d7d3c6f75c8c1d680";
+  /* ── Branch Group Classification ─────────────────────────── */
+
+  // High Value Retail Branches (Fixed Target: 80,000 daily)
+  const HIGH_VALUE_RETAIL_IDS = new Set([
+    "orgbranch-6aa9ea8000b47a2a2218b724", // Nolimit Healthcare
+    "orgbranch-6aa9ea8000b47a2a2218b504"  // Mombasa Retail
+  ]);
+
+  // Branches explicitly listed as Retails (Fixed Target: 50,000 daily)
+  const RETAIL_BRANCH_IDS = new Set([
+    "orgbranch-6aa9ea8000b47a2a2218b97d", // Silvergates Rongai
+    "orgbranch-6aa9ea8000b47a2a2218b6bb", // NANYUKI CHEMIST
+    "orgbranch-6aa9ea8000b47a2a2218b8fc", // Silvergate Jacaranda
+    "orgbranch-6aa9ea7f00b47a2a2218b166", // Kawangware Retail
+    "orgbranch-6aa9ea8000b47a2a2218b9d6", // Silvergates Imara
+    "orgbranch-6aa9ea7f00b47a2a2218ae55", // Arms Agrovet
+    "orgbranch-6aa9ea7f00b47a2a2218aedf", // Arms Ol Kalou
+    "orgbranch-6aa9ea7f00b47a2a2218ae9e", // Arms Narok Retail
+    "orgbranch-6aa9ea8000b47a2a2218b7dc", // PHARMAWEB WOTE
+    "orgbranch-6aa9ea8000b47a2a2218b79d", // PHARMAWEB MIGORI
+    "orgbranch-6aa9ea8000b47a2a2218b934", // Silvergates Health Solutions
+    "orgbranch-6aa9ea8000b47a2a2218b724", // Nolimit Healthcare (High Value 80k override)
+    "orgbranch-6aa9ea8000b47a2a2218b504" // Mombasa Retail (High Value 80k override)
+   
+  ]);
+
+  // Branches explicitly listed as Semi Wholesales (Fixed Target: 150,000 daily)
+  const SEMI_WHOLESALE_BRANCH_IDS = new Set([
+    "orgbranch-6aa9ea8000b47a2a2218ba4c", // Umoja
+    "orgbranch-6aa9ea8000b47a2a2218b587", // Mwiki
+    "orgbranch-6aa9ea8000b47a2a2218b4c8", // Mihang'o
+    "orgbranch-6aa9ea8000b47a2a2218b372", // Kitui Retail
+    "orgbranch-6aa9ea8000b47a2a2218b934", // Silvergates Health Solutions
+    "orgbranch-6aa9ea8000b47a2a2218b873",  // Rongai Retail
+    "orgbranch-6aa9ea7f00b47a2a2218b1ba"  // Kawangware Retail 2
+  ]);
+
+  // Everything else is Wholesale (No logic applied, just raw API target)
+  const WHOLESALE_BRANCH_IDS = new Set(
+    Object.keys(branchNames).filter(id => 
+      !RETAIL_BRANCH_IDS.has(id) && !SEMI_WHOLESALE_BRANCH_IDS.has(id)
+    )
+  );
+
+  // Default to Wholesale view on initial load
+  let currentBranchGroup = "wholesale";
 
   const branchSelect = document.getElementById("branchSelect");
 
@@ -1321,76 +1398,6 @@
     return "";
   }
 
-  /* ── Target Multiplier Logic (Special & Double Gifting) ─────────── */
-  // Only Applies to Branch Aggregation, NOT individual salespeople.
-  
-  function getTargetMultiplier(dateStr, branchId) {
-    const dateSelectVal = document.getElementById("dateSelect").value;
-    const todayStr = formatDate(getToday());
-    
-    if (dateSelectVal !== "today" || dateStr !== todayStr) return 1;
-
-    // Parse safely to avoid timezone offset issues
-    const dateObj = new Date(dateStr + "T00:00:00");
-    const dayOfWeek = dateObj.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
-
-    // Helper: Check if it's the last specific weekday of the month
-    function isLastWeekdayOfMonth(date, targetDay) {
-      if (date.getDay() !== targetDay) return false;
-      const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      return date.getDate() + 7 > lastDayOfMonth.getDate();
-    }
-
-    // 1. Check Double Gifting FIRST (Overrides Special Targets)
-    // Last Tuesday (Day 2) - Kitui Wholesale
-    if (dayOfWeek === 2 && isLastWeekdayOfMonth(dateObj, 2) && branchId === ID_KITUI) return 1.5;
-    
-    // Last Wednesday (Day 3) - Kawangware Wholesale
-    if (dayOfWeek === 3 && isLastWeekdayOfMonth(dateObj, 3) && branchId === ID_KAWANGWARE) return 1.5;
-    
-    // Last Friday (Day 5) - Kitengela and Rongai Wholesale
-    if (dayOfWeek === 5 && isLastWeekdayOfMonth(dateObj, 5) && (branchId === ID_KITENGEELA || branchId === ID_RONGAI)) return 1.5;
-    
-    // Last Thursday (Day 4) - All other remaining branches
-    if (dayOfWeek === 4 && isLastWeekdayOfMonth(dateObj, 4)) {
-      if (![ID_KITUI, ID_KAWANGWARE, ID_KITENGEELA, ID_RONGAI].includes(branchId)) return 1.5;
-    }
-
-    // 2. Check Special Targets
-    // Monday: All branches 70%
-    if (dayOfWeek === 1) return 0.7;
-
-    // Tuesday: All 80% EXCEPT Kawangware Wholesale, Rongai Wholesale (60%)
-    if (dayOfWeek === 2) {
-      if (branchId === ID_KAWANGWARE || branchId === ID_RONGAI) return 0.6;
-      return 0.8;
-    }
-
-    // Wednesday: All 60% EXCEPT Kawangware Wholesale, Rongai Wholesale (80%)
-    if (dayOfWeek === 3) {
-      if (branchId === ID_KAWANGWARE || branchId === ID_RONGAI) return 0.8;
-      return 0.6;
-    }
-
-    // Thursday: All 80% EXCEPT Kitengela, Kawangware Wholesale, Rongai Wholesale (60%)
-    if (dayOfWeek === 4) {
-      if (branchId === ID_KITENGEELA || branchId === ID_KAWANGWARE || branchId === ID_RONGAI) return 0.6;
-      return 0.8;
-    }
-
-    // Friday: All 60% EXCEPT Kawangware Wholesale, Rongai Wholesale, Kitengela (80%)
-    if (dayOfWeek === 5) {
-      if (branchId === ID_KAWANGWARE || branchId === ID_RONGAI || branchId === ID_KITENGEELA) return 0.8;
-      return 0.6;
-    }
-
-    // Sunday: All branches 60%
-    if (dayOfWeek === 0) return 0.6;
-
-    // Saturday or any other unhandled case -> normal target
-    return 1.0;
-  }
-
   /* ── Toast ───────────────────────────────────────────────── */
 
   let toastTimer = null;
@@ -1453,7 +1460,7 @@
     }
   }
 
-  /* ── EXACTLY TWO API REQUESTS ────────────────────────────── */
+  /* ── API REQUESTS ────────────────────────────────────────── */
 
   async function fetchSalesData(signal) {
     const { startDate, endDate } = getFetchRange();
@@ -1537,11 +1544,7 @@
 
   /* ── Client-side range aggregation ───────────────────────── */
 
-     // Aggregates Individual Telesales. 
-  // NOTE: Multiplier is NOT applied here. Individual targets always remain raw.
-  // FIX: Excludes any row where netDailySales is <= 0.
   function aggregateSalesPeople(startDate, endDate, selectedBranchId) {
-    // ── Step 1: Aggregate per (salesperson + branch + date) to get daily totals ──
     const dailyMap = new Map();
 
     for (const row of allRawData) {
@@ -1579,9 +1582,8 @@
 
       if (!name) continue;
 
-      // Strictly exclude values <= 0 from being added to the net sales
       const rowNetSales = getNetSales(row);
-      if (rowNetSales <= 0) continue; // <-- Skips this row entirely if sales are 0 or negative
+      if (rowNetSales <= 0) continue;
 
       const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
 
@@ -1599,18 +1601,14 @@
 
       const d = dailyMap.get(dailyKey);
       
-      // Summing only positive raw daily values for this specific day
-      d.netValue += rowNetSales;             // Sums row.netDailySales
-      d.target   += getSalesTarget(row);     // Sums row.dailySalesTarget
+      d.netValue += rowNetSales;
+      d.target   += getSalesTarget(row);
       d.orders   += getCustomerOrders(row);
     }
 
-    // ── Step 2: Roll daily totals up to per-salesperson totals ──
-    // Only days where the rep had POSITIVE sales (>0) count toward performance.
     const personMap = new Map();
 
     for (const d of dailyMap.values()) {
-      // Safety check: ensure the daily aggregated net value is still > 0
       if (d.netValue <= 0) continue;
 
       const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
@@ -1629,48 +1627,55 @@
 
       const p = personMap.get(personKey);
 
-      // Add the strictly positive daily values to the person's total
       p.netValue   += d.netValue;
       p.orders     += d.orders;
       p.target     += d.target;
       p.daysWorked += 1;
     }
 
-    // ── Step 3: Compute score from raw summations and filter ──
     return [...personMap.values()]
       .map(g => ({
         salesPersonName: g.salesPersonName,
         branchName: g.branchName,
         orgBranchId: g.orgBranchId,
-        netValue: g.netValue,             // Total netDailySales (strictly > 0 only)
-        target: g.target,                 // Total dailySalesTarget (only for positive days)
+        netValue: g.netValue,
+        target: g.target,
         orders: g.orders,
-        days: g.daysWorked,               // Count of days where netDailySales > 0
-        // Calculate percentage directly from the sums
+        days: g.daysWorked,
         score: g.target > 0 ? (g.netValue / g.target) * 100 : 0,
         totalDaysCustomers: g.orders
       }))
-      .filter(g => g.score > 0); // Keeps only reps who actually achieved > 0%
+      .filter(g => g.score > 0);
   }
 
 
-  // Aggregates Branches. 
-  // NOTE: Multiplier IS applied here. Branch targets will reflect special/double gifting rules.
   function aggregateBranches(startDate, endDate) {
     const daily = new Map();
 
+    // Special Targets Population logic
     function addDaily(name, date, target, netSales, branchId) {
       if (!name || !date) return;
       const key = `${name.toLowerCase().trim()}||${date}`;
       if (!daily.has(key)) daily.set(key, { name, date, target: 0, netSales: 0, rawTarget: 0 });
       const d = daily.get(key);
-      const multiplier = getTargetMultiplier(date, branchId);
-      d.target += Number(target) * multiplier;
-      d.rawTarget += Number(target);
+
+      let finalTarget = Number(target) || 0;
+
+      // Apply fixed minimum targets for Retail and Semi Wholesale
+      if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId)) {
+        finalTarget = 150000;
+      } else if (HIGH_VALUE_RETAIL_IDS.has(branchId)) {
+        finalTarget = 80000;
+      } else if (RETAIL_BRANCH_IDS.has(branchId)) {
+        finalTarget = 50000;
+      }
+      // Wholesales do not use logic, just use raw target from API
+
+      d.target += finalTarget;
+      d.rawTarget += Number(target) || 0;
       d.netSales += Number(netSales) || 0;
     }
 
-    // Branch endpoint records.
     for (const row of branchPerfData) {
       const date = getRecordDate(row);
       if (!isDateInRange(date, startDate, endDate)) continue;
@@ -1679,7 +1684,6 @@
       addDaily(name, date, getSalesTarget(row), getNetSales(row), row.orgBranchId || getBranchIdByName(name));
     }
 
-    // Sales-cache fallback for branch/day combinations missing above.
     const salesDaily = new Map();
     for (const row of allRawData) {
       const date = getRecordDate(row);
@@ -1711,7 +1715,7 @@
     return [...groups.values()].map(b => ({
       ...b,
       pct: b.target > 0 ? (b.netSales / b.target) * 100 : 0,
-      rawPct: b.rawTarget > 0 ? (b.netSales / b.rawTarget) * 100 : 0 // Actual score based on raw target
+      rawPct: b.rawTarget > 0 ? (b.netSales / b.rawTarget) * 100 : 0
     }));
   }
 
@@ -1816,6 +1820,34 @@
     }
   }
 
+  /* ── Branch Group Switching (Retails vs Wholesales vs Semi) */
+
+  function switchBranchGroup(group) {
+    currentBranchGroup = group;
+
+    const btnW = document.getElementById("btnWholesale");
+    const btnS = document.getElementById("btnSemiWholesale");
+    const btnR = document.getElementById("btnRetail");
+
+    btnW.classList.remove("active");
+    btnS.classList.remove("active");
+    btnR.classList.remove("active");
+
+    if (group === "retail") {
+      btnR.classList.add("active");
+      document.getElementById("branchGridTitle").textContent = "Retail Branches";
+    } else if (group === "semi") {
+      btnS.classList.add("active");
+      document.getElementById("branchGridTitle").textContent = "Semi Wholesale Branches";
+    } else {
+      btnW.classList.add("active");
+      document.getElementById("branchGridTitle").textContent = "Wholesale Branches";
+    }
+
+    document.getElementById("branchSearchBox").value = "";
+    renderBranchView();
+  }
+
   /* ── Branch view ─────────────────────────────────────────── */
 
   function renderBranchView() {
@@ -1832,9 +1864,18 @@
       aggregated.map(b => [b.name.toLowerCase().trim(), b])
     );
 
+    // Determine which branch IDs to show based on current group toggle
+    const branchIdsToShow =
+      currentBranchGroup === "retail" ? RETAIL_BRANCH_IDS :
+      currentBranchGroup === "semi" ? SEMI_WHOLESALE_BRANCH_IDS :
+      WHOLESALE_BRANCH_IDS;
+
     const branches = [];
 
     for (const id in branchNames) {
+      // Skip branches that don't belong to the currently-selected group
+      if (!branchIdsToShow.has(id)) continue;
+
       const name = branchNames[id];
       const entry = byName.get(name.toLowerCase().trim());
 
@@ -1874,7 +1915,7 @@
     const totalRawTarget = withData.reduce((s, b) => s + b.rawTarget, 0);
 
     const overallPct = totalTarget > 0 ? (totalNet / totalTarget) * 100 : 0;
-    const overallRawPct = totalRawTarget > 0 ? (totalNet / totalRawTarget) * 100 : 0; // Overall Actual Score
+    const overallRawPct = totalRawTarget > 0 ? (totalNet / totalRawTarget) * 100 : 0;
 
     const onTrack = withData.filter(b => b.pct >= 80).length;
 
@@ -1883,19 +1924,27 @@
       overallPct >= 50 ? "perf-medium" :
       "perf-low";
 
+    const groupLabel =
+      currentBranchGroup === "retail" ? "Retail" :
+      currentBranchGroup === "semi" ? "Semi Wholesale" :
+      "Wholesale";
+
     document.getElementById("bsOverallPct").textContent =
       overallPct.toFixed(1) + "%";
     document.getElementById("bsOverallPct").className =
       "stat-value " + overallClass;
+    document.getElementById("bsOverallPctSub").textContent =
+      `aggregated ${groupLabel.toLowerCase()} branches`;
 
     document.getElementById("bsTotalSales").textContent =
       "KES " + formatCurrency(totalNet);
+    document.getElementById("bsTotalSalesSub").textContent =
+      `across ${groupLabel.toLowerCase()} branches`;
 
     document.getElementById("bsOnTrack").textContent = onTrack;
     document.getElementById("bsOnTrackSub").textContent =
-      `of ${withData.length} branches at 80%+`;
+      `of ${withData.length} ${groupLabel.toLowerCase()} branches at 80%+`;
 
-    // Update 4th Card with Overall Actual Score against Raw Targets
     const rawPerfClass =
       overallRawPct >= 80 ? "perf-high" :
       overallRawPct >= 50 ? "perf-medium" :
@@ -1903,87 +1952,87 @@
 
     document.getElementById("bsRawPerf").textContent = overallRawPct.toFixed(1) + "%";
     document.getElementById("bsRawPerf").className = "stat-value " + rawPerfClass;
-    document.getElementById("bsRawPerfSub").textContent = "against original targets";
+    document.getElementById("bsRawPerfSub").textContent = `${groupLabel} branches against original targets`;
 
     let html = "";
 
-    branches.forEach(b => {
-      const tier =
-        !b.hasData ? "none" :
-        b.pct >= 80 ? "high" :
-        b.pct >= 50 ? "medium" :
-        "low";
+    if (branches.length === 0) {
+      html = `<div class="no-branch-data">No ${groupLabel.toLowerCase()} branches found</div>`;
+    } else {
+      branches.forEach(b => {
+        const tier =
+          !b.hasData ? "none" :
+          b.pct >= 80 ? "high" :
+          b.pct >= 50 ? "medium" :
+          "low";
 
-      const barWidth =
-        b.hasData ? Math.min(b.pct, 100).toFixed(1) : 0;
+        const barWidth =
+          b.hasData ? Math.min(b.pct, 100).toFixed(1) : 0;
 
-      // Determine dynamic color for raw score (Actual Score)
-      const rawPctColor = !b.hasData ? "#64748b" :
-        b.rawPct >= 80 ? "#22c55e" :
-        b.rawPct >= 50 ? "#facc15" :
-        "#ef4444";
+        const rawPctColor = !b.hasData ? "#64748b" :
+          b.rawPct >= 80 ? "#22c55e" :
+          b.rawPct >= 50 ? "#facc15" :
+          "#ef4444";
 
-      const isSpecialDay = b.hasData && b.rawTarget > 0 && b.target !== b.rawTarget;
-      const isDouble = b.hasData && b.target > b.rawTarget;
+        const isSpecialDay = b.hasData && b.rawTarget > 0 && b.target !== b.rawTarget;
+        const isDouble = b.hasData && b.target > b.rawTarget;
 
-      // Calculate deficits for this branch
-      let deficitHTML = '';
-      if (b.hasData) {
-        const specialDeficit = b.target - b.netSales;
-        const rawDeficit = b.rawTarget - b.netSales;
+        let deficitHTML = '';
+        if (b.hasData) {
+          const specialDeficit = b.target - b.netSales;
+          const rawDeficit = b.rawTarget - b.netSales;
 
-        deficitHTML = '<div class="branch-deficit-info">';
+          deficitHTML = '<div class="branch-deficit-info">';
 
-        if (isSpecialDay) {
-          // Show both deficits when special/double gifting is active
-          if (specialDeficit > 0) {
-            deficitHTML += `Deficit (Special): <span class="deficit-val">${formatFullCurrency(specialDeficit)}</span><br>`;
-          } else if (specialDeficit < 0) {
-            deficitHTML += `Surplus (Special): <span class="surplus-val">${formatFullCurrency(Math.abs(specialDeficit))}</span><br>`;
+          if (isSpecialDay) {
+            if (specialDeficit > 0) {
+              deficitHTML += `Deficit (Special): <span class="deficit-val">${formatFullCurrency(specialDeficit)}</span><br>`;
+            } else if (specialDeficit < 0) {
+              deficitHTML += `Surplus (Special): <span class="surplus-val">${formatFullCurrency(Math.abs(specialDeficit))}</span><br>`;
+            }
+            if (rawDeficit > 0) {
+              deficitHTML += `Deficit (Raw): <span class="deficit-val">${formatFullCurrency(rawDeficit)}</span>`;
+            } else if (rawDeficit < 0) {
+              deficitHTML += `Surplus (Raw): <span class="surplus-val">${formatFullCurrency(Math.abs(rawDeficit))}</span>`;
+            }
+          } else {
+            if (specialDeficit > 0) {
+              deficitHTML += `Deficit: <span class="deficit-val">${formatFullCurrency(specialDeficit)}</span>`;
+            } else if (specialDeficit < 0) {
+              deficitHTML += `Surplus: <span class="surplus-val">${formatFullCurrency(Math.abs(specialDeficit))}</span>`;
+            }
           }
-          if (rawDeficit > 0) {
-            deficitHTML += `Deficit (Raw): <span class="deficit-val">${formatFullCurrency(rawDeficit)}</span>`;
-          } else if (rawDeficit < 0) {
-            deficitHTML += `Surplus (Raw): <span class="surplus-val">${formatFullCurrency(Math.abs(rawDeficit))}</span>`;
-          }
-        } else {
-          // Show single deficit on normal days
-          if (specialDeficit > 0) {
-            deficitHTML += `Deficit: <span class="deficit-val">${formatFullCurrency(specialDeficit)}</span>`;
-          } else if (specialDeficit < 0) {
-            deficitHTML += `Surplus: <span class="surplus-val">${formatFullCurrency(Math.abs(specialDeficit))}</span>`;
-          }
+
+          deficitHTML += '</div>';
         }
 
-        deficitHTML += '</div>';
-      }
-
-      html += `
-        <div class="b-card tier-${tier}" data-name="${b.name.toLowerCase()}">
-          <div class="b-card-name">${b.name}</div>
-          <div class="b-card-pct ${b.hasData ? "perf-" + tier : ""}">
-            ${b.hasData ? b.pct.toFixed(1) + "%" : "—"}
+        html += `
+          <div class="b-card tier-${tier}" data-name="${b.name.toLowerCase()}">
+            <div class="b-card-name">${b.name}</div>
+            <div class="b-card-pct ${b.hasData ? "perf-" + tier : ""}">
+              ${b.hasData ? b.pct.toFixed(1) + "%" : "—"}
+            </div>
+            <div class="b-card-detail">
+              ${b.hasData
+                ? formatFullCurrency(b.netSales) + " of " + formatFullCurrency(b.target)
+                : "No data available"}
+            </div>
+            ${b.hasData && isSpecialDay ? 
+              `<div class="b-card-detail" style="margin-top: 4px; font-size: 11px; color: ${isDouble ? '#ba9305' : '#38bdf8'}; font-weight:700;">${isDouble ? 'DOUBLE GIFTING' : 'SPECIAL TARGET'} ACTIVE</div>
+               <div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 2px;">Actual Score: ${b.rawPct.toFixed(1)}% (Raw: ${formatFullCurrency(b.rawTarget)})</div>` : 
+               (b.hasData ? `<div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 4px;">Actual Score: ${b.rawPct.toFixed(1)}%</div>` : "")}
+            ${deficitHTML}
+            <div class="b-card-bar">
+              <div class="b-card-bar-fill bar-${tier}" style="width:${barWidth}%"></div>
+            </div>
           </div>
-          <div class="b-card-detail">
-            ${b.hasData
-              ? formatFullCurrency(b.netSales) + " of " + formatFullCurrency(b.target)
-              : "No data available"}
-          </div>
-          ${b.hasData && isSpecialDay ? 
-            `<div class="b-card-detail" style="margin-top: 4px; font-size: 11px; color: ${isDouble ? '#ba9305' : '#38bdf8'}; font-weight:700;">${isDouble ? 'DOUBLE GIFTING' : 'SPECIAL TARGET'} ACTIVE</div>
-             <div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 2px;">Actual Score: ${b.rawPct.toFixed(1)}% (Raw: ${formatFullCurrency(b.rawTarget)})</div>` : 
-             (b.hasData ? `<div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 4px;">Actual Score: ${b.rawPct.toFixed(1)}%</div>` : "")}
-          ${deficitHTML}
-          <div class="b-card-bar">
-            <div class="b-card-bar-fill bar-${tier}" style="width:${barWidth}%"></div>
-          </div>
-        </div>
-      `;
-    });
+        `;
+      });
+    }
 
     document.getElementById("branchGrid").innerHTML = html;
     document.getElementById("branchCount").textContent =
-      withData.length + " branches";
+      withData.length + (withData.length === 1 ? " branch" : " branches");
   }
 
   document.getElementById("branchSearchBox").addEventListener("input", e => {
@@ -2098,7 +2147,6 @@
     perfEl.textContent = branchPerfPct.toFixed(1) + "%";
     perfEl.className = "value " + perfClass;
 
-    // Determine dynamic color for raw score (Actual Score)
     const rawPctColor =
       branchRawPct >= 80 ? "#22c55e" :
       branchRawPct >= 50 ? "#facc15" :
@@ -2108,7 +2156,6 @@
       `${formatFullCurrency(branchNetSales)} of ` +
       `${formatFullCurrency(branchTarget)} target<br>`;
 
-    // Show Special/Double Gifting indicator and Raw Target / Actual Score if today's logic modified it
     if (branchRawTarget > 0 && branchTarget !== branchRawTarget) {
       const isDouble = branchTarget > branchRawTarget;
       detailHTML += `<div style="margin-top:8px; font-size:11px; font-weight:700; color:${isDouble ? '#ba9305' : '#38bdf8'}; text-transform:uppercase; letter-spacing:0.5px;">${isDouble ? 'DOUBLE GIFTING' : 'SPECIAL TARGET'} ACTIVE</div>`;
@@ -2119,7 +2166,6 @@
 
     const rawDeficit = branchRawTarget - branchNetSales;
 
-    // Deficit on Special Target
     if (deficit > 0) {
       detailHTML +=
         `Deficit on Special Target: <span class="deficit">` +
@@ -2134,7 +2180,6 @@
 
     detailHTML += `<br>`;
 
-    // Deficit on Raw Target
     if (rawDeficit > 0) {
       detailHTML +=
         `Deficit on Raw Target: <span class="deficit">` +
@@ -2240,7 +2285,7 @@
     const showDaysInfo = currentDaysInRange > 1;
 
     data.forEach((item, i) => {
-      const sales = Number(item.score) || 0; // Individual score uses raw target
+      const sales = Number(item.score) || 0;
       const orders = Number(item.totalDaysCustomers || 0);
       const value = Number(item.netValue) || 0;
       const daysWorked = Number(item.days) || 0;
