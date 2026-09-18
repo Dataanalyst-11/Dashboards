@@ -88,6 +88,7 @@
         .strm::before { background: #c084fc; box-shadow: 0 0 15px #c084fc; }
         .conf::before { background: #fbbf24; box-shadow: 0 0 15px #fbbf24; }
         .route::before { background: #34d399; box-shadow: 0 0 15px #34d399; }
+        .expr::before { background: #fb923c; box-shadow: 0 0 15px #fb923c; } /* Expressway Color */
 
         /* Hover Effects */
         .dashboard-card:hover {
@@ -151,9 +152,30 @@
             object-fit: contain;
         }
 
+        /* Special box for the Expressway Lounge logo (Black background) */
+        .lounge-icon-box {
+            width: 110px; 
+            height: 130px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            margin-bottom: 25px;
+            background: #000000; /* Black background to match the logo */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px; 
+            padding: 8px;
+            transition: transform 0.4s ease;
+        }
+        .lounge-icon-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
         .dashboard-card:hover .icon-box, 
         .dashboard-card:hover .bb-icon-box,
-        .dashboard-card:hover .pharma-icon-box { 
+        .dashboard-card:hover .pharma-icon-box,
+        .dashboard-card:hover .lounge-icon-box { 
             transform: rotate(10deg) scale(1.1); 
         }
 
@@ -174,6 +196,7 @@
         .strm:hover .view-btn { background: #c084fc; color: #0f172a; }
         .conf:hover .view-btn { background: #fbbf24; color: #0f172a; }
         .route:hover .view-btn { background: #34d399; color: #0f172a; }
+        .expr:hover .view-btn { background: #fb923c; color: #0f172a; } /* Expressway Hover */
 
         /* Entrance Animations */
         @keyframes fadeInUp {
@@ -185,6 +208,9 @@
         .dashboard-card:nth-child(2) { animation-delay: 0.4s; }
         .dashboard-card:nth-child(3) { animation-delay: 0.6s; }
         .dashboard-card:nth-child(4) { animation-delay: 0.8s; }
+        .dashboard-card:nth-child(5) { animation-delay: 1.0s; }
+        .dashboard-card:nth-child(6) { animation-delay: 1.2s; }
+        .dashboard-card:nth-child(7) { animation-delay: 1.4s; }
 
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
@@ -251,6 +277,16 @@
             <div class="icon-box">🚚</div>
             <h2>ROUTE PERFOMANCE</h2>
             <p>Track Route Perfomance.</p>
+            <div class="view-btn">Open Dashboard</div>
+        </a>
+
+        <!-- Expressway Lounge Dashboard -->
+        <a href="https://expressway.pythonanywhere.com/reports" class="dashboard-card expr">
+            <div class="lounge-icon-box">
+                <img src="https://z-cdn-media.chatglm.cn/files/7054b427-f6cc-4955-a5c3-5d60da8b04a6.png?auth_key=1889741041-54a093c7dc7244f3b9540f7569e731a9-0-16eb7dda1395c1af95627ed2995cf132" alt="Expressway Lounge Logo">
+            </div>
+            <h2>EXPRESSWAY LOUNGE</h2>
+            <p>Access Expressway Lounge reports and analytics.</p>
             <div class="view-btn">Open Dashboard</div>
         </a>
         
