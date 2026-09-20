@@ -526,7 +526,15 @@ footer span.highlight { color: #ba9305; font-weight: 600; }
     </div>
   </div>
 </div>
-<script src="config.js"></script>
+
+<script>
+  // Not a credential — proxy only accepts requests from this site's origin.
+  // The real API token lives ONLY in the Cloudflare worker's secrets.
+  window.API_CONFIG = {
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/"
+  };
+</script>
+  
 <script>
 /* 
   MASTER TEMPLATE SAMPLE:
@@ -1974,7 +1982,6 @@ function updateOverrideBadge() {
 }
 
 const AUTO_REFRESH_MS = 600000, PAGE_SIZE = 100000, CHUNK_DAYS = 15;
-const API_TOKEN = window.API_CONFIG.API_TOKEN, API_URL = window.API_CONFIG.API_URL;
 const S = {
   sort: { key: "actual", dir: "desc" },
   view: "routes",
@@ -2178,11 +2185,11 @@ async function fetchAllByDateChunks(path, signal, startDate, endDate) {
     const eDateStr = fmtDate(currentEnd);
     let page = 1, chunkFirstRecord = null;
     while (true) {
-      const url = `${API_URL}${path}?page=${page}&pageSize=${PAGE_SIZE}&startDate=${encodeURIComponent(sDateStr)}&endDate=${encodeURIComponent(eDateStr)}`;
+      const url = `${window.API_CONFIG.API_URL}${path}?page=${page}&pageSize=${PAGE_SIZE}&startDate=${encodeURIComponent(sDateStr)}&endDate=${encodeURIComponent(eDateStr)}`;
       const json = await fetchWithRetry(url, {
         signal,
         headers: {
-          Authorization: API_TOKEN,
+          
           "Content-Type": "application/json"
         }
       });
