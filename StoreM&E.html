@@ -181,9 +181,16 @@ document.getElementById('lu2').textContent = full;
 </script>
 
 <div class="toast" id="toast"></div>
-
-<script src="config.js"></script>
-<script src="beibora.js"></script>
+    
+<script>
+  // Proxy URLs only — real tokens live in the Cloudflare worker.
+  window.API_CONFIG = {
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/"
+  };
+  window.BEIBORA_CONFIG = {
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/beibora/"
+  };
+</script>
 
 <script>
 let currentCompany = "pharma";
@@ -208,13 +215,12 @@ function updClk() {
 }
 setInterval(updClk, 1000); updClk();
 
+// Helper to get the active config based on toggle
+//To load the correct config file
 function getActiveConfig() {
-    if (currentCompany === "pharma") {
-        return window.PHARMA_CONFIG || window.API_CONFIG || { API_URL: "", API_TOKEN: "" };
-    } else {
-        return window.BEIBORA_CONFIG || { API_URL: "", API_TOKEN: "" };
-    }
+    return currentCompany === "pharma" ? window.API_CONFIG : window.BEIBORA_CONFIG;
 }
+
 
 function switchCompany(company) {
     currentCompany = company;
@@ -507,7 +513,7 @@ function applyF() {
 
 async function fetchAllData(params) {
     const u = burl(params);
-    const resp = await fetch(u, { headers: { 'Authorization': getActiveConfig().API_TOKEN, 'Content-Type': 'application/json' } });
+    const resp = await fetch(u);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const j = await resp.json();
     return Array.isArray(j) ? j : (j.data || []);
