@@ -128,7 +128,12 @@
   <div>Designed and Managed by MIS.DPT</div>
 </div>
 
-<script src="config.js"></script>
+<script>
+  // Proxy URLs only — real tokens live in the Cloudflare worker.
+  window.API_CONFIG = {
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/"
+  };
+</script>
 
 <script>
 /* ===============================
@@ -188,10 +193,10 @@ past.setDate(today.getDate() - 29);
 const start = past.toISOString().split("T")[0];
 
 const API_URL =
-  window.API_CONFIG.API_URL +
-  `invoice-count-by-status?startDate=${start}&endDate=${end}`;
+  `${window.API_CONFIG.API_URL}invoice-count-by-status` +
+`?startDate=${start}&endDate=${end}`;
 
-const API_TOKEN = window.API_CONFIG.API_TOKEN;
+
 
 /* ===============================
    LOAD DASHBOARD DATA
@@ -202,7 +207,7 @@ async function loadDashboard() {
   try {
     const res = await fetch(API_URL, {
       headers: {
-        "Authorization": API_TOKEN,
+       
         "Content-Type": "application/json"
       }
     });
