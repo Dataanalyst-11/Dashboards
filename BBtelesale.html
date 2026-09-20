@@ -418,17 +418,18 @@
   .toast.toast-retry { border-left-color: #0284c7; }
 
   /* ── Responsive ──────────────────────────────────────────── */
-  @media (max-width: 900px) {
-    th:nth-child(7), td:nth-child(7) { display: none; }
-    th:nth-child(3), td:nth-child(3) { display: none; }
+   @media (max-width: 900px) {
+    th:nth-child(7), td:nth-child(7) { display: none; } /* Hides Sales Deficit */
+    th:nth-child(3), td:nth-child(3) { display: none; } /* Hides Branch */
     th:nth-child(2), td:nth-child(2) { width: 30%; }
     th:nth-child(4), td:nth-child(4) { width: 16%; }
     th:nth-child(5), td:nth-child(5) { width: 14%; }
     th:nth-child(6), td:nth-child(6) { width: 22%; text-align: center; }
+    th:nth-child(8), td:nth-child(8) { width: 18%; text-align: center; } /* Status column */
     .value-cell { text-align: center; }
   }
 
-  @media (max-width: 600px) {
+    @media (max-width: 600px) {
     header { padding: 20px 18px; }
     .stats-row { grid-template-columns: 1fr; padding: 16px 18px 0; gap: 12px; }
     .branch-perf-section { padding: 16px 18px 0; }
@@ -440,10 +441,12 @@
     .filter-select { flex: 1; min-width: 0; }
     .filter-select select { width: 100%; }
     .search-box { width: 100%; }
-    th:nth-child(6), td:nth-child(6) { display: none; }
+    th:nth-child(7), td:nth-child(7) { display: none; } /* Hides Sales Deficit */
+    th:nth-child(6), td:nth-child(6) { display: none; } /* Hides Order Value */
     th:nth-child(2), td:nth-child(2) { width: 40%; }
     th:nth-child(4), td:nth-child(4) { width: 22%; }
     th:nth-child(5), td:nth-child(5) { width: 20%; }
+    th:nth-child(8), td:nth-child(8) { width: 18%; text-align: center; } /* Status column */
     .custom-date-range.visible { max-width: 100%; flex-direction: column; border-radius: 10px; }
     .date-range-group + .date-range-group { border-left: none; border-top: 1px solid #ccfbf1; }
     .date-range-input-wrap input[type="date"] { width: 100%; }
@@ -591,8 +594,14 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Ensure you have a beibora.js file with BEIBORA_CONFIG -->
-<script src="beibora.js"></script>
+<!-- Replace the beibora.js configuration file -->
+<script>
+  // Not a credential — proxy only accepts requests from this site's origin.
+  // The real API token lives ONLY in the Cloudflare worker's secrets.
+  window.API_CONFIG = {
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/beibora/"
+  };
+</script>
 
 <script>
   /* ============================================================
@@ -601,7 +610,7 @@
 
   const AUTO_REFRESH_MS = 600000; // 10 minutes
   const DATA_LOOKBACK_DAYS = 365; // One API pull covers the client-side date filters.
-  const API_TOKEN = window.BEIBORA_CONFIG.API_TOKEN;
+  
 
   let currentSort = { key: "score", dir: "desc" };
   let isLoading = false;
@@ -965,7 +974,7 @@
     const { startDate, endDate } = getFetchRange();
 
     const url =
-      `${window.BEIBORA_CONFIG.API_URL}sales-person/performance-reports` +
+      `${window.API_CONFIG.API_URL}sales-person/performance-reports` +
       `?pageSize=10000` +
       `&startDate=${encodeURIComponent(startDate)}` +
       `&endDate=${encodeURIComponent(endDate)}`;
@@ -975,7 +984,7 @@
     const json = await fetchWithRetry(url, {
       signal,
       headers: {
-        "Authorization": API_TOKEN,
+        
         "Content-Type": "application/json"
       }
     });
