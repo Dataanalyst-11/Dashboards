@@ -265,7 +265,14 @@
   Designed and Managed by MIS.DPT
 </footer>
 
-<script src="config.js"></script>
+
+<script>
+  // Not a credential — proxy only accepts requests from this site's origin.
+  // The real API token lives ONLY in the Cloudflare worker's secrets.
+  window.API_CONFIG = {
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/"
+  };
+</script>
 
 <script>
   let scrollInterval = null;
@@ -354,9 +361,9 @@
 
   /* ---------- API CONFIG ---------- */
   const BASE_API =
-    `${window.API_CONFIG.API_URL}sales-person-performance?pageSize=500&startDate=${formattedEnd}&endDate=${formattedEnd}`;
+    `${window.API_CONFIG.API_URL}sales-person-performance?pageSize=10000&startDate=${formattedEnd}&endDate=${formattedEnd}`;
 
-  const API_TOKEN = window.API_CONFIG.API_TOKEN;
+  
 
   /* ── Branch performance data store (cached) ──────────────── */
   let branchPerfData = [];
@@ -376,7 +383,7 @@
 
     const res = await fetch(url, {
       headers: {
-        "Authorization": API_TOKEN,
+       
         "Content-Type": "application/json"
       }
     });
@@ -433,7 +440,6 @@
   async function fetchPage(pageNum) {
     const response = await fetch(`${BASE_API}&pageNum=${pageNum}`, {
       headers: {
-        "Authorization": API_TOKEN,
         "Content-Type": "application/json"
       }
     });
