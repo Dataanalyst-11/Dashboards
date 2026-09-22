@@ -695,5 +695,84 @@ async function fetchAndCacheData() {
   setInterval(fetchAndCacheData, AUTO_REFRESH_MS); // Auto-refresh every 15 mins
 </script>
 
+ <!-- JavaScript for Password Protection -->
+    <script>
+        // Run this script as soon as the page loads
+        window.onload = function() {
+            var loginOverlay = document.getElementById('loginOverlay');
+            var loginBtn = document.getElementById('loginBtn');
+            var passwordInput = document.getElementById('passwordInput');
+            var errorMessage = document.getElementById('errorMessage');
+            var loginBox = document.querySelector('.login-box');
+            var rememberMeCheckbox = document.getElementById('rememberMe');
+
+            // 5 Days in milliseconds (5 days * 24 hours * 60 minutes * 60 seconds * 1000 ms)
+            var FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+
+            // 1. Check if user is already authenticated (5-Day Session)
+            var loginTime = localStorage.getItem('loginTime');
+            if (loginTime) {
+                var timeElapsed = Date.now() - parseInt(loginTime);
+                if (timeElapsed < FIVE_DAYS_MS) {
+                    // Session is still valid, hide login screen instantly
+                    loginOverlay.classList.add('hidden'); 
+                } else {
+                    // 5 days have passed, clear the session
+                    localStorage.removeItem('loginTime');
+                }
+            }
+
+            // 2. Check if user previously saved their password
+            var savedPassword = localStorage.getItem('savedPhilmedPassword');
+            if (savedPassword) {
+                passwordInput.value = savedPassword;
+                rememberMeCheckbox.checked = true;
+            }
+
+            // 3. The core function that checks the password
+            function checkPassword() {
+                var password = passwordInput.value;
+
+                if (password === '@AdMiN#1MIS') {
+                    // Correct password
+                    
+                    // Save Login Time for 5-day auto-login
+                    localStorage.setItem('loginTime', Date.now().toString());
+
+                    // Handle Remember Password
+                    if (rememberMeCheckbox.checked) {
+                        localStorage.setItem('savedPhilmedPassword', password);
+                    } else {
+                        localStorage.removeItem('savedPhilmedPassword');
+                    }
+
+                    loginOverlay.classList.add('hidden'); // Hide overlay
+                } else {
+                    // Wrong password
+                    errorMessage.classList.add('show'); // Show error text
+                    loginBox.classList.add('shake'); // Shake the box
+                    
+                    // Remove shake class after 500ms so it can shake again next time
+                    setTimeout(function() {
+                        loginBox.classList.remove('shake');
+                    }, 500);
+                    
+                    passwordInput.value = ''; // Clear the input field
+                    rememberMeCheckbox.checked = false; // Uncheck remember me on fail
+                }
+            }
+
+            // 4. Listen for button click
+            loginBtn.addEventListener('click', checkPassword);
+
+            // 5. Listen for pressing the "Enter" key while inside the password box
+            passwordInput.addEventListener('keypress', function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault(); // Prevent default browser behavior
+                    checkPassword(); // Trigger the same check function
+                }
+            });
+        };
+    </script>
 </body>
 </html>
