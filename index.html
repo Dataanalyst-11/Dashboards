@@ -468,6 +468,16 @@
                     }
 
                     loginOverlay.classList.add('hidden'); // Hide overlay
+                    
+                    // --- NEW: Check if user was redirected from a specific dashboard ---
+                    var urlParams = new URLSearchParams(window.location.search);
+                    var redirectPath = urlParams.get('redirect');
+                    
+                    if (redirectPath) {
+                        // If they came from a dashboard, send them back to it immediately
+                        window.location.href = redirectPath;
+                    }
+                    
                 } else {
                     // Wrong password
                     errorMessage.classList.add('show'); // Show error text
