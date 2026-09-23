@@ -3,6 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <title>Cashier Performance Dashboard</title>
+  <!-- Authentication Guard Script -->
+<script>
+    (function() {
+        var FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+        var loginTime = localStorage.getItem('loginTime');
+        var isAuthenticated = false;
+
+        if (loginTime) {
+            var timeElapsed = Date.now() - parseInt(loginTime);
+            if (timeElapsed < FIVE_DAYS_MS) {
+                isAuthenticated = true;
+            } else {
+                localStorage.removeItem('loginTime');
+            }
+        }
+
+        // If they aren't authenticated, kick them to the login portal
+        if (!isAuthenticated) {
+            // Get the path of the current page they tried to access (e.g., /Dashboards/Route.html)
+            var currentPath = window.location.pathname + window.location.search;
+            // Redirect to the main hub, adding a "?redirect=" parameter
+            window.location.href = 'https://dataanalyst-11.github.io/?redirect=' + encodeURIComponent(currentPath);
+        }
+    })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script>
