@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>
+Collection Team Dashboard
+</title>
+
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+
+    margin: 0;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background: #f3f6f9;
+
+    color: #1f2937;
+
+}
+
+
+/* ================= HEADER ================= */
+
+.header {
+
+    background: #17365d;
+
+    color: white;
+
+    padding: 18px 30px;
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+}
+
+
+.header-title {
+
+    font-size: 25px;
+
+    font-weight: bold;
+
+}
+
+
+.header-subtitle {
+
+    font-size: 13px;
+
+    margin-top: 4px;
+
+    opacity: .8;
+
+}
+
+
+.last-update {
+
+    font-size: 13px;
+
+    text-align: right;
+
+}
+
+
+/* ================= DASHBOARD ================= */
+
+.dashboard {
+
+    padding: 22px 30px;
+
+}
+
+
+/* ================= KPI ================= */
+
+.kpis {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 16px;
+
+    margin-bottom: 22px;
+
+}
+
+
+.card {
+
+    background: white;
+
+    border-radius: 8px;
+
+    padding: 18px;
+
+    box-shadow:
+        0 2px 7px
+        rgba(0,0,0,.08);
+
+}
+
+
+.card-label {
+
+    color: #6b7280;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+}
+
+
+.card-value {
+
+    font-size: 27px;
+
+    font-weight: bold;
+
+    color: #17365d;
+
+    margin-top: 8px;
+
+}
+
+
+/* ================= CONTROLS ================= */
+
+.controls {
+
+    background: white;
+
+    padding: 15px;
+
+    border-radius: 8px;
+
+    margin-bottom: 18px;
+
+    display: flex;
+
+    gap: 12px;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+}
+
+
+select,
+input {
+
+    border:
+        1px solid #d1d5db;
+
+    border-radius: 5px;
+
+    padding: 9px 12px;
+
+    font-size: 14px;
+
+    background: white;
+
+}
+
+
+input {
+
+    min-width: 230px;
+
+}
+
+
+button {
+
+    padding: 9px 16px;
+
+    border: 0;
+
+    border-radius: 5px;
+
+    background: #17365d;
+
+    color: white;
+
+    cursor: pointer;
+
+}
+
+
+button:hover {
+
+    opacity: .9;
+
+}
+
+
+/* ================= TABLE ================= */
+
+.table-container {
+
+    background: white;
+
+    border-radius: 8px;
+
+    overflow-x: auto;
+
+    box-shadow:
+        0 2px 7px
+        rgba(0,0,0,.08);
+
+}
+
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 1200px;
+
+}
+
+
+th {
+
+    background: #17365d;
+
+    color: white;
+
+    padding: 12px 10px;
+
+    font-size: 12px;
+
+    text-align: center;
+
+    white-space: nowrap;
+
+}
+
+
+th:nth-child(1),
+th:nth-child(2) {
+
+    text-align: left;
+
+}
+
+
+td {
+
+    padding: 11px 10px;
+
+    border-bottom:
+        1px solid #e5e7eb;
+
+    font-size: 13px;
+
+    text-align: right;
+
+}
+
+
+td:nth-child(1),
+td:nth-child(2) {
+
+    text-align: left;
+
+}
+
+
+tbody tr:hover {
+
+    background: #f8fafc;
+
+}
+
+
+/* ================= PROGRESS ================= */
+
+.percentage-cell {
+
+    min-width: 170px;
+
+}
+
+
+.percentage-wrapper {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+}
+
+
+.progress {
+
+    height: 9px;
+
+    background: #e5e7eb;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    flex: 1;
+
+}
+
+
+.progress-bar {
+
+    height: 100%;
+
+    border-radius: 20px;
+
+}
+
+
+.high {
+
+    background: #16a34a;
+
+}
+
+
+.medium {
+
+    background: #f59e0b;
+
+}
+
+
+.low {
+
+    background: #dc2626;
+
+}
+
+
+.percentage-text {
+
+    width: 52px;
+
+    font-weight: bold;
+
+    text-align: right;
+
+}
+
+
+/* ================= LOADING ================= */
+
+#loading {
+
+    padding: 50px;
+
+    text-align: center;
+
+    color: #6b7280;
+
+}
+
+
+#error {
+
+    display: none;
+
+    background: #fee2e2;
+
+    color: #991b1b;
+
+    padding: 15px;
+
+    margin-bottom: 15px;
+
+    border-radius: 6px;
+
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:900px) {
+
+    .kpis {
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+    }
+
+    .dashboard {
+
+        padding: 15px;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- HEADER -->
+
+<div class="header">
+
+    <div>
+
+        <div class="header-title">
+
+            COLLECTION TEAM PERFORMANCE
+
+        </div>
+
+        <div class="header-subtitle">
+
+            Target vs Achieved |
+            Daily Collection Monitoring
+
+        </div>
+
+    </div>
+
+
+    <div class="last-update">
+
+        Last Updated
+
+        <br>
+
+        <span id="lastUpdate">
+
+            Loading...
+
+        </span>
+
+    </div>
+
+</div>
+
+
+
+<div class="dashboard">
+
+
+<div id="error"></div>
+
+
+<!-- KPI CARDS -->
+
+<div class="kpis">
+
+
+<div class="card">
+
+    <div class="card-label">
+
+        Total Target
+
+    </div>
+
+    <div
+        class="card-value"
+        id="totalTarget">
+
+        0
+
+    </div>
+
+</div>
+
+
+
+<div class="card">
+
+    <div class="card-label">
+
+        Total Achieved
+
+    </div>
+
+    <div
+        class="card-value"
+        id="totalAchieved">
+
+        0
+
+    </div>
+
+</div>
+
+
+
+<div class="card">
+
+    <div class="card-label">
+
+        Balance
+
+    </div>
+
+    <div
+        class="card-value"
+        id="balance">
+
+        0
+
+    </div>
+
+</div>
+
+
+
+<div class="card">
+
+    <div class="card-label">
+
+        Overall Achievement
+
+    </div>
+
+    <div
+        class="card-value"
+        id="overallPercentage">
+
+        0%
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- FILTERS -->
+
+<div class="controls">
+
+
+<select
+    id="branchFilter"
+    onchange="applyFilters()">
+
+    <option value="ALL">
+
+        All Branches
+
+    </option>
+
+</select>
+
+
+
+<input
+    type="text"
+    id="searchBox"
+    placeholder="Search collection team..."
+    onkeyup="applyFilters()"
+>
+
+
+
+<button onclick="loadData()">
+
+    ↻ Refresh
+
+</button>
+
+
+</div>
+
+
+
+<!-- TABLE -->
+
+<div class="table-container">
+
+
+<div id="loading">
+
+    Loading collection data...
+
+</div>
+
+
+
+<table
+    id="dataTable"
+    style="display:none">
+
+
+<thead>
+
+<tr>
+
+<th>
+COLLECTION TEAM
+</th>
+
+<th>
+BRANCH
+</th>
+
+<th>
+TOTAL - TARGET
+</th>
+
+<th>
+TOTAL - ACHIEVED
+</th>
+
+<th>
+SUNDAY
+</th>
+
+<th>
+MONDAY
+</th>
+
+<th>
+TUESDAY
+</th>
+
+<th>
+WEDNESDAY
+</th>
+
+<th>
+THURSDAY
+</th>
+
+<th>
+FRIDAY
+</th>
+
+<th>
+% ACHIEVED
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="tableBody">
+
+</tbody>
+
+
+</table>
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+
+/* =====================================================
+   GOOGLE APPS SCRIPT API
+===================================================== */
+
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzzqx9fEEfGwvPaE2R6yybFXQ90RJ6zJ7hwjWxF3KQDrETWuxR1eOBwhmZXsAKHhbnECg/exec";
+
+
+let allData = [];
+
+
+
+/* =====================================================
+   LOAD DATA
+===================================================== */
+
+async function loadData() {
+
+    const loading =
+        document.getElementById("loading");
+
+    const table =
+        document.getElementById("dataTable");
+
+    const error =
+        document.getElementById("error");
+
+
+    loading.style.display = "block";
+
+    table.style.display = "none";
+
+    error.style.display = "none";
+
+
+    try {
+
+
+        const response =
+            await fetch(API_URL);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP error: " +
+                response.status
+            );
+
+        }
+
+
+        const result =
+            await response.json();
+
+
+        if (result.status !== "success") {
+
+            throw new Error(
+                result.message ||
+                "API returned an error."
+            );
+
+        }
+
+
+        allData =
+            result.data || [];
+
+
+        populateBranches();
+
+        applyFilters();
+
+
+        document
+            .getElementById("lastUpdate")
+            .innerText =
+            new Date()
+                .toLocaleString("en-KE");
+
+
+    }
+
+    catch (err) {
+
+
+        loading.style.display =
+            "none";
+
+
+        error.style.display =
+            "block";
+
+
+        error.innerText =
+            "Unable to load collection data: " +
+            err.message;
+
+
+    }
+
+}
+
+
+
+/* =====================================================
+   BRANCH FILTER
+===================================================== */
+
+function populateBranches() {
+
+
+    const select =
+        document.getElementById(
+            "branchFilter"
+        );
+
+
+    const branches =
+        [
+            ...new Set(
+                allData
+                    .map(row => row.branch)
+                    .filter(Boolean)
+            )
+        ]
+        .sort();
+
+
+    select.innerHTML =
+        `<option value="ALL">
+            All Branches
+        </option>`;
+
+
+    branches.forEach(branch => {
+
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+
+        option.value =
+            branch;
+
+
+        option.textContent =
+            branch;
+
+
+        select.appendChild(
+            option
+        );
+
+
+    });
+
+}
+
+
+
+/* =====================================================
+   FILTER DATA
+===================================================== */
+
+function applyFilters() {
+
+
+    const branch =
+        document
+            .getElementById(
+                "branchFilter"
+            )
+            .value;
+
+
+    const search =
+        document
+            .getElementById(
+                "searchBox"
+            )
+            .value
+            .toLowerCase()
+            .trim();
+
+
+    const filtered =
+        allData.filter(row => {
+
+
+            const branchMatch =
+                branch === "ALL" ||
+                row.branch === branch;
+
+
+            const searchMatch =
+                !search ||
+                String(
+                    row.collectionTeam
+                )
+                .toLowerCase()
+                .includes(search);
+
+
+            return (
+                branchMatch &&
+                searchMatch
+            );
+
+        });
+
+
+    renderTable(filtered);
+
+    updateKPIs(filtered);
+
+}
+
+
+
+/* =====================================================
+   RENDER TABLE
+===================================================== */
+
+function renderTable(data) {
+
+
+    const tbody =
+        document.getElementById(
+            "tableBody"
+        );
+
+
+    tbody.innerHTML = "";
+
+
+    data.forEach(row => {
+
+
+        const tr =
+            document.createElement(
+                "tr"
+            );
+
+
+        tr.innerHTML = `
+
+<td>
+    <strong>
+        ${escapeHtml(
+            row.collectionTeam
+        )}
+    </strong>
+</td>
+
+<td>
+    ${escapeHtml(row.branch)}
+</td>
+
+<td>
+    ${formatNumber(row.target)}
+</td>
+
+<td>
+    ${formatNumber(row.achieved)}
+</td>
+
+<td>
+    ${formatNumber(row.sunday)}
+</td>
+
+<td>
+    ${formatNumber(row.monday)}
+</td>
+
+<td>
+    ${formatNumber(row.tuesday)}
+</td>
+
+<td>
+    ${formatNumber(row.wednesday)}
+</td>
+
+<td>
+    ${formatNumber(row.thursday)}
+</td>
+
+<td>
+    ${formatNumber(row.friday)}
+</td>
+
+<td class="percentage-cell">
+
+<div class="percentage-wrapper">
+
+<div class="progress">
+
+<div
+class="progress-bar ${getStatusClass(row.percentage)}"
+style="
+width:${Math.min(
+Math.max(row.percentage,0),
+100
+)}%
+">
+</div>
+
+</div>
+
+<div class="percentage-text">
+
+${Number(row.percentage).toFixed(1)}%
+
+</div>
+
+</div>
+
+</td>
+
+`;
+
+
+        tbody.appendChild(tr);
+
+
+    });
+
+
+    document.getElementById(
+        "loading"
+    ).style.display = "none";
+
+
+    document.getElementById(
+        "dataTable"
+    ).style.display = "table";
+
+}
+
+
+
+/* =====================================================
+   KPI
+===================================================== */
+
+function updateKPIs(data) {
+
+
+    let target = 0;
+
+    let achieved = 0;
+
+
+    data.forEach(row => {
+
+        target +=
+            Number(row.target) || 0;
+
+        achieved +=
+            Number(row.achieved) || 0;
+
+    });
+
+
+    const balance =
+        target - achieved;
+
+
+    const percentage =
+        target > 0
+            ? achieved / target * 100
+            : 0;
+
+
+    document.getElementById(
+        "totalTarget"
+    ).innerText =
+        formatNumber(target);
+
+
+    document.getElementById(
+        "totalAchieved"
+    ).innerText =
+        formatNumber(achieved);
+
+
+    document.getElementById(
+        "balance"
+    ).innerText =
+        formatNumber(balance);
+
+
+    document.getElementById(
+        "overallPercentage"
+    ).innerText =
+        percentage.toFixed(1) + "%";
+
+}
+
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function getStatusClass(value) {
+
+
+    if (value >= 90) {
+
+        return "high";
+
+    }
+
+
+    if (value >= 70) {
+
+        return "medium";
+
+    }
+
+
+    return "low";
+
+}
+
+
+
+/* =====================================================
+   NUMBER FORMAT
+===================================================== */
+
+function formatNumber(value) {
+
+    return Number(value || 0)
+        .toLocaleString("en-KE", {
+            maximumFractionDigits: 0
+        });
+
+}
+
+
+
+/* =====================================================
+   HTML ESCAPE
+===================================================== */
+
+function escapeHtml(value) {
+
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+
+/* =====================================================
+   INITIAL LOAD
+===================================================== */
+
+window.addEventListener(
+    "load",
+    loadData
+);
+
+
+/* =====================================================
+   AUTO REFRESH
+   60 SECONDS
+===================================================== */
+
+setInterval(
+    loadData,
+    60000
+);
+
+
+</script>
+
+
+</body>
+
+</html>
