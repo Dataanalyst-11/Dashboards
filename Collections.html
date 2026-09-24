@@ -1,5 +1,5 @@
-```html
 <!DOCTYPE html>
+
 <html>
 
 <head>
@@ -26,15 +26,11 @@ Collection Team Dashboard
 
 html,
 body {
-
     margin: 0;
     padding: 0;
-
     width: 100%;
     max-width: 100%;
-
     overflow-x: hidden;
-
 }
 
 body {
@@ -69,6 +65,8 @@ body {
         space-between;
 
     align-items: center;
+
+    width: 100%;
 
 }
 
@@ -212,7 +210,7 @@ input {
 
 select {
 
-    min-width: 170px;
+    min-width: 180px;
 
 }
 
@@ -220,7 +218,14 @@ input {
 
     min-width: 230px;
 
+    flex: 1;
+
 }
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
 
 button {
 
@@ -236,6 +241,8 @@ button {
 
     cursor: pointer;
 
+    font-size: 14px;
+
 }
 
 button:hover {
@@ -246,32 +253,89 @@ button:hover {
 
 
 /* =====================================================
-   BACKGROUND REFRESH STATUS
+   VIEW SWITCH
 ===================================================== */
 
-.refresh-status {
+.view-switch {
 
-    font-size: 12px;
+    display: inline-flex;
 
-    color: #6b7280;
+    align-items: center;
+
+    background: #eef2f7;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 7px;
+
+    padding: 3px;
 
     margin-left: auto;
 
-    white-space: nowrap;
+}
+
+.view-switch button {
+
+    background: transparent;
+
+    color: #475569;
+
+    border: none;
+
+    padding: 8px 18px;
+
+    border-radius: 5px;
+
+    font-weight: bold;
+
+    font-size: 13px;
+
+    transition: all .2s ease;
 
 }
 
-.refresh-status.refreshing {
+.view-switch button:hover {
 
-    color: #17365d;
+    opacity: 1;
 
-    font-weight: bold;
+    background: #e2e8f0;
+
+}
+
+.view-switch button.active {
+
+    background: #17365d;
+
+    color: white;
+
+    box-shadow:
+        0 1px 3px
+        rgba(0,0,0,.15);
 
 }
 
 
 /* =====================================================
-   TABLE
+   VIEW LABEL
+===================================================== */
+
+.view-label {
+
+    width: 100%;
+
+    margin-top: -7px;
+
+    margin-bottom: 10px;
+
+    font-size: 12px;
+
+    color: #64748b;
+
+}
+
+
+/* =====================================================
+   TABLE CONTAINER
 ===================================================== */
 
 .table-container {
@@ -293,17 +357,9 @@ button:hover {
 }
 
 
-/*
-   IMPORTANT:
-
-   The previous version had:
-
-       min-width:1200px;
-
-   That caused horizontal scrolling.
-
-   The table now uses the full available width.
-*/
+/* =====================================================
+   TABLE
+===================================================== */
 
 table {
 
@@ -317,85 +373,21 @@ table {
 
 }
 
-
-/* =====================================================
-   COLUMN WIDTHS
-===================================================== */
-
-th:nth-child(1),
-td:nth-child(1) {
-
-    width: 15%;
-
-}
-
-th:nth-child(2),
-td:nth-child(2) {
-
-    width: 10%;
-
-}
-
-th:nth-child(3),
-td:nth-child(3) {
-
-    width: 9%;
-
-}
-
-th:nth-child(4),
-td:nth-child(4) {
-
-    width: 10%;
-
-}
-
-th:nth-child(5),
-td:nth-child(5),
-th:nth-child(6),
-td:nth-child(6),
-th:nth-child(7),
-td:nth-child(7),
-th:nth-child(8),
-td:nth-child(8),
-th:nth-child(9),
-td:nth-child(9),
-th:nth-child(10),
-td:nth-child(10) {
-
-    width: 6%;
-
-}
-
-th:nth-child(11),
-td:nth-child(11) {
-
-    width: 14%;
-
-}
-
-
-/* =====================================================
-   TABLE HEADER
-===================================================== */
-
 th {
 
     background: #17365d;
 
     color: white;
 
-    padding: 10px 5px;
+    padding: 12px 8px;
 
-    font-size: 11px;
+    font-size: 12px;
 
     text-align: center;
 
     white-space: normal;
 
-    overflow-wrap: anywhere;
-
-    line-height: 1.2;
+    word-break: break-word;
 
 }
 
@@ -406,25 +398,18 @@ th:nth-child(2) {
 
 }
 
-
-/* =====================================================
-   TABLE BODY
-===================================================== */
-
 td {
 
-    padding: 9px 5px;
+    padding: 11px 8px;
 
     border-bottom:
         1px solid #e5e7eb;
 
-    font-size: 12px;
+    font-size: 13px;
 
     text-align: right;
 
-    white-space: normal;
-
-    overflow-wrap: anywhere;
+    word-break: break-word;
 
 }
 
@@ -443,12 +428,102 @@ tbody tr:hover {
 
 
 /* =====================================================
-   PROGRESS BAR
+   COLUMNS VIEW WIDTHS
+===================================================== */
+
+.columns-view th:nth-child(1),
+.columns-view td:nth-child(1) {
+
+    width: 15%;
+
+}
+
+.columns-view th:nth-child(2),
+.columns-view td:nth-child(2) {
+
+    width: 10%;
+
+}
+
+.columns-view th:nth-child(3),
+.columns-view td:nth-child(3) {
+
+    width: 9%;
+
+}
+
+.columns-view th:nth-child(4),
+.columns-view td:nth-child(4) {
+
+    width: 10%;
+
+}
+
+.columns-view th:nth-child(5),
+.columns-view td:nth-child(5),
+.columns-view th:nth-child(6),
+.columns-view td:nth-child(6),
+.columns-view th:nth-child(7),
+.columns-view td:nth-child(7),
+.columns-view th:nth-child(8),
+.columns-view td:nth-child(8),
+.columns-view th:nth-child(9),
+.columns-view td:nth-child(9),
+.columns-view th:nth-child(10),
+.columns-view td:nth-child(10) {
+
+    width: 6.5%;
+
+}
+
+.columns-view th:nth-child(11),
+.columns-view td:nth-child(11) {
+
+    width: 12%;
+
+}
+
+
+/* =====================================================
+   SUMMARY VIEW WIDTHS
+===================================================== */
+
+.summary-view th:nth-child(1),
+.summary-view td:nth-child(1) {
+
+    width: 40%;
+
+}
+
+.summary-view th:nth-child(2),
+.summary-view td:nth-child(2) {
+
+    width: 20%;
+
+}
+
+.summary-view th:nth-child(3),
+.summary-view td:nth-child(3) {
+
+    width: 20%;
+
+}
+
+.summary-view th:nth-child(4),
+.summary-view td:nth-child(4) {
+
+    width: 20%;
+
+}
+
+
+/* =====================================================
+   PROGRESS
 ===================================================== */
 
 .percentage-cell {
 
-    width: 100%;
+    min-width: 0;
 
 }
 
@@ -458,7 +533,7 @@ tbody tr:hover {
 
     align-items: center;
 
-    gap: 4px;
+    gap: 8px;
 
     width: 100%;
 
@@ -466,7 +541,7 @@ tbody tr:hover {
 
 .progress {
 
-    height: 8px;
+    height: 9px;
 
     background: #e5e7eb;
 
@@ -476,7 +551,7 @@ tbody tr:hover {
 
     flex: 1;
 
-    min-width: 0;
+    min-width: 25px;
 
 }
 
@@ -508,15 +583,51 @@ tbody tr:hover {
 
 .percentage-text {
 
-    width: 38px;
+    width: 52px;
 
-    min-width: 38px;
+    min-width: 52px;
 
     font-weight: bold;
 
     text-align: right;
 
-    font-size: 11px;
+}
+
+
+/* =====================================================
+   SUMMARY PERFORMANCE
+===================================================== */
+
+.summary-performance {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+}
+
+.summary-performance .progress {
+
+    max-width: 180px;
+
+}
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.empty-state {
+
+    text-align: center;
+
+    padding: 40px 20px;
+
+    color: #6b7280;
+
+    font-size: 14px;
 
 }
 
@@ -558,10 +669,33 @@ tbody tr:hover {
 
 
 /* =====================================================
+   REFRESH STATUS
+===================================================== */
+
+.refresh-status {
+
+    font-size: 12px;
+
+    color: #64748b;
+
+    margin-left: 3px;
+
+}
+
+.refresh-status.updating {
+
+    color: #17365d;
+
+    font-weight: bold;
+
+}
+
+
+/* =====================================================
    RESPONSIVE
 ===================================================== */
 
-@media(max-width:1200px) {
+@media(max-width:1100px) {
 
     .dashboard {
 
@@ -569,27 +703,36 @@ tbody tr:hover {
 
     }
 
-    th {
+    .header {
 
-        font-size: 10px;
+        padding:
+            16px 18px;
 
     }
 
-    td {
+    .columns-view th,
+    .columns-view td {
 
         font-size: 11px;
 
-        padding: 8px 4px;
+        padding:
+            9px 5px;
+
+    }
+
+    .progress {
+
+        min-width: 20px;
 
     }
 
     .percentage-text {
 
-        font-size: 10px;
+        width: 45px;
 
-        width: 34px;
+        min-width: 45px;
 
-        min-width: 34px;
+        font-size: 11px;
 
     }
 
@@ -598,9 +741,96 @@ tbody tr:hover {
 
 @media(max-width:900px) {
 
+    .kpis {
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+    }
+
+    .controls {
+
+        align-items:
+            stretch;
+
+    }
+
+    .controls select,
+    .controls input,
+    .controls button {
+
+        width: 100%;
+
+    }
+
+    .view-switch {
+
+        margin-left: 0;
+
+        width: 100%;
+
+    }
+
+    .view-switch button {
+
+        flex: 1;
+
+    }
+
+}
+
+
+@media(max-width:600px) {
+
     .header {
 
-        padding: 15px;
+        flex-direction:
+            column;
+
+        align-items:
+            flex-start;
+
+        gap: 10px;
+
+    }
+
+    .last-update {
+
+        text-align:
+            left;
+
+    }
+
+    .dashboard {
+
+        padding: 12px;
+
+    }
+
+    .kpis {
+
+        grid-template-columns:
+            1fr 1fr;
+
+        gap: 10px;
+
+    }
+
+    .card {
+
+        padding: 13px;
+
+    }
+
+    .card-value {
+
+        font-size: 20px;
+
+    }
+
+    .card-label {
+
+        font-size: 11px;
 
     }
 
@@ -616,170 +846,55 @@ tbody tr:hover {
 
     }
 
-    .kpis {
+    .table-container {
 
-        grid-template-columns:
-            repeat(2,1fr);
-
-    }
-
-    .dashboard {
-
-        padding: 12px;
+        overflow-x: hidden;
 
     }
 
-    th {
+    table {
 
-        font-size: 9px;
-
-        padding: 7px 3px;
+        table-layout: fixed;
 
     }
 
+    th,
     td {
 
         font-size: 10px;
 
-        padding: 7px 3px;
+        padding:
+            8px 4px;
 
     }
 
     .percentage-wrapper {
 
-        gap: 2px;
-
-    }
-
-    .progress {
-
-        height: 6px;
+        gap: 4px;
 
     }
 
     .percentage-text {
 
-        width: 31px;
+        width: 40px;
 
-        min-width: 31px;
+        min-width: 40px;
 
-        font-size: 9px;
-
-    }
-
-}
-
-
-@media(max-width:600px) {
-
-    .header {
-
-        flex-direction: column;
-
-        align-items: flex-start;
-
-        gap: 8px;
+        font-size: 10px;
 
     }
 
-    .header-title {
+    .summary-performance {
 
-        font-size: 17px;
-
-    }
-
-    .last-update {
-
-        text-align: left;
+        display: block;
 
     }
 
-    .dashboard {
-
-        padding: 8px;
-
-    }
-
-    .kpis {
-
-        grid-template-columns:
-            repeat(2,1fr);
-
-        gap: 8px;
-
-    }
-
-    .card {
-
-        padding: 12px;
-
-    }
-
-    .card-label {
-
-        font-size: 11px;
-
-    }
-
-    .card-value {
-
-        font-size: 19px;
-
-    }
-
-    .controls {
-
-        padding: 10px;
-
-        gap: 7px;
-
-    }
-
-    select,
-    input,
-    button {
-
-        font-size: 12px;
-
-        padding: 8px;
-
-    }
-
-    select {
-
-        min-width: 140px;
-
-    }
-
-    input {
-
-        min-width: 150px;
-
-        flex: 1;
-
-    }
-
-    .refresh-status {
+    .summary-performance .progress {
 
         width: 100%;
 
-        margin-left: 0;
-
-    }
-
-    th {
-
-        font-size: 8px;
-
-        padding: 6px 2px;
-
-    }
-
-    td {
-
-        font-size: 9px;
-
-        padding: 6px 2px;
+        margin-bottom: 3px;
 
     }
 
@@ -787,35 +902,25 @@ tbody tr:hover {
 
 
 /* =====================================================
-   VERY SMALL SCREENS
+   VERY SMALL DEVICES
 ===================================================== */
 
-@media(max-width:400px) {
+@media(max-width:420px) {
 
-    th {
+    .kpis {
 
-        font-size: 7px;
-
-    }
-
-    td {
-
-        font-size: 8px;
+        grid-template-columns:
+            1fr;
 
     }
 
-    .percentage-text {
+    .card-value {
 
-        font-size: 8px;
-
-        width: 27px;
-
-        min-width: 27px;
+        font-size: 22px;
 
     }
 
 }
-
 
 </style>
 
@@ -861,10 +966,17 @@ tbody tr:hover {
 
         </span>
 
+        <div
+            id="refreshStatus"
+            class="refresh-status">
+
+            Auto-refresh: 5 min
+
+        </div>
+
     </div>
 
 </div>
-
 
 
 <div class="dashboard">
@@ -962,15 +1074,12 @@ tbody tr:hover {
 </div>
 
 
-
 <!-- =====================================================
-     FILTERS
+     CONTROLS
 ===================================================== -->
 
 <div class="controls">
 
-
-<!-- BRANCH -->
 
 <select
     id="branchFilter"
@@ -985,7 +1094,6 @@ tbody tr:hover {
 </select>
 
 
-<!-- COLLECTION TEAM -->
 
 <select
     id="teamFilter"
@@ -1000,7 +1108,6 @@ tbody tr:hover {
 </select>
 
 
-<!-- SEARCH -->
 
 <input
     type="text"
@@ -1010,36 +1117,63 @@ tbody tr:hover {
 >
 
 
-<!-- REFRESH -->
 
 <button
-    onclick="loadData(true)">
+    id="refreshButton"
+    onclick="manualRefresh()">
 
     ↻ Refresh
 
 </button>
 
 
-<!-- STATUS -->
+<!-- =====================================================
+     SUMMARY / COLUMNS SWITCH
+===================================================== -->
 
-<div
-    id="refreshStatus"
-    class="refresh-status">
+<div class="view-switch">
 
-    Auto-refresh: 5 min
+    <button
+        id="summaryButton"
+        onclick="switchView('summary')">
+
+        SUMMARY
+
+    </button>
+
+    <button
+        id="columnsButton"
+        class="active"
+        onclick="switchView('columns')">
+
+        COLUMNS
+
+    </button>
 
 </div>
 
 
 </div>
 
+
+<div class="view-label">
+
+    <span id="viewDescription">
+
+        Detailed daily collection performance
+
+    </span>
+
+</div>
 
 
 <!-- =====================================================
      TABLE
 ===================================================== -->
 
-<div class="table-container">
+<div
+    class="table-container"
+    id="tableContainer">
 
 
 <div id="loading">
@@ -1049,58 +1183,61 @@ tbody tr:hover {
 </div>
 
 
+<!-- =====================================================
+     COLUMNS VIEW
+===================================================== -->
 
 <table
-    id="dataTable"
+    id="columnsTable"
+    class="columns-view"
     style="display:none">
-
 
 <thead>
 
 <tr>
 
 <th>
-    COLLECTION TEAM
+COLLECTION TEAM
 </th>
 
 <th>
-    BRANCH
+BRANCH
 </th>
 
 <th>
-    TOTAL - TARGET
+TOTAL - TARGET
 </th>
 
 <th>
-    TOTAL - ACHIEVED
+TOTAL - ACHIEVED
 </th>
 
 <th>
-    SUNDAY
+SUNDAY
 </th>
 
 <th>
-    MONDAY
+MONDAY
 </th>
 
 <th>
-    TUESDAY
+TUESDAY
 </th>
 
 <th>
-    WEDNESDAY
+WEDNESDAY
 </th>
 
 <th>
-    THURSDAY
+THURSDAY
 </th>
 
 <th>
-    FRIDAY
+FRIDAY
 </th>
 
 <th>
-    % ACHIEVED
+% ACHIEVED
 </th>
 
 </tr>
@@ -1108,7 +1245,51 @@ tbody tr:hover {
 </thead>
 
 
-<tbody id="tableBody">
+<tbody
+    id="columnsBody">
+
+</tbody>
+
+
+</table>
+
+
+<!-- =====================================================
+     SUMMARY VIEW
+===================================================== -->
+
+<table
+    id="summaryTable"
+    class="summary-view"
+    style="display:none">
+
+<thead>
+
+<tr>
+
+<th>
+COLLECTION TEAM
+</th>
+
+<th>
+TOTAL TARGET
+</th>
+
+<th>
+TOTAL ACHIEVED
+</th>
+
+<th>
+% PERFORMANCE
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody
+    id="summaryBody">
 
 </tbody>
 
@@ -1135,16 +1316,12 @@ const API_URL =
 
 
 /* =====================================================
-   GLOBAL DATA
+   GLOBAL VARIABLES
 ===================================================== */
 
 let allData = [];
 
-
-/*
-   Prevent multiple refreshes from running
-   at the same time.
-*/
+let currentView = "columns";
 
 let refreshInProgress = false;
 
@@ -1153,15 +1330,7 @@ let refreshInProgress = false;
    LOAD DATA
 ===================================================== */
 
-async function loadData(
-    manualRefresh = false
-) {
-
-
-    /*
-       Don't start another request if
-       one is already running.
-    */
+async function loadData(manual = false) {
 
     if (refreshInProgress) {
 
@@ -1169,47 +1338,49 @@ async function loadData(
 
     }
 
-
     refreshInProgress = true;
 
 
     const loading =
-        document.getElementById(
-            "loading"
-        );
-
-    const table =
-        document.getElementById(
-            "dataTable"
-        );
+        document.getElementById("loading");
 
     const error =
-        document.getElementById(
-            "error"
-        );
+        document.getElementById("error");
 
     const refreshStatus =
-        document.getElementById(
-            "refreshStatus"
-        );
+        document.getElementById("refreshStatus");
 
 
     /*
-       First load is the ONLY time
-       we display the loading screen.
+       Save current filter selections
+       before refreshing.
     */
 
-    const firstLoad =
-        allData.length === 0;
+    const selectedBranch =
+        document.getElementById(
+            "branchFilter"
+        ).value;
+
+    const selectedTeam =
+        document.getElementById(
+            "teamFilter"
+        ).value;
+
+    const searchText =
+        document.getElementById(
+            "searchBox"
+        ).value;
 
 
-    if (firstLoad) {
+    /*
+       Only show full loading screen
+       when there is no data yet.
+    */
+
+    if (allData.length === 0) {
 
         loading.style.display =
             "block";
-
-        table.style.display =
-            "none";
 
     }
 
@@ -1218,60 +1389,16 @@ async function loadData(
         "none";
 
 
-    /*
-       Background refresh indicator.
-    */
+    refreshStatus.innerText =
+        "Updating data...";
 
-    if (!firstLoad) {
-
-        refreshStatus.innerText =
-            "Updating data...";
-
-        refreshStatus.classList.add(
-            "refreshing"
-        );
-
-    }
+    refreshStatus.classList.add(
+        "updating"
+    );
 
 
     try {
 
-
-        /*
-           Capture the current filters
-           BEFORE fetching new data.
-        */
-
-        const currentBranch =
-            document
-                .getElementById(
-                    "branchFilter"
-                )
-                .value;
-
-
-        const currentTeam =
-            document
-                .getElementById(
-                    "teamFilter"
-                )
-                .value;
-
-
-        const currentSearch =
-            document
-                .getElementById(
-                    "searchBox"
-                )
-                .value;
-
-
-        /*
-           Fetch fresh data.
-
-           Timestamp prevents browser/cache
-           from returning an old API response.
-        */
 
         const response =
             await fetch(
@@ -1279,8 +1406,7 @@ async function loadData(
                 "?t=" +
                 Date.now(),
                 {
-                    cache:
-                        "no-store"
+                    cache: "no-store"
                 }
             );
 
@@ -1313,44 +1439,37 @@ async function loadData(
 
 
         /*
-           Only replace allData after
-           the complete request succeeds.
+           Replace data only after
+           successful API response.
         */
 
-        const newData =
+        allData =
             result.data || [];
 
 
-        allData =
-            newData;
-
-
         /*
-           Rebuild both filters while
-           preserving their selections.
+           Rebuild filters while
+           preserving current selections.
         */
 
         populateFilters(
-            currentBranch,
-            currentTeam
+            selectedBranch,
+            selectedTeam
         );
 
 
         /*
-           Restore search box.
+           Restore search text.
         */
 
-        document
-            .getElementById(
-                "searchBox"
-            )
-            .value =
-            currentSearch;
+        document.getElementById(
+            "searchBox"
+        ).value = searchText;
 
 
         /*
-           Apply the preserved filters
-           to the new data.
+           Apply current filters and
+           current view.
         */
 
         applyFilters();
@@ -1360,27 +1479,20 @@ async function loadData(
            Update timestamp.
         */
 
-        document
-            .getElementById(
-                "lastUpdate"
-            )
-            .innerText =
+        document.getElementById(
+            "lastUpdate"
+        ).innerText =
             new Date()
                 .toLocaleString(
                     "en-KE"
                 );
 
 
-        /*
-           Background refresh completed.
-        */
-
         refreshStatus.innerText =
             "Auto-refresh: 5 min";
 
-
         refreshStatus.classList.remove(
-            "refreshing"
+            "updating"
         );
 
 
@@ -1390,37 +1502,34 @@ async function loadData(
 
 
         /*
-           IMPORTANT:
-
-           If background refresh fails,
-           DO NOT remove the existing
-           dashboard data.
+           Do NOT erase existing data
+           if a background refresh fails.
         */
 
-        if (firstLoad) {
+        if (allData.length === 0) {
 
             loading.style.display =
                 "none";
 
-            error.style.display =
-                "block";
-
-            error.innerText =
-                "Unable to load collection data: " +
-                err.message;
-
         }
 
-        else {
 
-            refreshStatus.innerText =
-                "Update failed - retrying in 5 min";
+        error.style.display =
+            "block";
 
-            refreshStatus.classList.remove(
-                "refreshing"
-            );
 
-        }
+        error.innerText =
+            "Unable to refresh collection data: " +
+            err.message;
+
+
+        refreshStatus.innerText =
+            "Refresh failed — existing data retained";
+
+        refreshStatus.classList.remove(
+            "updating"
+        );
+
 
     }
 
@@ -1434,9 +1543,19 @@ async function loadData(
 }
 
 
+/* =====================================================
+   MANUAL REFRESH
+===================================================== */
+
+function manualRefresh() {
+
+    loadData(true);
+
+}
+
 
 /* =====================================================
-   POPULATE BRANCH + COLLECTION TEAM FILTERS
+   POPULATE FILTERS
 ===================================================== */
 
 function populateFilters(
@@ -1457,9 +1576,9 @@ function populateFilters(
         );
 
 
-    /* =================================================
+    /*
        BRANCHES
-    ================================================= */
+    */
 
     const branches =
         [
@@ -1472,7 +1591,13 @@ function populateFilters(
                     .filter(Boolean)
             )
         ]
-        .sort();
+        .sort(
+            (a,b) =>
+                String(a)
+                    .localeCompare(
+                        String(b)
+                    )
+        );
 
 
     branchSelect.innerHTML =
@@ -1483,7 +1608,6 @@ function populateFilters(
 
     branches.forEach(
         branch => {
-
 
             const option =
                 document.createElement(
@@ -1503,14 +1627,36 @@ function populateFilters(
                 option
             );
 
-
         }
     );
 
 
-    /* =================================================
+    /*
+       Restore branch.
+    */
+
+    if (
+        branches.includes(
+            selectedBranch
+        )
+    ) {
+
+        branchSelect.value =
+            selectedBranch;
+
+    }
+
+    else {
+
+        branchSelect.value =
+            "ALL";
+
+    }
+
+
+    /*
        COLLECTION TEAMS
-    ================================================= */
+    */
 
     const teams =
         [
@@ -1523,7 +1669,13 @@ function populateFilters(
                     .filter(Boolean)
             )
         ]
-        .sort();
+        .sort(
+            (a,b) =>
+                String(a)
+                    .localeCompare(
+                        String(b)
+                    )
+        );
 
 
     teamSelect.innerHTML =
@@ -1534,7 +1686,6 @@ function populateFilters(
 
     teams.forEach(
         team => {
-
 
             const option =
                 document.createElement(
@@ -1554,54 +1705,33 @@ function populateFilters(
                 option
             );
 
-
         }
     );
 
 
-    /* =================================================
-       RESTORE BRANCH SELECTION
-    ================================================= */
+    /*
+       Restore collection team.
+    */
 
-    const branchExists =
-        [
-            ...branchSelect.options
-        ]
-        .some(
-            option =>
-                option.value ===
-                selectedBranch
-        );
+    if (
+        teams.includes(
+            selectedTeam
+        )
+    ) {
 
+        teamSelect.value =
+            selectedTeam;
 
-    branchSelect.value =
-        branchExists
-            ? selectedBranch
-            : "ALL";
+    }
 
+    else {
 
-    /* =================================================
-       RESTORE COLLECTION TEAM SELECTION
-    ================================================= */
+        teamSelect.value =
+            "ALL";
 
-    const teamExists =
-        [
-            ...teamSelect.options
-        ]
-        .some(
-            option =>
-                option.value ===
-                selectedTeam
-        );
-
-
-    teamSelect.value =
-        teamExists
-            ? selectedTeam
-            : "ALL";
+    }
 
 }
-
 
 
 /* =====================================================
@@ -1642,39 +1772,28 @@ function applyFilters() {
             row => {
 
 
-                /*
-                   BRANCH FILTER
-                */
-
                 const branchMatch =
                     branch === "ALL" ||
-                    row.branch ===
-                    branch;
+                    String(
+                        row.branch || ""
+                    ) === branch;
 
-
-                /*
-                   COLLECTION TEAM FILTER
-                */
 
                 const teamMatch =
                     team === "ALL" ||
-                    row.collectionTeam ===
-                    team;
+                    String(
+                        row.collectionTeam || ""
+                    ) === team;
 
-
-                /*
-                   SEARCH FILTER
-                */
 
                 const searchMatch =
                     !search ||
                     String(
-                        row.collectionTeam
+                        row.collectionTeam ||
+                        ""
                     )
                     .toLowerCase()
-                    .includes(
-                        search
-                    );
+                    .includes(search);
 
 
                 return (
@@ -1687,39 +1806,197 @@ function applyFilters() {
         );
 
 
-    renderTable(
-        filtered
-    );
-
+    /*
+       Update KPI cards.
+    */
 
     updateKPIs(
         filtered
     );
 
+
+    /*
+       Render currently selected
+       view.
+    */
+
+    if (
+        currentView ===
+        "summary"
+    ) {
+
+        renderSummary(
+            filtered
+        );
+
+    }
+
+    else {
+
+        renderColumns(
+            filtered
+        );
+
+    }
+
 }
 
 
-
 /* =====================================================
-   RENDER TABLE
+   SWITCH VIEW
 ===================================================== */
 
-function renderTable(
+function switchView(view) {
+
+
+    currentView =
+        view;
+
+
+    const summaryButton =
+        document.getElementById(
+            "summaryButton"
+        );
+
+
+    const columnsButton =
+        document.getElementById(
+            "columnsButton"
+        );
+
+
+    const description =
+        document.getElementById(
+            "viewDescription"
+        );
+
+
+    if (
+        view === "summary"
+    ) {
+
+
+        summaryButton.classList.add(
+            "active"
+        );
+
+
+        columnsButton.classList.remove(
+            "active"
+        );
+
+
+        description.innerText =
+            "Collection team summary — total target, total achieved and performance";
+
+
+    }
+
+    else {
+
+
+        columnsButton.classList.add(
+            "active"
+        );
+
+
+        summaryButton.classList.remove(
+            "active"
+        );
+
+
+        description.innerText =
+            "Detailed daily collection performance";
+
+    }
+
+
+    /*
+       Re-render using the
+       currently filtered data.
+    */
+
+    applyFilters();
+
+}
+
+
+/* =====================================================
+   RENDER COLUMNS VIEW
+===================================================== */
+
+function renderColumns(
     data
 ) {
 
 
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+
+    const columnsTable =
+        document.getElementById(
+            "columnsTable"
+        );
+
+
+    const summaryTable =
+        document.getElementById(
+            "summaryTable"
+        );
+
+
     const tbody =
         document.getElementById(
-            "tableBody"
+            "columnsBody"
         );
 
 
     /*
-       Build the entire table in memory
-       before touching the screen.
+       Hide summary.
+    */
 
-       This makes updates smoother.
+    summaryTable.style.display =
+        "none";
+
+
+    /*
+       No data.
+    */
+
+    if (
+        data.length === 0
+    ) {
+
+        tbody.innerHTML =
+            `<tr>
+                <td colspan="11">
+                    <div class="empty-state">
+                        No collection data found for the selected filters.
+                    </div>
+                </td>
+            </tr>`;
+
+
+        loading.style.display =
+            "none";
+
+
+        columnsTable.style.display =
+            "table";
+
+
+        return;
+
+    }
+
+
+    /*
+       Build all rows first.
+       This avoids repeatedly modifying
+       the DOM.
     */
 
     let html = "";
@@ -1729,148 +2006,144 @@ function renderTable(
         row => {
 
 
+            const percentage =
+                getPercentage(
+                    row.target,
+                    row.achieved
+                );
+
+
             html += `
 
 <tr>
 
 <td>
 
-    <strong>
+<strong>
 
-        ${escapeHtml(
-            row.collectionTeam
-        )}
+${escapeHtml(
+    row.collectionTeam
+)}
 
-    </strong>
-
-</td>
-
-
-<td>
-
-    ${escapeHtml(
-        row.branch
-    )}
+</strong>
 
 </td>
 
 
 <td>
 
-    ${formatNumber(
-        row.target
-    )}
+${escapeHtml(
+    row.branch
+)}
 
 </td>
 
 
 <td>
 
-    ${formatNumber(
-        row.achieved
-    )}
+${formatNumber(
+    row.target
+)}
 
 </td>
 
 
 <td>
 
-    ${formatNumber(
-        row.sunday
-    )}
+${formatNumber(
+    row.achieved
+)}
 
 </td>
 
 
 <td>
 
-    ${formatNumber(
-        row.monday
-    )}
+${formatNumber(
+    row.sunday
+)}
 
 </td>
 
 
 <td>
 
-    ${formatNumber(
-        row.tuesday
-    )}
+${formatNumber(
+    row.monday
+)}
 
 </td>
 
 
 <td>
 
-    ${formatNumber(
-        row.wednesday
-    )}
+${formatNumber(
+    row.tuesday
+)}
 
 </td>
 
 
 <td>
 
-    ${formatNumber(
-        row.thursday
-    )}
+${formatNumber(
+    row.wednesday
+)}
 
 </td>
 
 
 <td>
 
-    ${formatNumber(
-        row.friday
-    )}
+${formatNumber(
+    row.thursday
+)}
+
+</td>
+
+
+<td>
+
+${formatNumber(
+    row.friday
+)}
 
 </td>
 
 
 <td class="percentage-cell">
 
-    <div
-        class="percentage-wrapper">
+<div class="percentage-wrapper">
+
+<div class="progress">
+
+<div
+    class="progress-bar ${getStatusClass(
+        percentage
+    )}"
+
+    style="
+        width:${Math.min(
+            Math.max(
+                percentage,
+                0
+            ),
+            100
+        )}%;
+    "
+>
+</div>
+
+</div>
 
 
-        <div
-            class="progress">
+<div class="percentage-text">
 
+${percentage.toFixed(1)}%
 
-            <div
-                class="progress-bar
-                ${getStatusClass(
-                    row.percentage
-                )}"
-                style="
-                    width:${Math.min(
-                        Math.max(
-                            Number(
-                                row.percentage
-                            ) || 0,
-                            0
-                        ),
-                        100
-                    )}%
-                ">
+</div>
 
-            </div>
-
-
-        </div>
-
-
-        <div
-            class="percentage-text">
-
-            ${Number(
-                row.percentage
-            ).toFixed(1)}%
-
-        </div>
-
-
-    </div>
+</div>
 
 </td>
 
@@ -1883,35 +2156,293 @@ function renderTable(
     );
 
 
-    /*
-       One DOM update.
-    */
-
     tbody.innerHTML =
         html;
 
 
-    document
-        .getElementById(
-            "loading"
-        )
-        .style.display =
+    loading.style.display =
         "none";
 
 
-    document
-        .getElementById(
-            "dataTable"
-        )
-        .style.display =
+    columnsTable.style.display =
         "table";
 
 }
 
 
+/* =====================================================
+   RENDER SUMMARY VIEW
+===================================================== */
+
+function renderSummary(
+    data
+) {
+
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+
+    const columnsTable =
+        document.getElementById(
+            "columnsTable"
+        );
+
+
+    const summaryTable =
+        document.getElementById(
+            "summaryTable"
+        );
+
+
+    const tbody =
+        document.getElementById(
+            "summaryBody"
+        );
+
+
+    /*
+       Hide columns table.
+    */
+
+    columnsTable.style.display =
+        "none";
+
+
+    /*
+       No data.
+    */
+
+    if (
+        data.length === 0
+    ) {
+
+        tbody.innerHTML =
+            `<tr>
+                <td colspan="4">
+                    <div class="empty-state">
+                        No collection data found for the selected filters.
+                    </div>
+                </td>
+            </tr>`;
+
+
+        loading.style.display =
+            "none";
+
+
+        summaryTable.style.display =
+            "table";
+
+
+        return;
+
+    }
+
+
+    /*
+       Aggregate data by collection team.
+    */
+
+    const summaryMap =
+        new Map();
+
+
+    data.forEach(
+        row => {
+
+
+            const team =
+                String(
+                    row.collectionTeam ||
+                    "Unknown"
+                );
+
+
+            if (
+                !summaryMap.has(
+                    team
+                )
+            ) {
+
+                summaryMap.set(
+                    team,
+                    {
+                        collectionTeam:
+                            team,
+
+                        target: 0,
+
+                        achieved: 0
+                    }
+                );
+
+            }
+
+
+            const item =
+                summaryMap.get(
+                    team
+                );
+
+
+            item.target +=
+                Number(
+                    row.target
+                ) || 0;
+
+
+            item.achieved +=
+                Number(
+                    row.achieved
+                ) || 0;
+
+        }
+    );
+
+
+    /*
+       Convert map to array.
+    */
+
+    const summaryData =
+        Array.from(
+            summaryMap.values()
+        );
+
+
+    /*
+       Sort collection teams
+       alphabetically.
+    */
+
+    summaryData.sort(
+        (a,b) =>
+            a.collectionTeam
+                .localeCompare(
+                    b.collectionTeam
+                )
+    );
+
+
+    /*
+       Build HTML once.
+    */
+
+    let html = "";
+
+
+    summaryData.forEach(
+        item => {
+
+
+            const percentage =
+                item.target > 0
+                    ? (
+                        item.achieved /
+                        item.target
+                    ) * 100
+                    : 0;
+
+
+            html += `
+
+<tr>
+
+<td>
+
+<strong>
+
+${escapeHtml(
+    item.collectionTeam
+)}
+
+</strong>
+
+</td>
+
+
+<td>
+
+${formatNumber(
+    item.target
+)}
+
+</td>
+
+
+<td>
+
+${formatNumber(
+    item.achieved
+)}
+
+</td>
+
+
+<td class="percentage-cell">
+
+<div class="summary-performance">
+
+<div class="progress">
+
+<div
+    class="progress-bar ${getStatusClass(
+        percentage
+    )}"
+
+    style="
+        width:${Math.min(
+            Math.max(
+                percentage,
+                0
+            ),
+            100
+        )}%;
+    "
+>
+</div>
+
+</div>
+
+
+<div class="percentage-text">
+
+${percentage.toFixed(1)}%
+
+</div>
+
+</div>
+
+</td>
+
+
+</tr>
+
+`;
+
+        }
+    );
+
+
+    tbody.innerHTML =
+        html;
+
+
+    loading.style.display =
+        "none";
+
+
+    summaryTable.style.display =
+        "table";
+
+}
+
 
 /* =====================================================
-   UPDATE KPIs
+   KPI
 ===================================================== */
 
 function updateKPIs(
@@ -1957,47 +2488,76 @@ function updateKPIs(
             : 0;
 
 
-    document
-        .getElementById(
-            "totalTarget"
-        )
-        .innerText =
+    document.getElementById(
+        "totalTarget"
+    ).innerText =
         formatNumber(
             target
         );
 
 
-    document
-        .getElementById(
-            "totalAchieved"
-        )
-        .innerText =
+    document.getElementById(
+        "totalAchieved"
+    ).innerText =
         formatNumber(
             achieved
         );
 
 
-    document
-        .getElementById(
-            "balance"
-        )
-        .innerText =
+    document.getElementById(
+        "balance"
+    ).innerText =
         formatNumber(
             balance
         );
 
 
-    document
-        .getElementById(
-            "overallPercentage"
-        )
-        .innerText =
-        percentage.toFixed(
-            1
-        ) + "%";
+    document.getElementById(
+        "overallPercentage"
+    ).innerText =
+        percentage.toFixed(1) +
+        "%";
 
 }
 
+
+/* =====================================================
+   PERCENTAGE
+===================================================== */
+
+function getPercentage(
+    target,
+    achieved
+) {
+
+
+    const targetNumber =
+        Number(
+            target
+        ) || 0;
+
+
+    const achievedNumber =
+        Number(
+            achieved
+        ) || 0;
+
+
+    if (
+        targetNumber <= 0
+    ) {
+
+        return 0;
+
+    }
+
+
+    return (
+        achievedNumber /
+        targetNumber
+    ) * 100;
+
+}
 
 
 /* =====================================================
@@ -2009,18 +2569,18 @@ function getStatusClass(
 ) {
 
 
-    value =
-        Number(value) || 0;
-
-
-    if (value >= 90) {
+    if (
+        value >= 90
+    ) {
 
         return "high";
 
     }
 
 
-    if (value >= 70) {
+    if (
+        value >= 70
+    ) {
 
         return "medium";
 
@@ -2030,7 +2590,6 @@ function getStatusClass(
     return "low";
 
 }
-
 
 
 /* =====================================================
@@ -2047,13 +2606,11 @@ function formatNumber(
     .toLocaleString(
         "en-KE",
         {
-            maximumFractionDigits:
-                0
+            maximumFractionDigits: 0
         }
     );
 
 }
-
 
 
 /* =====================================================
@@ -2067,29 +2624,33 @@ function escapeHtml(
     return String(
         value || ""
     )
+
     .replace(
         /&/g,
         "&amp;"
     )
+
     .replace(
         /</g,
         "&lt;"
     )
+
     .replace(
         />/g,
         "&gt;"
     )
+
     .replace(
         /"/g,
         "&quot;"
     )
+
     .replace(
         /'/g,
         "&#039;"
     );
 
 }
-
 
 
 /* =====================================================
@@ -2100,27 +2661,25 @@ window.addEventListener(
     "load",
     function() {
 
-        loadData(false);
+        loadData();
 
     }
 );
 
 
-
 /* =====================================================
-   AUTOMATIC BACKGROUND REFRESH
+   AUTO REFRESH
    EVERY 5 MINUTES
 ===================================================== */
 
 setInterval(
     function() {
 
-        loadData(false);
+        loadData();
 
     },
     300000
 );
-
 
 </script>
 
@@ -2128,4 +2687,3 @@ setInterval(
 </body>
 
 </html>
-```
