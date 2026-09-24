@@ -9,17 +9,12 @@
 
 * { box-sizing: border-box; }
 
-html, body {
-    margin: 0; padding: 0;
-    width: 100%; max-width: 100%;
-    overflow-x: hidden;
-}
+html, body { margin: 0; padding: 0; width: 100%; max-width: 100%; overflow-x: hidden; }
 
 body {
     font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
     background: linear-gradient(180deg, #0a1228 0%, #0f172a 50%, #131c31 100%);
-    color: #e2e8f0;
-    min-height: 100vh;
+    color: #e2e8f0; min-height: 100vh;
 }
 
 /* ========== HEADER ========== */
@@ -32,12 +27,7 @@ body {
     position: relative; overflow: hidden; border-bottom: 1px solid #1e3a5f;
 }
 
-.header::before {
-    content: ""; position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(circle at 90% 50%, rgba(96, 165, 250, .08) 0%, transparent 50%);
-    pointer-events: none;
-}
+.header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 90% 50%, rgba(96, 165, 250, .08) 0%, transparent 50%); pointer-events: none; }
 
 .header-title { font-size: 26px; font-weight: 800; letter-spacing: .5px; position: relative; color: #f8fafc; }
 .header-subtitle { font-size: 13px; margin-top: 5px; opacity: .8; font-weight: 500; position: relative; color: #93c5fd; }
@@ -110,11 +100,7 @@ button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 
 /* ========== VIEW SWITCH ========== */
 
-.view-switch {
-    display: inline-flex; align-items: center;
-    background: #0f172a; border: 1px solid #334155;
-    border-radius: 8px; padding: 3px; margin-left: auto;
-}
+.view-switch { display: inline-flex; align-items: center; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 3px; margin-left: auto; }
 
 .view-switch button {
     background: transparent; color: #94a3b8; border: none;
@@ -124,10 +110,7 @@ button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 }
 
 .view-switch button:hover { opacity: 1; background: #1e293b; color: #e2e8f0; transform: none; }
-.view-switch button.active {
-    background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%);
-    color: white; box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
-}
+.view-switch button.active { background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%); color: white; box-shadow: 0 2px 8px rgba(37, 99, 235, .35); }
 
 /* ========== VIEW LABEL ========== */
 
@@ -165,14 +148,8 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 /* ========== TEN-COL VIEW WIDTHS ========== */
 
 .ten-col-view th:nth-child(1), .ten-col-view td:nth-child(1) { width: 18%; }
-.ten-col-view th:nth-child(2), .ten-col-view td:nth-child(2),
-.ten-col-view th:nth-child(3), .ten-col-view td:nth-child(3) { width: 10%; }
-.ten-col-view th:nth-child(4), .ten-col-view td:nth-child(4),
-.ten-col-view th:nth-child(5), .ten-col-view td:nth-child(5),
-.ten-col-view th:nth-child(6), .ten-col-view td:nth-child(6),
-.ten-col-view th:nth-child(7), .ten-col-view td:nth-child(7),
-.ten-col-view th:nth-child(8), .ten-col-view td:nth-child(8),
-.ten-col-view th:nth-child(9), .ten-col-view td:nth-child(9) { width: 8%; }
+.ten-col-view th:nth-child(2), .ten-col-view td:nth-child(2), .ten-col-view th:nth-child(3), .ten-col-view td:nth-child(3) { width: 10%; }
+.ten-col-view th:nth-child(4), .ten-col-view td:nth-child(4), .ten-col-view th:nth-child(5), .ten-col-view td:nth-child(5), .ten-col-view th:nth-child(6), .ten-col-view td:nth-child(6), .ten-col-view th:nth-child(7), .ten-col-view td:nth-child(7), .ten-col-view th:nth-child(8), .ten-col-view td:nth-child(8), .ten-col-view th:nth-child(9), .ten-col-view td:nth-child(9) { width: 8%; }
 .ten-col-view th:nth-child(10), .ten-col-view td:nth-child(10) { width: 14%; }
 
 /* ========== ELEVEN-COL VIEW WIDTHS ========== */
@@ -181,13 +158,24 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 .eleven-col-view th:nth-child(2), .eleven-col-view td:nth-child(2) { width: 10%; }
 .eleven-col-view th:nth-child(3), .eleven-col-view td:nth-child(3) { width: 9%; }
 .eleven-col-view th:nth-child(4), .eleven-col-view td:nth-child(4) { width: 10%; }
-.eleven-col-view th:nth-child(5), .eleven-col-view td:nth-child(5),
-.eleven-col-view th:nth-child(6), .eleven-col-view td:nth-child(6),
-.eleven-col-view th:nth-child(7), .eleven-col-view td:nth-child(7),
-.eleven-col-view th:nth-child(8), .eleven-col-view td:nth-child(8),
-.eleven-col-view th:nth-child(9), .eleven-col-view td:nth-child(9),
-.eleven-col-view th:nth-child(10), .eleven-col-view td:nth-child(10) { width: 6.5%; }
+.eleven-col-view th:nth-child(5), .eleven-col-view td:nth-child(5), .eleven-col-view th:nth-child(6), .eleven-col-view td:nth-child(6), .eleven-col-view th:nth-child(7), .eleven-col-view td:nth-child(7), .eleven-col-view th:nth-child(8), .eleven-col-view td:nth-child(8), .eleven-col-view th:nth-child(9), .eleven-col-view td:nth-child(9), .eleven-col-view th:nth-child(10), .eleven-col-view td:nth-child(10) { width: 6.5%; }
 .eleven-col-view th:nth-child(11), .eleven-col-view td:nth-child(11) { width: 12%; }
+
+/* ========== THIRTEEN-COL VIEW WIDTHS (DEFERRED/PARTIAL) ========== */
+
+.thirteen-col-view th:nth-child(1), .thirteen-col-view td:nth-child(1) { width: 11%; }
+.thirteen-col-view th:nth-child(2), .thirteen-col-view td:nth-child(2) { width: 8%; }
+.thirteen-col-view th:nth-child(3), .thirteen-col-view td:nth-child(3),
+.thirteen-col-view th:nth-child(4), .thirteen-col-view td:nth-child(4),
+.thirteen-col-view th:nth-child(5), .thirteen-col-view td:nth-child(5) { width: 8%; }
+.thirteen-col-view th:nth-child(6), .thirteen-col-view td:nth-child(6),
+.thirteen-col-view th:nth-child(7), .thirteen-col-view td:nth-child(7),
+.thirteen-col-view th:nth-child(8), .thirteen-col-view td:nth-child(8),
+.thirteen-col-view th:nth-child(9), .thirteen-col-view td:nth-child(9),
+.thirteen-col-view th:nth-child(10), .thirteen-col-view td:nth-child(10) { width: 6%; }
+.thirteen-col-view th:nth-child(11), .thirteen-col-view td:nth-child(11) { width: 10%; }
+.thirteen-col-view th:nth-child(12), .thirteen-col-view td:nth-child(12) { width: 11%; }
+.thirteen-col-view th:nth-child(13), .thirteen-col-view td:nth-child(13) { width: 6%; text-align: left; }
 
 /* ========== PROGRESS ========== */
 
@@ -202,22 +190,9 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 
 /* ========== REPORT CARDS ========== */
 
-.report-card {
-    background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
-    border-radius: 10px; overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55;
-    margin-top: 22px;
-}
-
-.report-card-header {
-    background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%);
-    color: #93c5fd; padding: 14px 20px; font-size: 14px; font-weight: 700;
-    letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 2px solid #2563eb;
-    display: flex; align-items: center; gap: 8px;
-}
-
+.report-card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; margin-top: 22px; }
+.report-card-header { background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%); color: #93c5fd; padding: 14px 20px; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 2px solid #2563eb; display: flex; align-items: center; gap: 8px; }
 .report-card-header::before { content: ""; display: inline-block; width: 4px; height: 18px; background: #2563eb; border-radius: 2px; }
-
 .report-table { width: 100%; border-collapse: collapse; table-layout: auto; }
 .report-table th { background: transparent; color: #94a3b8; padding: 12px 10px; font-size: 11px; font-weight: 700; text-align: right; text-transform: uppercase; letter-spacing: .3px; border-bottom: 1px solid #2a3a55; white-space: nowrap; }
 .report-table th:first-child { text-align: left; }
@@ -252,7 +227,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 @media(max-width:1100px) {
     .dashboard { padding: 18px; }
     .header { padding: 16px 18px; }
-    .ten-col-view th, .ten-col-view td, .eleven-col-view th, .eleven-col-view td { font-size: 11px; padding: 9px 5px; }
+    .ten-col-view th, .ten-col-view td, .eleven-col-view th, .eleven-col-view td, .thirteen-col-view th, .thirteen-col-view td { font-size: 11px; padding: 9px 5px; }
     .progress { min-width: 20px; }
     .percentage-text { width: 45px; min-width: 45px; font-size: 11px; }
     .report-table th, .report-table td { font-size: 11px; padding: 9px 6px; }
@@ -291,7 +266,6 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 
 <body>
 
-<!-- ========== HEADER ========== -->
 <div class="header">
     <div>
         <div class="header-title">COLLECTION TEAM PERFORMANCE</div>
@@ -308,7 +282,6 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 
 <div id="error"></div>
 
-<!-- ========== KPI CARDS ========== -->
 <div class="kpis">
     <div class="card"><div class="card-label">Total Target</div><div class="card-value" id="totalTarget">0</div></div>
     <div class="card"><div class="card-label">Total Achieved</div><div class="card-value" id="totalAchieved">0</div></div>
@@ -316,7 +289,6 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
     <div class="card"><div class="card-label">Overall Achievement</div><div class="card-value" id="overallPercentage">0%</div></div>
 </div>
 
-<!-- ========== CONTROLS ========== -->
 <div class="controls">
     <select id="branchFilter" onchange="applyFilters()"><option value="ALL">All Branches</option></select>
     <select id="teamFilter" onchange="applyFilters()"><option value="ALL">All Collection Teams</option></select>
@@ -349,14 +321,24 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
     </div>
 </div>
 
-<!-- ========== DEFERRED/PARTIAL VIEW (rows 51-76, 11 columns — same layout as branches) ========== -->
+<!-- ========== DEFERRED/PARTIAL VIEW (rows 51-76, 13 columns — exact sheet layout) ========== -->
 <div id="deferredContainer" style="display:none">
     <div class="table-container">
-        <table id="deferredTable" class="eleven-col-view">
+        <table id="deferredTable" class="thirteen-col-view">
         <thead><tr>
-        <th>COLLECTION TEAM</th><th>BRANCH</th><th>TOTAL - TARGET</th><th>TOTAL - ACHIEVED</th>
-        <th>SUNDAY</th><th>MONDAY</th><th>TUESDAY</th><th>WEDNESDAY</th><th>THURSDAY</th><th>FRIDAY</th>
+        <th>DRI</th>
+        <th>BRANCH</th>
+        <th>DEFFERED TARGET</th>
+        <th>PARTIAL A/CS TARGET</th>
+        <th>TOTAL TARGET</th>
+        <th>MONDAY</th>
+        <th>TUESDAY</th>
+        <th>WEDNESDAY</th>
+        <th>THURSDAY</th>
+        <th>FRIDAY</th>
+        <th>WEEK 4 COLLECTION</th>
         <th>% ACHIEVED</th>
+        <th>COLLECTION MARSHAL</th>
         </tr></thead>
         <tbody id="deferredBody"></tbody>
         </table>
@@ -401,9 +383,8 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
     </div>
 
     <!-- Section 4: Deferred/Partial Summary card -->
-    <!-- Columns: DRI | TOTAL TARGET | WEEK 4 COLLECTION | % PERFORMANCE -->
+    <!-- DRI | TOTAL TARGET | WEEK 4 COLLECTION | % PERFORMANCE -->
     <!-- % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100 -->
-    <!-- Sorted by % PERFORMANCE descending -->
     <div class="report-card" id="deferredSummaryCard" style="display:none">
         <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
         <div class="report-table-wrapper">
@@ -428,7 +409,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 <script>
 
 const API_URL =
-"https://script.google.com/macros/s/AKfycbxn1ng5S3MCyHMS6t6Me-WRjsMUQNmJXVNpkeP4RdV5dV5TzpqARD_YB5fJPP49yaSp-w/exec";
+"https://script.google.com/macros/s/AKfycbysXlfvoc9Jomg-u5LWdFrCeKDTyTqq3kUUUj8WAaneUut1HlxHtubgTZ7eQPjJzEVJcg/exec";
 
 let allData = [];
 let deferredData = [];
@@ -528,15 +509,24 @@ function applyFilters() {
     const team = document.getElementById("teamFilter").value;
     const search = document.getElementById("searchBox").value.toLowerCase().trim();
 
-    const filterFn = row => {
+    // Filter for collection team data (uses collectionTeam).
+    const filterCollection = row => {
         const bm = branch === "ALL" || String(row.branch || "") === branch;
         const tm = team === "ALL" || String(row.collectionTeam || "") === team;
         const sm = !search || String(row.collectionTeam || "").toLowerCase().includes(search);
         return bm && tm && sm;
     };
 
-    const filtered = allData.filter(filterFn);
-    const filteredDeferred = deferredData.filter(filterFn);
+    // Filter for deferred data (uses dri instead of collectionTeam).
+    const filterDeferred = row => {
+        const bm = branch === "ALL" || String(row.branch || "") === branch;
+        const tm = team === "ALL" || String(row.dri || "") === team;
+        const sm = !search || String(row.dri || "").toLowerCase().includes(search);
+        return bm && tm && sm;
+    };
+
+    const filtered = allData.filter(filterCollection);
+    const filteredDeferred = deferredData.filter(filterDeferred);
 
     updateKPIs(filtered);
 
@@ -576,7 +566,7 @@ function switchView(view) {
         summaryCont.style.display = "block";
     } else if (view === "deferred") {
         deferredButton.classList.add("active");
-        description.innerText = "Deferred / Partial — detailed daily collection performance";
+        description.innerText = "Deferred / Partial — detailed collection performance";
         deferredCont.style.display = "block";
     } else {
         branchesButton.classList.add("active");
@@ -609,24 +599,13 @@ function escapeHtml(value) {
 /* ========== RENDER SUMMARY VIEW (4 sections) ========== */
 
 function renderSummaryView(data) {
-    // Section 1: Collection team summary
     renderTable(data);
-
-    // Section 2: Weekly totals card
     renderReportCard("weeklyTotalsCard", "weeklyTotalsHead", "weeklyTotalsBody", weeklyTotals);
-
-    // Section 3: Monthly totals card
     renderReportCard("monthlyTotalsCard", "monthlyTotalsHead", "monthlyTotalsBody", monthlyTotals);
-
-    // Section 4: Deferred/Partial summary card
-    // Picks from deferredData (rows 51-76).
-    // Columns: DRI | TOTAL TARGET | WEEK 4 COLLECTION | % PERFORMANCE
-    // % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
-    // Sorted by % PERFORMANCE descending.
     renderDeferredSummary();
 }
 
-/* ========== RENDER TABLE (Collection team summary — Section 1) ========== */
+/* ========== RENDER TABLE (Collection team summary) ========== */
 
 function renderTable(data) {
     const tbody = document.getElementById("summaryBody");
@@ -670,7 +649,7 @@ function renderTable(data) {
     tbody.innerHTML = html;
 }
 
-/* ========== RENDER REPORT CARD (Weekly / Monthly — Sections 2 & 3) ========== */
+/* ========== RENDER REPORT CARD (Weekly / Monthly) ========== */
 
 function renderReportCard(cardId, headId, bodyId, reportData) {
     const card = document.getElementById(cardId);
@@ -705,27 +684,24 @@ function renderReportCard(cardId, headId, bodyId, reportData) {
 }
 
 /* =====================================================
-   RENDER DEFERRED SUMMARY  (Section 4)
+   RENDER DEFERRED SUMMARY (Section 4)
 
-   Picks from deferredData (rows 51-76 from the sheet).
+   Picks from deferredData (rows 51-76).
 
    Columns:
-     1. DRI                 = row.collectionTeam  (column 0)
-     2. TOTAL TARGET        = row.target           (column 2)
-     3. WEEK 4 COLLECTION   = row.achieved         (column 3)
-     4. % PERFORMANCE       = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
+     1. DRI               = row.dri               (sheet col 0)
+     2. TOTAL TARGET      = row.target            (sheet col 4)
+     3. WEEK 4 COLLECTION = row.week4Collection   (sheet col 10)
+     4. % PERFORMANCE     = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
 
-   Aggregates by DRI (in case multiple rows share
-   the same DRI across different branches).
-
-   Sorted by % PERFORMANCE — DESCENDING (largest first).
+   Aggregates by DRI.
+   Sorted by % PERFORMANCE — DESCENDING.
 ===================================================== */
 
 function renderDeferredSummary() {
     const card = document.getElementById("deferredSummaryCard");
     const tbody = document.getElementById("deferredSummaryBody");
 
-    // If no deferred data, hide the card.
     if (!deferredData || deferredData.length === 0) {
         card.style.display = "none";
         tbody.innerHTML = "";
@@ -734,19 +710,13 @@ function renderDeferredSummary() {
 
     card.style.display = "block";
 
-    /* ------------------------------------------------
-       Step 1: Aggregate by DRI (collection team).
-       Sum TOTAL TARGET and WEEK 4 COLLECTION (achieved).
-    ------------------------------------------------ */
-
+    // Step 1: Aggregate by DRI.
     const driMap = new Map();
 
     deferredData.forEach(row => {
-
-        const dri = String(row.collectionTeam || "Unknown");
+        const dri = String(row.dri || "Unknown");
 
         if (!driMap.has(dri)) {
-            // Initialize with zeros.
             driMap.set(dri, {
                 dri: dri,
                 totalTarget: 0,
@@ -756,26 +726,19 @@ function renderDeferredSummary() {
 
         const item = driMap.get(dri);
 
-        // TOTAL TARGET = row.target (column 2)
+        // TOTAL TARGET = row.target (sheet column 4)
         item.totalTarget += Number(row.target) || 0;
 
-        // WEEK 4 COLLECTION = row.achieved (column 3)
-        item.week4Collection += Number(row.achieved) || 0;
+        // WEEK 4 COLLECTION = row.week4Collection (sheet column 10)
+        item.week4Collection += Number(row.week4Collection) || 0;
     });
 
-    /* ------------------------------------------------
-       Step 2: Calculate % PERFORMANCE for each DRI.
-       % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
-    ------------------------------------------------ */
-
+    // Step 2: Calculate % PERFORMANCE.
     const driData = Array.from(driMap.values()).map(item => {
-
         let performance = 0;
-
         if (item.totalTarget > 0) {
             performance = (item.week4Collection / item.totalTarget) * 100;
         }
-
         return {
             dri: item.dri,
             totalTarget: item.totalTarget,
@@ -784,52 +747,22 @@ function renderDeferredSummary() {
         };
     });
 
-    /* ------------------------------------------------
-       Step 3: Sort by % PERFORMANCE — DESCENDING.
-       Highest performance appears first.
-    ------------------------------------------------ */
-
+    // Step 3: Sort by % PERFORMANCE descending.
     driData.sort((a, b) => b.performance - a.performance);
 
-    /* ------------------------------------------------
-       Step 4: Render rows.
-    ------------------------------------------------ */
-
+    // Step 4: Render.
     let html = "";
 
     driData.forEach(item => {
-
-        // Clamp the progress bar width to 0-100.
         const barWidth = Math.min(Math.max(item.performance, 0), 100);
 
         html += `<tr>
-
-<td>
-    <strong>${escapeHtml(item.dri)}</strong>
-</td>
-
-<td>
-    ${formatNumber(item.totalTarget)}
-</td>
-
-<td>
-    ${formatNumber(item.week4Collection)}
-</td>
-
-<td class="percentage-cell">
-    <div class="percentage-wrapper">
-        <div class="progress">
-            <div
-                class="progress-bar ${getStatusClass(item.performance)}"
-                style="width:${barWidth}%;"
-            ></div>
-        </div>
-        <div class="percentage-text">
-            ${item.performance.toFixed(1)}%
-        </div>
-    </div>
-</td>
-
+<td><strong>${escapeHtml(item.dri)}</strong></td>
+<td>${formatNumber(item.totalTarget)}</td>
+<td>${formatNumber(item.week4Collection)}</td>
+<td class="percentage-cell"><div class="percentage-wrapper">
+<div class="progress"><div class="progress-bar ${getStatusClass(item.performance)}" style="width:${barWidth}%;"></div></div>
+<div class="percentage-text">${item.performance.toFixed(1)}%</div></div></td>
 </tr>`;
     });
 
@@ -862,29 +795,71 @@ function renderBranches(data) {
     tbody.innerHTML = html;
 }
 
-/* ========== RENDER DEFERRED (per-row, 11 cols, same layout as branches) ========== */
+/* =====================================================
+   RENDER DEFERRED (per-row, 13 columns — exact sheet layout)
+
+   Columns (from sheet row 51):
+     0:  DRI
+     1:  BRANCH
+     2:  DEFFERED TARGET
+     3:  PARTIAL A/CS TARGET
+     4:  TOTAL TARGET
+     5:  MONDAY
+     6:  TUESDAY
+     7:  WEDNESDAY
+     8:  THURSDAY
+     9:  FRIDAY
+     10: WEEK 4 COLLECTION
+     11: % ACHIEVED
+     12: COLLECTION MARSHAL
+
+   % ACHIEVED = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
+   Sorted by % ACHIEVED descending.
+===================================================== */
 
 function renderDeferred(data) {
     const tbody = document.getElementById("deferredBody");
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">No deferred/partial data found for the selected filters.</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="13"><div class="empty-state">No deferred/partial data found for the selected filters.</div></td></tr>`;
         return;
     }
-    const sortedData = [...data].sort((a, b) => getPercentage(b.target, b.achieved) - getPercentage(a.target, a.achieved));
+
+    // Sort by % ACHIEVED = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
+    const sortedData = [...data].sort((a, b) => {
+        const pctA = a.target > 0 ? (a.week4Collection / a.target) * 100 : 0;
+        const pctB = b.target > 0 ? (b.week4Collection / b.target) * 100 : 0;
+        return pctB - pctA;
+    });
+
     let html = "";
+
     sortedData.forEach(row => {
-        const pct = getPercentage(row.target, row.achieved);
+        const pct = row.target > 0 ? (row.week4Collection / row.target) * 100 : 0;
         const safe = Math.min(Math.max(pct, 0), 100);
+
         html += `<tr>
-<td><strong>${escapeHtml(row.collectionTeam)}</strong></td>
+
+<td><strong>${escapeHtml(row.dri)}</strong></td>
 <td>${escapeHtml(row.branch)}</td>
-<td>${formatNumber(row.target)}</td><td>${formatNumber(row.achieved)}</td>
-<td>${formatNumber(row.sunday)}</td><td>${formatNumber(row.monday)}</td><td>${formatNumber(row.tuesday)}</td>
-<td>${formatNumber(row.wednesday)}</td><td>${formatNumber(row.thursday)}</td><td>${formatNumber(row.friday)}</td>
+<td>${formatNumber(row.deferredTarget)}</td>
+<td>${formatNumber(row.partialTarget)}</td>
+<td>${formatNumber(row.target)}</td>
+<td>${formatNumber(row.monday)}</td>
+<td>${formatNumber(row.tuesday)}</td>
+<td>${formatNumber(row.wednesday)}</td>
+<td>${formatNumber(row.thursday)}</td>
+<td>${formatNumber(row.friday)}</td>
+<td>${formatNumber(row.week4Collection)}</td>
+
 <td class="percentage-cell"><div class="percentage-wrapper">
 <div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div>
-<div class="percentage-text">${pct.toFixed(1)}%</div></div></td></tr>`;
+<div class="percentage-text">${pct.toFixed(1)}%</div></div></td>
+
+<td>${escapeHtml(row.collectionMarshal)}</td>
+
+</tr>`;
     });
+
     tbody.innerHTML = html;
 }
 
