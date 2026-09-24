@@ -59,6 +59,11 @@ tbody tr:nth-child(even) { background: rgba(15, 23, 42, .5); }
 tbody tr:nth-child(even):hover { background: rgba(59, 130, 246, .12); }
 tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 
+/* TOTAL ROW styling for all tables */
+tbody tr.total-row { background: rgba(37, 99, 235, .12) !important; }
+tbody tr.total-row:hover { background: rgba(37, 99, 235, .18) !important; }
+tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid #2563eb; border-bottom: 2px solid #2563eb; }
+
 .ten-col-view th:nth-child(1), .ten-col-view td:nth-child(1) { width: 18%; }
 .ten-col-view th:nth-child(2), .ten-col-view td:nth-child(2), .ten-col-view th:nth-child(3), .ten-col-view td:nth-child(3) { width: 10%; }
 .ten-col-view th:nth-child(4), .ten-col-view td:nth-child(4), .ten-col-view th:nth-child(5), .ten-col-view td:nth-child(5), .ten-col-view th:nth-child(6), .ten-col-view td:nth-child(6), .ten-col-view th:nth-child(7), .ten-col-view td:nth-child(7), .ten-col-view th:nth-child(8), .ten-col-view td:nth-child(8), .ten-col-view th:nth-child(9), .ten-col-view td:nth-child(9) { width: 8%; }
@@ -145,10 +150,10 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 <div id="error"></div>
 
 <div class="kpis">
-    <div class="card"><div class="card-label" id="kpi1Label">Total Target</div><div class="card-value" id="totalTarget">0</div></div>
-    <div class="card"><div class="card-label" id="kpi2Label">Total Achieved</div><div class="card-value" id="totalAchieved">0</div></div>
-    <div class="card"><div class="card-label" id="kpi3Label">Balance</div><div class="card-value" id="balance">0</div></div>
-    <div class="card"><div class="card-label" id="kpi4Label">Overall Achievement</div><div class="card-value" id="overallPercentage">0%</div></div>
+    <div class="card"><div class="card-label">Total Target</div><div class="card-value" id="totalTarget">0</div></div>
+    <div class="card"><div class="card-label">Total Achieved</div><div class="card-value" id="totalAchieved">0</div></div>
+    <div class="card"><div class="card-label">Balance</div><div class="card-value" id="balance">0</div></div>
+    <div class="card"><div class="card-label">Overall Achievement</div><div class="card-value" id="overallPercentage">0%</div></div>
 </div>
 
 <div class="controls">
@@ -210,17 +215,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
         <tbody id="summaryBody"></tbody>
         </table>
     </div>
-   <div class="report-card" id="deferredSummaryCard" style="display:none">
-        <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
-        <div class="report-table-wrapper">
-            <table class="report-table deferred-summary-table">
-                <thead><tr>
-                <th>DRI</th><th>TOTAL TARGET</th><th>WEEK 4 COLLECTION</th><th>DEFICIT</th><th>% PERFORMANCE</th>
-                </tr></thead>
-                <tbody id="deferredSummaryBody"></tbody>
-            </table>
-        </div>
-    </div>
+
     <div class="report-card" id="weeklyTotalsCard" style="display:none">
         <div class="report-card-header">WEEKLY TOTALS</div>
         <div class="report-table-wrapper"><table class="report-table"><thead id="weeklyTotalsHead"></thead><tbody id="weeklyTotalsBody"></tbody></table></div>
@@ -231,6 +226,17 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
         <div class="report-table-wrapper"><table class="report-table"><thead id="monthlyTotalsHead"></thead><tbody id="monthlyTotalsBody"></tbody></table></div>
     </div>
 
+    <div class="report-card" id="deferredSummaryCard" style="display:none">
+        <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
+        <div class="report-table-wrapper">
+            <table class="report-table deferred-summary-table">
+                <thead><tr>
+                <th>DRI</th><th>TOTAL TARGET</th><th>WEEK 4 COLLECTION</th><th>DEFICIT</th><th>% PERFORMANCE</th>
+                </tr></thead>
+                <tbody id="deferredSummaryBody"></tbody>
+            </table>
+        </div>
+    </div>
 
 </div>
 
@@ -239,7 +245,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 <script>
 
 const API_URL =
-"https://script.google.com/macros/s/AKfycbw2NHgGCV28w84Gg-tLtpKyKjmQmGJOkpme1SeMLSUljXCNkEt2Bm3ClAgPF83eCv7dFQ/exec";
+"https://script.google.com/macros/s/AKfycbysXlfvoc9Jomg-u5LWdFrCeKDTyTqq3kUUUj8WAaneUut1HlxHtubgTZ7eQPjJzEVJcg/exec";
 
 let allData = [];
 let deferredData = [];
@@ -312,65 +318,36 @@ async function loadData(manual = false) {
 
 function manualRefresh() { loadData(true); }
 
-/* ========== POPULATE FILTERS ==========
-   When on DEFERRED view: populates Branch and DRI
-   from deferredData (rows 51-76).
-   When on other views: populates Branch and
-   Collection Team from allData (rows 1-27).
-===================================================== */
+/* ========== POPULATE FILTERS ========== */
 
 function populateFilters(selectedBranch, selectedTeam) {
 
     const branchSelect = document.getElementById("branchFilter");
     const teamSelect   = document.getElementById("teamFilter");
-    const searchBox    = document.getElementById("searchBox");
 
-    // Determine data source and labels based on current view.
     const isDeferred = currentView === "deferred";
     const dataSource = isDeferred ? deferredData : allData;
     const teamKey    = isDeferred ? "dri" : "collectionTeam";
     const teamLabel  = isDeferred ? "All DRIs" : "All Collection Teams";
-    const searchPh   = isDeferred ? "Search DRI..." : "Search collection team...";
 
-    // ---- Branches ----
-    const branches = [...new Set(
-        dataSource.map(r => r.branch).filter(Boolean)
-    )].sort((a,b) => String(a).localeCompare(String(b)));
-
+    const branches = [...new Set(dataSource.map(r => r.branch).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
     branchSelect.innerHTML = `<option value="ALL">All Branches</option>`;
-    branches.forEach(b => {
-        const o = document.createElement("option");
-        o.value = b; o.textContent = b;
-        branchSelect.appendChild(o);
-    });
+    branches.forEach(b => { const o = document.createElement("option"); o.value = b; o.textContent = b; branchSelect.appendChild(o); });
     branchSelect.value = branches.includes(selectedBranch) ? selectedBranch : "ALL";
 
-    // ---- Teams / DRIs ----
-    const teams = [...new Set(
-        dataSource.map(r => r[teamKey] || r.collectionTeam || "").filter(Boolean)
-    )].sort((a,b) => String(a).localeCompare(String(b)));
-
+    const teams = [...new Set(dataSource.map(r => r[teamKey] || r.collectionTeam || "").filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
     teamSelect.innerHTML = `<option value="ALL">${teamLabel}</option>`;
-    teams.forEach(t => {
-        const o = document.createElement("option");
-        o.value = t; o.textContent = t;
-        teamSelect.appendChild(o);
-    });
+    teams.forEach(t => { const o = document.createElement("option"); o.value = t; o.textContent = t; teamSelect.appendChild(o); });
     teamSelect.value = teams.includes(selectedTeam) ? selectedTeam : "ALL";
-
-    // ---- Search placeholder ----
-    searchBox.placeholder = searchPh;
 }
 
 /* ========== APPLY FILTERS ========== */
 
 function applyFilters() {
-
     const branch = document.getElementById("branchFilter").value;
-    const team   = document.getElementById("teamFilter").value;
+    const team = document.getElementById("teamFilter").value;
     const search = document.getElementById("searchBox").value.toLowerCase().trim();
 
-    // Filter for collection team data.
     const filterCollection = row => {
         const bm = branch === "ALL" || String(row.branch || "") === branch;
         const tm = team === "ALL" || String(row.collectionTeam || "") === team;
@@ -378,7 +355,6 @@ function applyFilters() {
         return bm && tm && sm;
     };
 
-    // Filter for deferred data (uses row.dri).
     const filterDeferred = row => {
         const driName = String(row.dri || row.collectionTeam || "");
         const bm = branch === "ALL" || String(row.branch || "") === branch;
@@ -390,14 +366,12 @@ function applyFilters() {
     const filtered = allData.filter(filterCollection);
     const filteredDeferred = deferredData.filter(filterDeferred);
 
-    // ---- Update KPIs based on current view ----
     if (currentView === "deferred") {
         updateKPIsDeferred(filteredDeferred);
     } else {
         updateKPIs(filtered);
     }
 
-    // ---- Render the correct view ----
     if (currentView === "summary") {
         renderSummaryView(filtered);
     } else if (currentView === "deferred") {
@@ -410,7 +384,6 @@ function applyFilters() {
 /* ========== SWITCH VIEW ========== */
 
 function switchView(view) {
-
     currentView = view;
 
     const summaryButton  = document.getElementById("summaryButton");
@@ -422,52 +395,32 @@ function switchView(view) {
     const summaryCont    = document.getElementById("summaryContainer");
     const deferredCont   = document.getElementById("deferredContainer");
 
-    // Hide all containers.
     branchesCont.style.display = "none";
     summaryCont.style.display  = "none";
     deferredCont.style.display = "none";
-
-    // Remove active from all buttons.
     summaryButton.classList.remove("active");
     branchesButton.classList.remove("active");
     deferredButton.classList.remove("active");
-
-    // ---- Update KPI labels based on view ----
-    const kpi2Label = document.getElementById("kpi2Label");
-    const kpi3Label = document.getElementById("kpi3Label");
-    const kpi4Label = document.getElementById("kpi4Label");
 
     if (view === "summary") {
         summaryButton.classList.add("active");
         description.innerText = "Collection team summary, weekly totals, monthly totals and deferred/partial summary";
         summaryCont.style.display = "block";
-        kpi2Label.innerText = "Total Achieved";
-        kpi3Label.innerText = "Balance";
-        kpi4Label.innerText = "Overall Achievement";
     } else if (view === "deferred") {
         deferredButton.classList.add("active");
         description.innerText = "Deferred / Partial — detailed collection performance";
         deferredCont.style.display = "block";
-        kpi2Label.innerText = "Week 4 Collection";
-        kpi3Label.innerText = "Deficit";
-        kpi4Label.innerText = "% Performance";
     } else {
         branchesButton.classList.add("active");
         description.innerText = "Detailed daily collection performance";
         branchesCont.style.display = "block";
-        kpi2Label.innerText = "Total Achieved";
-        kpi3Label.innerText = "Balance";
-        kpi4Label.innerText = "Overall Achievement";
     }
 
     loading.style.display = "none";
 
-    // ---- OVERWRITE FILTERS for the new view ----
-    // When switching to deferred: populate from deferredData.
-    // When switching to other views: populate from allData.
-    // Reset selections to ALL since the data source changed.
-    populateFilters("ALL", "ALL");
-    document.getElementById("searchBox").value = "";
+    const currentBranch = document.getElementById("branchFilter").value;
+    const currentTeam   = document.getElementById("teamFilter").value;
+    populateFilters(currentBranch, currentTeam);
 
     applyFilters();
 }
@@ -503,12 +456,7 @@ function updateKPIs(data) {
     document.getElementById("overallPercentage").innerText = pct.toFixed(1) + "%";
 }
 
-/* ========== KPI: Deferred/Partial data ==========
-   TOTAL TARGET      = Σ row.target
-   WEEK 4 COLLECTION = Σ row.week4Collection
-   DEFICIT           = TOTAL TARGET - WEEK 4 COLLECTION
-   % PERFORMANCE     = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
-===================================================== */
+/* ========== KPI: Deferred/Partial data ========== */
 
 function updateKPIsDeferred(data) {
     let target = 0, week4Collection = 0;
@@ -533,7 +481,11 @@ function renderSummaryView(data) {
     renderDeferredSummary();
 }
 
-/* ========== RENDER TABLE (Collection team summary) ========== */
+/* ========== RENDER TABLE (Collection team summary + TOTAL row) ==========
+   The TOTAL row is calculated from the filtered data
+   passed to this function. When filters are applied,
+   the TOTAL reflects only the filtered rows.
+===================================================== */
 
 function renderTable(data) {
     const tbody = document.getElementById("summaryBody");
@@ -541,6 +493,7 @@ function renderTable(data) {
         tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">No collection data found for the selected filters.</div></td></tr>`;
         return;
     }
+
     const summaryMap = new Map();
     data.forEach(row => {
         const team = String(row.collectionTeam || "Unknown");
@@ -551,12 +504,42 @@ function renderTable(data) {
         item.tuesday += Number(row.tuesday) || 0; item.wednesday += Number(row.wednesday) || 0;
         item.thursday += Number(row.thursday) || 0; item.friday += Number(row.friday) || 0;
     });
+
     const summaryData = Array.from(summaryMap.values()).sort((a, b) => calcPct(b) - calcPct(a));
+
     let html = "";
+
+    // Data rows
     summaryData.forEach(item => {
         const pct = calcPct(item); const safe = Math.min(Math.max(pct, 0), 100);
         html += `<tr><td><strong>${escapeHtml(item.collectionTeam)}</strong></td><td>${formatNumber(item.target)}</td><td>${formatNumber(item.achieved)}</td><td>${formatNumber(item.sunday)}</td><td>${formatNumber(item.monday)}</td><td>${formatNumber(item.tuesday)}</td><td>${formatNumber(item.wednesday)}</td><td>${formatNumber(item.thursday)}</td><td>${formatNumber(item.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div><div class="percentage-text">${pct.toFixed(1)}%</div></div></td></tr>`;
     });
+
+    // ---- TOTAL row (calculated from filtered summaryData) ----
+    let tTarget = 0, tAchieved = 0, tSun = 0, tMon = 0, tTue = 0, tWed = 0, tThu = 0, tFri = 0;
+    summaryData.forEach(item => {
+        tTarget += item.target; tAchieved += item.achieved;
+        tSun += item.sunday; tMon += item.monday; tTue += item.tuesday;
+        tWed += item.wednesday; tThu += item.thursday; tFri += item.friday;
+    });
+    const tPct = tTarget > 0 ? (tAchieved / tTarget) * 100 : 0;
+    const tSafe = Math.min(Math.max(tPct, 0), 100);
+
+    html += `<tr class="total-row">
+<td><strong>TOTAL</strong></td>
+<td>${formatNumber(tTarget)}</td>
+<td>${formatNumber(tAchieved)}</td>
+<td>${formatNumber(tSun)}</td>
+<td>${formatNumber(tMon)}</td>
+<td>${formatNumber(tTue)}</td>
+<td>${formatNumber(tWed)}</td>
+<td>${formatNumber(tThu)}</td>
+<td>${formatNumber(tFri)}</td>
+<td class="percentage-cell"><div class="percentage-wrapper">
+<div class="progress"><div class="progress-bar ${getStatusClass(tPct)}" style="width:${tSafe}%;"></div></div>
+<div class="percentage-text">${tPct.toFixed(1)}%</div></div></td>
+</tr>`;
+
     tbody.innerHTML = html;
 }
 
@@ -579,20 +562,7 @@ function renderReportCard(cardId, headId, bodyId, reportData) {
     body.innerHTML = bodyHtml;
 }
 
-/* =====================================================
-   RENDER DEFERRED SUMMARY (5 columns + TOTAL row)
-
-   Columns:
-     DRI | TOTAL TARGET | WEEK 4 COLLECTION | DEFICIT | % PERFORMANCE
-
-   DEFICIT       = TOTAL TARGET - WEEK 4 COLLECTION
-   % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
-
-   Sorted by % PERFORMANCE descending.
-
-   After the last DRI, a TOTAL row is added showing
-   the grand totals.
-===================================================== */
+/* ========== RENDER DEFERRED SUMMARY (5 columns + TOTAL row) ========== */
 
 function renderDeferredSummary() {
     const card = document.getElementById("deferredSummaryCard");
@@ -604,9 +574,7 @@ function renderDeferredSummary() {
 
     card.style.display = "block";
 
-    // ---- Step 1: Aggregate by DRI ----
     const driMap = new Map();
-
     deferredData.forEach(row => {
         const dri = String(row.dri || row.collectionTeam || "Unknown");
         if (!driMap.has(dri)) { driMap.set(dri, { dri: dri, totalTarget: 0, week4Collection: 0 }); }
@@ -615,28 +583,14 @@ function renderDeferredSummary() {
         item.week4Collection += Number(row.week4Collection || row.achieved || 0);
     });
 
-    // ---- Step 2: Calculate DEFICIT + % PERFORMANCE ----
     const driData = Array.from(driMap.values()).map(item => {
         const deficit = item.totalTarget - item.week4Collection;
         let performance = 0;
-        if (item.totalTarget > 0) {
-            performance = (item.week4Collection / item.totalTarget) * 100;
-        }
-        return {
-            dri: item.dri,
-            totalTarget: item.totalTarget,
-            week4Collection: item.week4Collection,
-            deficit: deficit,
-            performance: performance
-        };
-    });
+        if (item.totalTarget > 0) { performance = (item.week4Collection / item.totalTarget) * 100; }
+        return { dri: item.dri, totalTarget: item.totalTarget, week4Collection: item.week4Collection, deficit: deficit, performance: performance };
+    }).sort((a, b) => b.performance - a.performance);
 
-    // ---- Step 3: Sort by % PERFORMANCE descending ----
-    driData.sort((a, b) => b.performance - a.performance);
-
-    // ---- Step 4: Render data rows ----
     let html = "";
-
     driData.forEach(item => {
         const barWidth = Math.min(Math.max(item.performance, 0), 100);
         html += `<tr>
@@ -650,50 +604,82 @@ function renderDeferredSummary() {
 </tr>`;
     });
 
-    // ---- Step 5: Add TOTAL row ----
-    let grandTotalTarget = 0;
-    let grandTotalWeek4   = 0;
-    let grandTotalDeficit  = 0;
-
-    driData.forEach(item => {
-        grandTotalTarget += item.totalTarget;
-        grandTotalWeek4  += item.week4Collection;
-        grandTotalDeficit += item.deficit;
-    });
-
-    const grandPct = grandTotalTarget > 0
-        ? (grandTotalWeek4 / grandTotalTarget) * 100
-        : 0;
-    const grandBarWidth = Math.min(Math.max(grandPct, 0), 100);
+    // ---- TOTAL row ----
+    let gTarget = 0, gWeek4 = 0, gDeficit = 0;
+    driData.forEach(item => { gTarget += item.totalTarget; gWeek4 += item.week4Collection; gDeficit += item.deficit; });
+    const gPct = gTarget > 0 ? (gWeek4 / gTarget) * 100 : 0;
+    const gBar = Math.min(Math.max(gPct, 0), 100);
 
     html += `<tr class="total-row">
 <td><strong>TOTAL</strong></td>
-<td>${formatNumber(grandTotalTarget)}</td>
-<td>${formatNumber(grandTotalWeek4)}</td>
-<td class="deficit-cell">${formatNumber(grandTotalDeficit)}</td>
+<td>${formatNumber(gTarget)}</td>
+<td>${formatNumber(gWeek4)}</td>
+<td class="deficit-cell">${formatNumber(gDeficit)}</td>
 <td class="percentage-cell"><div class="percentage-wrapper">
-<div class="progress"><div class="progress-bar ${getStatusClass(grandPct)}" style="width:${grandBarWidth}%;"></div></div>
-<div class="percentage-text">${grandPct.toFixed(1)}%</div></div></td>
+<div class="progress"><div class="progress-bar ${getStatusClass(gPct)}" style="width:${gBar}%;"></div></div>
+<div class="percentage-text">${gPct.toFixed(1)}%</div></div></td>
 </tr>`;
 
     tbody.innerHTML = html;
 }
 
-/* ========== RENDER BRANCHES ========== */
+/* ========== RENDER BRANCHES (per-row + TOTAL row) ==========
+   The TOTAL row is calculated from the filtered data.
+   When filters are applied, the TOTAL reflects
+   only the filtered rows.
+===================================================== */
 
 function renderBranches(data) {
     const tbody = document.getElementById("branchesBody");
-    if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">No collection data found for the selected filters.</div></td></tr>`; return; }
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">No collection data found for the selected filters.</div></td></tr>`;
+        return;
+    }
+
     const sortedData = [...data].sort((a, b) => getPercentage(b.target, b.achieved) - getPercentage(a.target, a.achieved));
     let html = "";
+
+    // Data rows
     sortedData.forEach(row => {
         const pct = getPercentage(row.target, row.achieved); const safe = Math.min(Math.max(pct, 0), 100);
         html += `<tr><td><strong>${escapeHtml(row.collectionTeam)}</strong></td><td>${escapeHtml(row.branch)}</td><td>${formatNumber(row.target)}</td><td>${formatNumber(row.achieved)}</td><td>${formatNumber(row.sunday)}</td><td>${formatNumber(row.monday)}</td><td>${formatNumber(row.tuesday)}</td><td>${formatNumber(row.wednesday)}</td><td>${formatNumber(row.thursday)}</td><td>${formatNumber(row.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div><div class="percentage-text">${pct.toFixed(1)}%</div></div></td></tr>`;
     });
+
+    // ---- TOTAL row (calculated from filtered data) ----
+    let tTarget = 0, tAchieved = 0, tSun = 0, tMon = 0, tTue = 0, tWed = 0, tThu = 0, tFri = 0;
+    data.forEach(row => {
+        tTarget += Number(row.target) || 0; tAchieved += Number(row.achieved) || 0;
+        tSun += Number(row.sunday) || 0; tMon += Number(row.monday) || 0;
+        tTue += Number(row.tuesday) || 0; tWed += Number(row.wednesday) || 0;
+        tThu += Number(row.thursday) || 0; tFri += Number(row.friday) || 0;
+    });
+    const tPct = tTarget > 0 ? (tAchieved / tTarget) * 100 : 0;
+    const tSafe = Math.min(Math.max(tPct, 0), 100);
+
+    html += `<tr class="total-row">
+<td><strong>TOTAL</strong></td>
+<td></td>
+<td>${formatNumber(tTarget)}</td>
+<td>${formatNumber(tAchieved)}</td>
+<td>${formatNumber(tSun)}</td>
+<td>${formatNumber(tMon)}</td>
+<td>${formatNumber(tTue)}</td>
+<td>${formatNumber(tWed)}</td>
+<td>${formatNumber(tThu)}</td>
+<td>${formatNumber(tFri)}</td>
+<td class="percentage-cell"><div class="percentage-wrapper">
+<div class="progress"><div class="progress-bar ${getStatusClass(tPct)}" style="width:${tSafe}%;"></div></div>
+<div class="percentage-text">${tPct.toFixed(1)}%</div></div></td>
+</tr>`;
+
     tbody.innerHTML = html;
 }
 
-/* ========== RENDER DEFERRED (14 columns) ========== */
+/* ========== RENDER DEFERRED (per-row + TOTAL row) ==========
+   The TOTAL row is calculated from the filtered data.
+   When filters are applied, the TOTAL reflects
+   only the filtered rows.
+===================================================== */
 
 function renderDeferred(data) {
     const tbody = document.getElementById("deferredBody");
@@ -714,6 +700,7 @@ function renderDeferred(data) {
 
     let html = "";
 
+    // Data rows
     sortedData.forEach(row => {
         const dri               = row.dri || row.collectionTeam || "";
         const branch            = row.branch || "";
@@ -750,6 +737,46 @@ function renderDeferred(data) {
 <td>${escapeHtml(collectionMarshal)}</td>
 </tr>`;
     });
+
+    // ---- TOTAL row (calculated from filtered data) ----
+    let tDeferred = 0, tPartial = 0, tTotalTarget = 0;
+    let tMon = 0, tTue = 0, tWed = 0, tThu = 0, tFri = 0;
+    let tWeek4 = 0;
+
+    data.forEach(row => {
+        tDeferred += Number(row.deferredTarget || 0);
+        tPartial += Number(row.partialTarget || 0);
+        tTotalTarget += Number(row.target || row.totalTarget || 0);
+        tMon += Number(row.monday || 0);
+        tTue += Number(row.tuesday || 0);
+        tWed += Number(row.wednesday || 0);
+        tThu += Number(row.thursday || 0);
+        tFri += Number(row.friday || 0);
+        tWeek4 += Number(row.week4Collection || row.achieved || 0);
+    });
+
+    const tDeficit = tTotalTarget - tWeek4;
+    const tPct = tTotalTarget > 0 ? (tWeek4 / tTotalTarget) * 100 : 0;
+    const tSafe = Math.min(Math.max(tPct, 0), 100);
+
+    html += `<tr class="total-row">
+<td><strong>TOTAL</strong></td>
+<td></td>
+<td>${formatNumber(tDeferred)}</td>
+<td>${formatNumber(tPartial)}</td>
+<td>${formatNumber(tTotalTarget)}</td>
+<td>${formatNumber(tMon)}</td>
+<td>${formatNumber(tTue)}</td>
+<td>${formatNumber(tWed)}</td>
+<td>${formatNumber(tThu)}</td>
+<td>${formatNumber(tFri)}</td>
+<td>${formatNumber(tWeek4)}</td>
+<td class="deficit-cell">${formatNumber(tDeficit)}</td>
+<td class="percentage-cell"><div class="percentage-wrapper">
+<div class="progress"><div class="progress-bar ${getStatusClass(tPct)}" style="width:${tSafe}%;"></div></div>
+<div class="percentage-text">${tPct.toFixed(1)}%</div></div></td>
+<td></td>
+</tr>`;
 
     tbody.innerHTML = html;
 }
