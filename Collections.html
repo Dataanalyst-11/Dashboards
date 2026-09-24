@@ -215,7 +215,17 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <tbody id="summaryBody"></tbody>
         </table>
     </div>
-
+  <div class="report-card" id="deferredSummaryCard" style="display:none">
+        <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
+        <div class="report-table-wrapper">
+            <table class="report-table deferred-summary-table">
+                <thead><tr>
+                <th>DRI</th><th>TOTAL TARGET</th><th>WEEK 4 COLLECTION</th><th>DEFICIT</th><th>% PERFORMANCE</th>
+                </tr></thead>
+                <tbody id="deferredSummaryBody"></tbody>
+            </table>
+        </div>
+    </div>
     <div class="report-card" id="weeklyTotalsCard" style="display:none">
         <div class="report-card-header">WEEKLY TOTALS</div>
         <div class="report-table-wrapper"><table class="report-table"><thead id="weeklyTotalsHead"></thead><tbody id="weeklyTotalsBody"></tbody></table></div>
