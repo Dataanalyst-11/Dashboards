@@ -22,9 +22,10 @@ html, body {
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f3f6f9;
-    color: #1f2937;
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+    background: linear-gradient(180deg, #0a1228 0%, #0f172a 50%, #131c31 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
 }
 
 /* =====================================================
@@ -32,18 +33,55 @@ body {
 ===================================================== */
 
 .header {
-    background: #17365d;
+    background: linear-gradient(135deg, #050d1f 0%, #0a1f3d 50%, #122a52 100%);
     color: white;
-    padding: 18px 30px;
+    padding: 20px 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .45);
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid #1e3a5f;
 }
 
-.header-title { font-size: 25px; font-weight: bold; }
-.header-subtitle { font-size: 13px; margin-top: 4px; opacity: .8; }
-.last-update { font-size: 13px; text-align: right; }
+.header::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 90% 50%, rgba(96, 165, 250, .08) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.header-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    position: relative;
+    color: #f8fafc;
+}
+
+.header-subtitle {
+    font-size: 13px;
+    margin-top: 5px;
+    opacity: .8;
+    font-weight: 500;
+    position: relative;
+    color: #93c5fd;
+}
+
+.last-update {
+    font-size: 13px;
+    text-align: right;
+    position: relative;
+    color: #cbd5e1;
+}
+
+.last-update #lastUpdate {
+    font-weight: 600;
+    color: #60a5fa;
+}
 
 /* =====================================================
    DASHBOARD
@@ -67,53 +105,135 @@ body {
 }
 
 .card {
-    background: white;
-    border-radius: 8px;
-    padding: 18px;
-    box-shadow: 0 2px 7px rgba(0,0,0,.08);
+    background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .35);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #2a3a55;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 
-.card-label { color: #6b7280; font-size: 13px; font-weight: bold; }
-.card-value { font-size: 27px; font-weight: bold; color: #17365d; margin-top: 8px; }
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
+    border-color: #3b555f;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--accent, #2563eb);
+}
+
+.card:nth-child(1) { --accent: #3b82f6; }
+.card:nth-child(2) { --accent: #10b981; }
+.card:nth-child(3) { --accent: #f59e0b; }
+.card:nth-child(4) { --accent: #a855f7; }
+
+.card-label {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.card-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #f1f5f9;
+    margin-top: 8px;
+    font-feature-settings: "tnum";
+}
 
 /* =====================================================
    CONTROLS
 ===================================================== */
 
 .controls {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
+    background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
+    padding: 16px;
+    border-radius: 10px;
     margin-bottom: 18px;
     display: flex;
     gap: 12px;
     align-items: center;
     flex-wrap: wrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .35);
+    border: 1px solid #2a3a55;
 }
 
 select, input {
-    border: 1px solid #d1d5db;
-    border-radius: 5px;
+    border: 1px solid #334155;
+    border-radius: 7px;
     padding: 9px 12px;
     font-size: 14px;
-    background: white;
+    background: #0f172a;
+    color: #e2e8f0;
     max-width: 100%;
+    transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-select { min-width: 180px; }
+select:focus,
+input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .2);
+}
+
+select { min-width: 180px; cursor: pointer; }
 input  { min-width: 230px; flex: 1; }
 
+input::placeholder { color: #64748b; }
+
 button {
-    padding: 9px 16px;
+    padding: 9px 18px;
     border: 0;
-    border-radius: 5px;
-    background: #17365d;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%);
     color: white;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 600;
+    transition: opacity .2s ease, transform .15s ease;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
 }
 
-button:hover { opacity: .9; }
+button:hover { opacity: .92; transform: translateY(-1px); }
+button:active { transform: translateY(0); }
+
+button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =====================================================
+   REFRESH BUTTON
+===================================================== */
+
+#refreshButton .refresh-icon {
+    display: inline-block;
+    transition: transform .3s ease;
+}
+
+#refreshButton.spinning .refresh-icon {
+    animation: spin 1s linear infinite;
+}
+
+#refreshButton.spinning {
+    background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
 
 /* =====================================================
    VIEW SWITCH
@@ -122,30 +242,37 @@ button:hover { opacity: .9; }
 .view-switch {
     display: inline-flex;
     align-items: center;
-    background: #eef2f7;
-    border: 1px solid #d1d5db;
-    border-radius: 7px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
     padding: 3px;
     margin-left: auto;
 }
 
 .view-switch button {
     background: transparent;
-    color: #475569;
+    color: #94a3b8;
     border: none;
-    padding: 8px 18px;
-    border-radius: 5px;
-    font-weight: bold;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 700;
     font-size: 13px;
+    letter-spacing: .5px;
     transition: all .2s ease;
+    box-shadow: none;
 }
 
-.view-switch button:hover { opacity: 1; background: #e2e8f0; }
+.view-switch button:hover {
+    opacity: 1;
+    background: #1e293b;
+    color: #e2e8f0;
+    transform: none;
+}
 
 .view-switch button.active {
-    background: #17365d;
+    background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%);
     color: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
 }
 
 /* =====================================================
@@ -154,10 +281,12 @@ button:hover { opacity: .9; }
 
 .view-label {
     width: 100%;
-    margin-top: -7px;
+    margin-top: -8px;
     margin-bottom: 10px;
     font-size: 12px;
     color: #64748b;
+    font-weight: 500;
+    font-style: italic;
 }
 
 /* =====================================================
@@ -165,12 +294,13 @@ button:hover { opacity: .9; }
 ===================================================== */
 
 .table-container {
-    background: white;
-    border-radius: 8px;
+    background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
+    border-radius: 10px;
     overflow: hidden;
     width: 100%;
     max-width: 100%;
-    box-shadow: 0 2px 7px rgba(0,0,0,.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+    border: 1px solid #2a3a55;
 }
 
 table {
@@ -181,32 +311,49 @@ table {
 }
 
 th {
-    background: #17365d;
-    color: white;
-    padding: 12px 8px;
-    font-size: 12px;
+    background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%);
+    color: #e2e8f0;
+    padding: 14px 8px;
+    font-size: 11px;
+    font-weight: 700;
     text-align: center;
     white-space: normal;
     word-break: break-word;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-bottom: 2px solid #2563eb;
 }
 
-th:nth-child(1) { text-align: left; }
+th:nth-child(1),
+th:nth-child(2) { text-align: left; }
 
 td {
-    padding: 11px 8px;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 8px;
+    border-bottom: 1px solid #1e293b;
     font-size: 13px;
     text-align: right;
     word-break: break-word;
+    color: #cbd5e1;
 }
 
-td:nth-child(1) { text-align: left; }
+td:nth-child(1),
+td:nth-child(2) { text-align: left; }
 
-tbody tr:hover { background: #f8fafc; }
+tbody tr { transition: background .15s ease; }
+
+tbody tr:hover { background: rgba(59, 130, 246, .08); }
+
+tbody tr:nth-child(even) { background: rgba(15, 23, 42, .5); }
+
+tbody tr:nth-child(even):hover { background: rgba(59, 130, 246, .12); }
+
+tbody tr td strong {
+    color: #f1f5f9;
+    font-weight: 700;
+}
 
 /* =====================================================
-   TEN-COLUMN VIEW WIDTHS
-   (used by both SUMMARY and BRANCHES views)
+   TEN-COLUMN VIEW WIDTHS  (SUMMARY VIEW)
 ===================================================== */
 
 .ten-col-view th:nth-child(1),
@@ -234,6 +381,40 @@ tbody tr:hover { background: #f8fafc; }
 .ten-col-view td:nth-child(10) { width: 14%; }
 
 /* =====================================================
+   ELEVEN-COLUMN VIEW WIDTHS  (BRANCHES VIEW — original layout)
+   COLLECTION TEAM | BRANCH | TARGET | ACHIEVED |
+   SUN | MON | TUE | WED | THU | FRI | % ACHIEVED
+===================================================== */
+
+.eleven-col-view th:nth-child(1),
+.eleven-col-view td:nth-child(1) { width: 15%; }
+
+.eleven-col-view th:nth-child(2),
+.eleven-col-view td:nth-child(2) { width: 10%; }
+
+.eleven-col-view th:nth-child(3),
+.eleven-col-view td:nth-child(3) { width: 9%; }
+
+.eleven-col-view th:nth-child(4),
+.eleven-col-view td:nth-child(4) { width: 10%; }
+
+.eleven-col-view th:nth-child(5),
+.eleven-col-view td:nth-child(5),
+.eleven-col-view th:nth-child(6),
+.eleven-col-view td:nth-child(6),
+.eleven-col-view th:nth-child(7),
+.eleven-col-view td:nth-child(7),
+.eleven-col-view th:nth-child(8),
+.eleven-col-view td:nth-child(8),
+.eleven-col-view th:nth-child(9),
+.eleven-col-view td:nth-child(9),
+.eleven-col-view th:nth-child(10),
+.eleven-col-view td:nth-child(10) { width: 6.5%; }
+
+.eleven-col-view th:nth-child(11),
+.eleven-col-view td:nth-child(11) { width: 12%; }
+
+/* =====================================================
    PROGRESS
 ===================================================== */
 
@@ -247,24 +428,32 @@ tbody tr:hover { background: #f8fafc; }
 }
 
 .progress {
-    height: 9px;
-    background: #e5e7eb;
+    height: 10px;
+    background: #1e293b;
     border-radius: 20px;
     overflow: hidden;
     flex: 1;
     min-width: 25px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .4);
 }
 
-.progress-bar { height: 100%; border-radius: 20px; }
-.high   { background: #16a34a; }
-.medium { background: #f59e0b; }
-.low    { background: #dc2626; }
+.progress-bar {
+    height: 100%;
+    border-radius: 20px;
+    transition: width .4s ease;
+}
+
+.high   { background: linear-gradient(90deg, #059669 0%, #10b981 100%); }
+.medium { background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%); }
+.low    { background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%); }
 
 .percentage-text {
     width: 52px;
     min-width: 52px;
-    font-weight: bold;
+    font-weight: 700;
     text-align: right;
+    color: #f1f5f9;
+    font-size: 12px;
 }
 
 /* =====================================================
@@ -273,35 +462,47 @@ tbody tr:hover { background: #f8fafc; }
 
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
-    color: #6b7280;
+    padding: 50px 20px;
+    color: #64748b;
     font-size: 14px;
+    font-style: italic;
 }
 
 /* =====================================================
    LOADING / ERROR / REFRESH STATUS
 ===================================================== */
 
-#loading { padding: 50px; text-align: center; color: #6b7280; }
+#loading {
+    padding: 60px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+    font-style: italic;
+}
 
 #error {
     display: none;
-    background: #fee2e2;
-    color: #991b1b;
-    padding: 15px;
+    background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
+    color: #fecaca;
+    padding: 15px 18px;
     margin-bottom: 15px;
-    border-radius: 6px;
+    border-radius: 8px;
+    border: 1px solid #991b1b;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 .refresh-status {
     font-size: 12px;
-    color: #64748b;
+    color: #94a3b8;
     margin-left: 3px;
+    margin-top: 2px;
+    font-weight: 500;
 }
 
 .refresh-status.updating {
-    color: #17365d;
-    font-weight: bold;
+    color: #60a5fa;
+    font-weight: 600;
 }
 
 /* =====================================================
@@ -312,7 +513,9 @@ tbody tr:hover { background: #f8fafc; }
     .dashboard { padding: 18px; }
     .header    { padding: 16px 18px; }
     .ten-col-view th,
-    .ten-col-view td {
+    .ten-col-view td,
+    .eleven-col-view th,
+    .eleven-col-view td {
         font-size: 11px;
         padding: 9px 5px;
     }
@@ -337,7 +540,7 @@ tbody tr:hover { background: #f8fafc; }
     .kpis { grid-template-columns: 1fr 1fr; gap: 10px; }
     .card { padding: 13px; }
     .card-value { font-size: 20px; }
-    .card-label { font-size: 11px; }
+    .card-label { font-size: 10px; }
     .header-title { font-size: 19px; }
     .header-subtitle { font-size: 11px; }
     .table-container { overflow-x: hidden; }
@@ -432,21 +635,20 @@ tbody tr:hover { background: #f8fafc; }
     placeholder="Search collection team..."
     oninput="applyFilters()">
 
-<button id="refreshButton" onclick="manualRefresh()">↻ Refresh</button>
-
-<!-- =====================================================
-     SUMMARY / BRANCHES SWITCH
-===================================================== -->
+<button id="refreshButton" onclick="manualRefresh()" type="button">
+    <span class="refresh-icon">↻</span>
+    <span class="refresh-text">Refresh</span>
+</button>
 
 <div class="view-switch">
-    <button id="summaryButton" onclick="switchView('summary')">SUMMARY</button>
-    <button id="branchesButton" class="active" onclick="switchView('branches')">BRANCHES</button>
+    <button id="summaryButton" onclick="switchView('summary')" type="button">SUMMARY</button>
+    <button id="branchesButton" class="active" onclick="switchView('branches')" type="button">BRANCHES</button>
 </div>
 
 </div>
 
 <div class="view-label">
-    <span id="viewDescription">Collection performance aggregated by branch</span>
+    <span id="viewDescription">Detailed daily collection performance</span>
 </div>
 
 <!-- =====================================================
@@ -458,7 +660,7 @@ tbody tr:hover { background: #f8fafc; }
 <div id="loading">Loading collection data...</div>
 
 <!-- =====================================================
-     SUMMARY VIEW  (by Collection Team — 10 columns)
+     SUMMARY VIEW  (10 columns — aggregated by collection team)
 ===================================================== -->
 
 <table id="summaryTable" class="ten-col-view" style="display:none">
@@ -480,15 +682,16 @@ tbody tr:hover { background: #f8fafc; }
 </table>
 
 <!-- =====================================================
-     BRANCHES VIEW  (by Branch — 10 columns)
+     BRANCHES VIEW  (11 columns — original per-row layout)
 ===================================================== -->
 
-<table id="branchesTable" class="ten-col-view" style="display:none">
+<table id="branchesTable" class="eleven-col-view" style="display:none">
 <thead>
 <tr>
+<th>COLLECTION TEAM</th>
 <th>BRANCH</th>
-<th>TOTAL TARGET</th>
-<th>TOTAL ACHIEVED</th>
+<th>TOTAL - TARGET</th>
+<th>TOTAL - ACHIEVED</th>
 <th>SUNDAY</th>
 <th>MONDAY</th>
 <th>TUESDAY</th>
@@ -507,16 +710,8 @@ tbody tr:hover { background: #f8fafc; }
 
 <script>
 
-/* =====================================================
-   GOOGLE APPS SCRIPT API
-===================================================== */
-
 const API_URL =
 "https://script.google.com/macros/s/AKfycbysXlfvoc9Jomg-u5LWdFrCeKDTyTqq3kUUUj8WAaneUut1HlxHtubgTZ7eQPjJzEVJcg/exec";
-
-/* =====================================================
-   GLOBAL VARIABLES
-===================================================== */
 
 let allData = [];
 let currentView = "branches";
@@ -532,9 +727,17 @@ async function loadData(manual = false) {
 
     refreshInProgress = true;
 
-    const loading      = document.getElementById("loading");
-    const error        = document.getElementById("error");
+    const loading       = document.getElementById("loading");
+    const error         = document.getElementById("error");
     const refreshStatus = document.getElementById("refreshStatus");
+    const refreshButton = document.getElementById("refreshButton");
+    const refreshText   = refreshButton.querySelector(".refresh-text");
+
+    refreshButton.disabled = true;
+    refreshButton.classList.add("spinning");
+    if (manual) {
+        refreshText.innerText = "Refreshing...";
+    }
 
     const selectedBranch = document.getElementById("branchFilter").value;
     const selectedTeam   = document.getElementById("teamFilter").value;
@@ -574,7 +777,9 @@ async function loadData(manual = false) {
         document.getElementById("lastUpdate").innerText =
             new Date().toLocaleString("en-KE");
 
-        refreshStatus.innerText = "Auto-refresh: 5 min";
+        refreshStatus.innerText = manual
+            ? "Manual refresh complete — Auto-refresh: 5 min"
+            : "Auto-refresh: 5 min";
         refreshStatus.classList.remove("updating");
 
     } catch (err) {
@@ -590,14 +795,23 @@ async function loadData(manual = false) {
         refreshStatus.classList.remove("updating");
 
     } finally {
+
+        refreshButton.disabled = false;
+        refreshButton.classList.remove("spinning");
+        refreshText.innerText = "Refresh";
+
         refreshInProgress = false;
+
+        if (manual) {
+            setTimeout(() => {
+                if (!refreshInProgress) {
+                    refreshStatus.innerText = "Auto-refresh: 5 min";
+                }
+            }, 4000);
+        }
     }
 
 }
-
-/* =====================================================
-   MANUAL REFRESH
-===================================================== */
 
 function manualRefresh() {
     loadData(true);
@@ -612,13 +826,11 @@ function populateFilters(selectedBranch = "ALL", selectedTeam = "ALL") {
     const branchSelect = document.getElementById("branchFilter");
     const teamSelect   = document.getElementById("teamFilter");
 
-    // BRANCHES
     const branches = [...new Set(
         allData.map(row => row.branch).filter(Boolean)
     )].sort((a,b) => String(a).localeCompare(String(b)));
 
-    branchSelect.innerHTML =
-        `<option value="ALL">All Branches</option>`;
+    branchSelect.innerHTML = `<option value="ALL">All Branches</option>`;
 
     branches.forEach(branch => {
         const option = document.createElement("option");
@@ -629,13 +841,11 @@ function populateFilters(selectedBranch = "ALL", selectedTeam = "ALL") {
 
     branchSelect.value = branches.includes(selectedBranch) ? selectedBranch : "ALL";
 
-    // COLLECTION TEAMS
     const teams = [...new Set(
         allData.map(row => row.collectionTeam).filter(Boolean)
     )].sort((a,b) => String(a).localeCompare(String(b)));
 
-    teamSelect.innerHTML =
-        `<option value="ALL">All Collection Teams</option>`;
+    teamSelect.innerHTML = `<option value="ALL">All Collection Teams</option>`;
 
     teams.forEach(team => {
         const option = document.createElement("option");
@@ -708,7 +918,7 @@ function switchView(view) {
         branchesButton.classList.add("active");
         summaryButton.classList.remove("active");
         description.innerText =
-            "Branch summary — total target, total achieved, daily totals and performance";
+            "Detailed daily collection performance";
     }
 
     applyFilters();
@@ -716,7 +926,18 @@ function switchView(view) {
 }
 
 /* =====================================================
-   RENDER TABLE  (SUMMARY VIEW — by Collection Team)
+   HELPER: compute percentage for sorting
+===================================================== */
+
+function calcPct(item) {
+    return item.target > 0
+        ? (item.achieved / item.target) * 100
+        : 0;
+}
+
+/* =====================================================
+   RENDER TABLE  (SUMMARY VIEW — aggregated by team)
+   Sorted by % ACHIEVED  (LARGEST → SMALLEST)
 ===================================================== */
 
 function renderTable(data) {
@@ -742,7 +963,6 @@ function renderTable(data) {
         return;
     }
 
-    // ---------- Aggregate by collection team ----------
     const summaryMap = new Map();
 
     data.forEach(row => {
@@ -752,14 +972,9 @@ function renderTable(data) {
         if (!summaryMap.has(team)) {
             summaryMap.set(team, {
                 collectionTeam: team,
-                target:    0,
-                achieved:  0,
-                sunday:    0,
-                monday:    0,
-                tuesday:   0,
-                wednesday: 0,
-                thursday:  0,
-                friday:    0
+                target: 0, achieved: 0,
+                sunday: 0, monday: 0, tuesday: 0,
+                wednesday: 0, thursday: 0, friday: 0
             });
         }
 
@@ -776,26 +991,18 @@ function renderTable(data) {
     });
 
     const summaryData = Array.from(summaryMap.values())
-        .sort((a, b) => a.collectionTeam.localeCompare(b.collectionTeam));
+        .sort((a, b) => calcPct(b) - calcPct(a));
 
     let html = "";
 
     summaryData.forEach(item => {
 
-        const percentage =
-            item.target > 0
-                ? (item.achieved / item.target) * 100
-                : 0;
-
-        const safePct = Math.min(Math.max(percentage, 0), 100);
+        const percentage = calcPct(item);
+        const safePct    = Math.min(Math.max(percentage, 0), 100);
 
         html += `
 <tr>
-
-<td>
-    <strong>${escapeHtml(item.collectionTeam)}</strong>
-</td>
-
+<td><strong>${escapeHtml(item.collectionTeam)}</strong></td>
 <td>${formatNumber(item.target)}</td>
 <td>${formatNumber(item.achieved)}</td>
 <td>${formatNumber(item.sunday)}</td>
@@ -804,26 +1011,16 @@ function renderTable(data) {
 <td>${formatNumber(item.wednesday)}</td>
 <td>${formatNumber(item.thursday)}</td>
 <td>${formatNumber(item.friday)}</td>
-
 <td class="percentage-cell">
-
     <div class="percentage-wrapper">
-
         <div class="progress">
-            <div
-                class="progress-bar ${getStatusClass(percentage)}"
-                style="width:${safePct}%;">
+            <div class="progress-bar ${getStatusClass(percentage)}"
+                 style="width:${safePct}%;">
             </div>
         </div>
-
-        <div class="percentage-text">
-            ${percentage.toFixed(1)}%
-        </div>
-
+        <div class="percentage-text">${percentage.toFixed(1)}%</div>
     </div>
-
 </td>
-
 </tr>`;
     });
 
@@ -834,7 +1031,9 @@ function renderTable(data) {
 }
 
 /* =====================================================
-   RENDER BRANCHES  (BRANCHES VIEW — by Branch)
+   RENDER BRANCHES  (BRANCHES VIEW — original per-row layout)
+   11 columns, NO aggregation, sorted by % ACHIEVED
+   (largest → smallest)
 ===================================================== */
 
 function renderBranches(data) {
@@ -849,7 +1048,7 @@ function renderBranches(data) {
     if (!data || data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="10">
+                <td colspan="11">
                     <div class="empty-state">
                         No collection data found for the selected filters.
                     </div>
@@ -860,68 +1059,36 @@ function renderBranches(data) {
         return;
     }
 
-    // ---------- Aggregate by branch ----------
-    const branchMap = new Map();
-
-    data.forEach(row => {
-
-        const branchName = String(row.branch || "Unknown");
-
-        if (!branchMap.has(branchName)) {
-            branchMap.set(branchName, {
-                branch:    branchName,
-                target:    0,
-                achieved:  0,
-                sunday:    0,
-                monday:    0,
-                tuesday:   0,
-                wednesday: 0,
-                thursday:  0,
-                friday:    0
-            });
-        }
-
-        const item = branchMap.get(branchName);
-
-        item.target    += Number(row.target)    || 0;
-        item.achieved  += Number(row.achieved)  || 0;
-        item.sunday    += Number(row.sunday)    || 0;
-        item.monday    += Number(row.monday)    || 0;
-        item.tuesday   += Number(row.tuesday)   || 0;
-        item.wednesday += Number(row.wednesday) || 0;
-        item.thursday  += Number(row.thursday)  || 0;
-        item.friday    += Number(row.friday)    || 0;
+    // ---------- Sort rows by % ACHIEVED (largest → smallest) ----------
+    const sortedData = [...data].sort((a, b) => {
+        const pctA = getPercentage(a.target, a.achieved);
+        const pctB = getPercentage(b.target, b.achieved);
+        return pctB - pctA;
     });
-
-    const branchData = Array.from(branchMap.values())
-        .sort((a, b) => a.branch.localeCompare(b.branch));
 
     let html = "";
 
-    branchData.forEach(item => {
+    sortedData.forEach(row => {
 
-        const percentage =
-            item.target > 0
-                ? (item.achieved / item.target) * 100
-                : 0;
-
-        const safePct = Math.min(Math.max(percentage, 0), 100);
+        const percentage = getPercentage(row.target, row.achieved);
+        const safePct    = Math.min(Math.max(percentage, 0), 100);
 
         html += `
 <tr>
 
 <td>
-    <strong>${escapeHtml(item.branch)}</strong>
+    <strong>${escapeHtml(row.collectionTeam)}</strong>
 </td>
 
-<td>${formatNumber(item.target)}</td>
-<td>${formatNumber(item.achieved)}</td>
-<td>${formatNumber(item.sunday)}</td>
-<td>${formatNumber(item.monday)}</td>
-<td>${formatNumber(item.tuesday)}</td>
-<td>${formatNumber(item.wednesday)}</td>
-<td>${formatNumber(item.thursday)}</td>
-<td>${formatNumber(item.friday)}</td>
+<td>${escapeHtml(row.branch)}</td>
+<td>${formatNumber(row.target)}</td>
+<td>${formatNumber(row.achieved)}</td>
+<td>${formatNumber(row.sunday)}</td>
+<td>${formatNumber(row.monday)}</td>
+<td>${formatNumber(row.tuesday)}</td>
+<td>${formatNumber(row.wednesday)}</td>
+<td>${formatNumber(row.thursday)}</td>
+<td>${formatNumber(row.friday)}</td>
 
 <td class="percentage-cell">
 
@@ -976,23 +1143,15 @@ function updateKPIs(data) {
 }
 
 /* =====================================================
-   PERCENTAGE
+   PERCENTAGE / STATUS / FORMAT / ESCAPE
 ===================================================== */
 
 function getPercentage(target, achieved) {
-
-    const targetNumber   = Number(target)   || 0;
-    const achievedNumber = Number(achieved) || 0;
-
-    if (targetNumber <= 0) return 0;
-
-    return (achievedNumber / targetNumber) * 100;
-
+    const t = Number(target) || 0;
+    const a = Number(achieved) || 0;
+    if (t <= 0) return 0;
+    return (a / t) * 100;
 }
-
-/* =====================================================
-   STATUS
-===================================================== */
 
 function getStatusClass(value) {
     if (value >= 90) return "high";
@@ -1000,18 +1159,10 @@ function getStatusClass(value) {
     return "low";
 }
 
-/* =====================================================
-   NUMBER FORMAT
-===================================================== */
-
 function formatNumber(value) {
     return Number(value || 0)
         .toLocaleString("en-KE", { maximumFractionDigits: 0 });
 }
-
-/* =====================================================
-   HTML ESCAPE
-===================================================== */
 
 function escapeHtml(value) {
     return String(value || "")
