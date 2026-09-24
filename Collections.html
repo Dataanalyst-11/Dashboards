@@ -59,13 +59,11 @@ tbody tr:nth-child(even) { background: rgba(15, 23, 42, .5); }
 tbody tr:nth-child(even):hover { background: rgba(59, 130, 246, .12); }
 tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 
-/* TEN-COL VIEW (Summary) */
 .ten-col-view th:nth-child(1), .ten-col-view td:nth-child(1) { width: 18%; }
 .ten-col-view th:nth-child(2), .ten-col-view td:nth-child(2), .ten-col-view th:nth-child(3), .ten-col-view td:nth-child(3) { width: 10%; }
 .ten-col-view th:nth-child(4), .ten-col-view td:nth-child(4), .ten-col-view th:nth-child(5), .ten-col-view td:nth-child(5), .ten-col-view th:nth-child(6), .ten-col-view td:nth-child(6), .ten-col-view th:nth-child(7), .ten-col-view td:nth-child(7), .ten-col-view th:nth-child(8), .ten-col-view td:nth-child(8), .ten-col-view th:nth-child(9), .ten-col-view td:nth-child(9) { width: 8%; }
 .ten-col-view th:nth-child(10), .ten-col-view td:nth-child(10) { width: 14%; }
 
-/* ELEVEN-COL VIEW (Branches) */
 .eleven-col-view th:nth-child(1), .eleven-col-view td:nth-child(1) { width: 15%; }
 .eleven-col-view th:nth-child(2), .eleven-col-view td:nth-child(2) { width: 10%; }
 .eleven-col-view th:nth-child(3), .eleven-col-view td:nth-child(3) { width: 9%; }
@@ -73,17 +71,10 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 .eleven-col-view th:nth-child(5), .eleven-col-view td:nth-child(5), .eleven-col-view th:nth-child(6), .eleven-col-view td:nth-child(6), .eleven-col-view th:nth-child(7), .eleven-col-view td:nth-child(7), .eleven-col-view th:nth-child(8), .eleven-col-view td:nth-child(8), .eleven-col-view th:nth-child(9), .eleven-col-view td:nth-child(9), .eleven-col-view th:nth-child(10), .eleven-col-view td:nth-child(10) { width: 6.5%; }
 .eleven-col-view th:nth-child(11), .eleven-col-view td:nth-child(11) { width: 12%; }
 
-/* FOURTEEN-COL VIEW (Deferred/Partial — with DEFICIT + % PERFORMANCE) */
 .fourteen-col-view th:nth-child(1), .fourteen-col-view td:nth-child(1) { width: 9%; }
 .fourteen-col-view th:nth-child(2), .fourteen-col-view td:nth-child(2) { width: 7%; }
-.fourteen-col-view th:nth-child(3), .fourteen-col-view td:nth-child(3),
-.fourteen-col-view th:nth-child(4), .fourteen-col-view td:nth-child(4),
-.fourteen-col-view th:nth-child(5), .fourteen-col-view td:nth-child(5) { width: 7%; }
-.fourteen-col-view th:nth-child(6), .fourteen-col-view td:nth-child(6),
-.fourteen-col-view th:nth-child(7), .fourteen-col-view td:nth-child(7),
-.fourteen-col-view th:nth-child(8), .fourteen-col-view td:nth-child(8),
-.fourteen-col-view th:nth-child(9), .fourteen-col-view td:nth-child(9),
-.fourteen-col-view th:nth-child(10), .fourteen-col-view td:nth-child(10) { width: 5%; }
+.fourteen-col-view th:nth-child(3), .fourteen-col-view td:nth-child(3), .fourteen-col-view th:nth-child(4), .fourteen-col-view td:nth-child(4), .fourteen-col-view th:nth-child(5), .fourteen-col-view td:nth-child(5) { width: 7%; }
+.fourteen-col-view th:nth-child(6), .fourteen-col-view td:nth-child(6), .fourteen-col-view th:nth-child(7), .fourteen-col-view td:nth-child(7), .fourteen-col-view th:nth-child(8), .fourteen-col-view td:nth-child(8), .fourteen-col-view th:nth-child(9), .fourteen-col-view td:nth-child(9), .fourteen-col-view th:nth-child(10), .fourteen-col-view td:nth-child(10) { width: 5%; }
 .fourteen-col-view th:nth-child(11), .fourteen-col-view td:nth-child(11) { width: 9%; }
 .fourteen-col-view th:nth-child(12), .fourteen-col-view td:nth-child(12) { width: 9%; }
 .fourteen-col-view th:nth-child(13), .fourteen-col-view td:nth-child(13) { width: 10%; }
@@ -98,7 +89,6 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 .low { background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%); }
 .percentage-text { width: 52px; min-width: 52px; font-weight: 700; text-align: right; color: #f1f5f9; font-size: 12px; }
 
-/* DEFICIT text color — red to highlight shortfall */
 .deficit-cell { color: #fca5a5 !important; font-weight: 600; }
 
 .report-card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; margin-top: 22px; }
@@ -117,12 +107,9 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 .report-table tbody tr.total-row:hover { background: rgba(37, 99, 235, .15); }
 .report-table-wrapper { overflow-x: auto; }
 
-/* DEFERRED SUMMARY TABLE (5 columns with DEFICIT + progress bar) */
 .deferred-summary-table { table-layout: fixed; }
 .deferred-summary-table th:nth-child(1), .deferred-summary-table td:nth-child(1) { width: 25%; }
-.deferred-summary-table th:nth-child(2), .deferred-summary-table td:nth-child(2),
-.deferred-summary-table th:nth-child(3), .deferred-summary-table td:nth-child(3),
-.deferred-summary-table th:nth-child(4), .deferred-summary-table td:nth-child(4) { width: 15%; }
+.deferred-summary-table th:nth-child(2), .deferred-summary-table td:nth-child(2), .deferred-summary-table th:nth-child(3), .deferred-summary-table td:nth-child(3), .deferred-summary-table th:nth-child(4), .deferred-summary-table td:nth-child(4) { width: 15%; }
 .deferred-summary-table th:nth-child(5), .deferred-summary-table td:nth-child(5) { width: 30%; }
 
 .empty-state { text-align: center; padding: 50px 20px; color: #64748b; font-size: 14px; font-style: italic; }
@@ -157,24 +144,11 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 
 <div id="error"></div>
 
-<!-- KPI CARDS — labels change dynamically based on active view -->
 <div class="kpis">
-    <div class="card">
-        <div class="card-label" id="kpi1Label">Total Target</div>
-        <div class="card-value" id="totalTarget">0</div>
-    </div>
-    <div class="card">
-        <div class="card-label" id="kpi2Label">Total Achieved</div>
-        <div class="card-value" id="totalAchieved">0</div>
-    </div>
-    <div class="card">
-        <div class="card-label" id="kpi3Label">Balance</div>
-        <div class="card-value" id="balance">0</div>
-    </div>
-    <div class="card">
-        <div class="card-label" id="kpi4Label">Overall Achievement</div>
-        <div class="card-value" id="overallPercentage">0%</div>
-    </div>
+    <div class="card"><div class="card-label" id="kpi1Label">Total Target</div><div class="card-value" id="totalTarget">0</div></div>
+    <div class="card"><div class="card-label" id="kpi2Label">Total Achieved</div><div class="card-value" id="totalAchieved">0</div></div>
+    <div class="card"><div class="card-label" id="kpi3Label">Balance</div><div class="card-value" id="balance">0</div></div>
+    <div class="card"><div class="card-label" id="kpi4Label">Overall Achievement</div><div class="card-value" id="overallPercentage">0%</div></div>
 </div>
 
 <div class="controls">
@@ -209,25 +183,14 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
     </div>
 </div>
 
-<!-- DEFERRED/PARTIAL VIEW (14 columns — includes DEFICIT + % PERFORMANCE) -->
+<!-- DEFERRED/PARTIAL VIEW (14 columns) -->
 <div id="deferredContainer" style="display:none">
     <div class="table-container">
         <table id="deferredTable" class="fourteen-col-view">
         <thead><tr>
-        <th>DRI</th>
-        <th>BRANCH</th>
-        <th>DEFFERED TARGET</th>
-        <th>PARTIAL A/CS TARGET</th>
-        <th>TOTAL TARGET</th>
-        <th>MONDAY</th>
-        <th>TUESDAY</th>
-        <th>WEDNESDAY</th>
-        <th>THURSDAY</th>
-        <th>FRIDAY</th>
-        <th>WEEK 4 COLLECTION</th>
-        <th>DEFICIT</th>
-        <th>% PERFORMANCE</th>
-        <th>COLLECTION MARSHAL</th>
+        <th>DRI</th><th>BRANCH</th><th>DEFFERED TARGET</th><th>PARTIAL A/CS TARGET</th><th>TOTAL TARGET</th>
+        <th>MONDAY</th><th>TUESDAY</th><th>WEDNESDAY</th><th>THURSDAY</th><th>FRIDAY</th>
+        <th>WEEK 4 COLLECTION</th><th>DEFICIT</th><th>% PERFORMANCE</th><th>COLLECTION MARSHAL</th>
         </tr></thead>
         <tbody id="deferredBody"></tbody>
         </table>
@@ -258,17 +221,12 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
         <div class="report-table-wrapper"><table class="report-table"><thead id="monthlyTotalsHead"></thead><tbody id="monthlyTotalsBody"></tbody></table></div>
     </div>
 
-    <!-- Deferred/Partial Summary — 5 columns: DRI, TOTAL TARGET, WEEK 4 COLLECTION, DEFICIT, % PERFORMANCE -->
     <div class="report-card" id="deferredSummaryCard" style="display:none">
         <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
         <div class="report-table-wrapper">
             <table class="report-table deferred-summary-table">
                 <thead><tr>
-                <th>DRI</th>
-                <th>TOTAL TARGET</th>
-                <th>WEEK 4 COLLECTION</th>
-                <th>DEFICIT</th>
-                <th>% PERFORMANCE</th>
+                <th>DRI</th><th>TOTAL TARGET</th><th>WEEK 4 COLLECTION</th><th>DEFICIT</th><th>% PERFORMANCE</th>
                 </tr></thead>
                 <tbody id="deferredSummaryBody"></tbody>
             </table>
@@ -282,7 +240,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 <script>
 
 const API_URL =
-"https://script.google.com/macros/s/AKfycbyp_J28P_mNSIyvVWMH1vcUYbG1tEcwVJnT5CmZetd8jFrrYZNd_mN0y0puQTYvfaDUug/exec";
+"https://script.google.com/macros/s/AKfycbw2NHgGCV28w84Gg-tLtpKyKjmQmGJOkpme1SeMLSUljXCNkEt2Bm3ClAgPF83eCv7dFQ/exec";
 
 let allData = [];
 let deferredData = [];
@@ -355,30 +313,65 @@ async function loadData(manual = false) {
 
 function manualRefresh() { loadData(true); }
 
-/* ========== POPULATE FILTERS ========== */
+/* ========== POPULATE FILTERS ==========
+   When on DEFERRED view: populates Branch and DRI
+   from deferredData (rows 51-76).
+   When on other views: populates Branch and
+   Collection Team from allData (rows 1-27).
+===================================================== */
 
-function populateFilters(selectedBranch = "ALL", selectedTeam = "ALL") {
+function populateFilters(selectedBranch, selectedTeam) {
+
     const branchSelect = document.getElementById("branchFilter");
-    const teamSelect = document.getElementById("teamFilter");
+    const teamSelect   = document.getElementById("teamFilter");
+    const searchBox    = document.getElementById("searchBox");
 
-    const branches = [...new Set(allData.map(r => r.branch).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
+    // Determine data source and labels based on current view.
+    const isDeferred = currentView === "deferred";
+    const dataSource = isDeferred ? deferredData : allData;
+    const teamKey    = isDeferred ? "dri" : "collectionTeam";
+    const teamLabel  = isDeferred ? "All DRIs" : "All Collection Teams";
+    const searchPh   = isDeferred ? "Search DRI..." : "Search collection team...";
+
+    // ---- Branches ----
+    const branches = [...new Set(
+        dataSource.map(r => r.branch).filter(Boolean)
+    )].sort((a,b) => String(a).localeCompare(String(b)));
+
     branchSelect.innerHTML = `<option value="ALL">All Branches</option>`;
-    branches.forEach(b => { const o = document.createElement("option"); o.value = b; o.textContent = b; branchSelect.appendChild(o); });
+    branches.forEach(b => {
+        const o = document.createElement("option");
+        o.value = b; o.textContent = b;
+        branchSelect.appendChild(o);
+    });
     branchSelect.value = branches.includes(selectedBranch) ? selectedBranch : "ALL";
 
-    const teams = [...new Set(allData.map(r => r.collectionTeam).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
-    teamSelect.innerHTML = `<option value="ALL">All Collection Teams</option>`;
-    teams.forEach(t => { const o = document.createElement("option"); o.value = t; o.textContent = t; teamSelect.appendChild(o); });
+    // ---- Teams / DRIs ----
+    const teams = [...new Set(
+        dataSource.map(r => r[teamKey] || r.collectionTeam || "").filter(Boolean)
+    )].sort((a,b) => String(a).localeCompare(String(b)));
+
+    teamSelect.innerHTML = `<option value="ALL">${teamLabel}</option>`;
+    teams.forEach(t => {
+        const o = document.createElement("option");
+        o.value = t; o.textContent = t;
+        teamSelect.appendChild(o);
+    });
     teamSelect.value = teams.includes(selectedTeam) ? selectedTeam : "ALL";
+
+    // ---- Search placeholder ----
+    searchBox.placeholder = searchPh;
 }
 
 /* ========== APPLY FILTERS ========== */
 
 function applyFilters() {
+
     const branch = document.getElementById("branchFilter").value;
-    const team = document.getElementById("teamFilter").value;
+    const team   = document.getElementById("teamFilter").value;
     const search = document.getElementById("searchBox").value.toLowerCase().trim();
 
+    // Filter for collection team data.
     const filterCollection = row => {
         const bm = branch === "ALL" || String(row.branch || "") === branch;
         const tm = team === "ALL" || String(row.collectionTeam || "") === team;
@@ -386,6 +379,7 @@ function applyFilters() {
         return bm && tm && sm;
     };
 
+    // Filter for deferred data (uses row.dri).
     const filterDeferred = row => {
         const driName = String(row.dri || row.collectionTeam || "");
         const bm = branch === "ALL" || String(row.branch || "") === branch;
@@ -398,17 +392,13 @@ function applyFilters() {
     const filteredDeferred = deferredData.filter(filterDeferred);
 
     // ---- Update KPIs based on current view ----
-    // When on DEFERRED view, use deferred data:
-    //   TOTAL TARGET  = sum of row.target
-    //   WEEK 4 COLLN = sum of row.week4Collection
-    //   DEFICIT       = TOTAL TARGET - WEEK 4 COLLECTION
-    //   % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
     if (currentView === "deferred") {
         updateKPIsDeferred(filteredDeferred);
     } else {
         updateKPIs(filtered);
     }
 
+    // ---- Render the correct view ----
     if (currentView === "summary") {
         renderSummaryView(filtered);
     } else if (currentView === "deferred") {
@@ -421,19 +411,24 @@ function applyFilters() {
 /* ========== SWITCH VIEW ========== */
 
 function switchView(view) {
+
     currentView = view;
-    const summaryButton = document.getElementById("summaryButton");
+
+    const summaryButton  = document.getElementById("summaryButton");
     const branchesButton = document.getElementById("branchesButton");
     const deferredButton = document.getElementById("deferredButton");
-    const description = document.getElementById("viewDescription");
-    const loading = document.getElementById("loading");
-    const branchesCont = document.getElementById("branchesContainer");
-    const summaryCont = document.getElementById("summaryContainer");
-    const deferredCont = document.getElementById("deferredContainer");
+    const description    = document.getElementById("viewDescription");
+    const loading        = document.getElementById("loading");
+    const branchesCont   = document.getElementById("branchesContainer");
+    const summaryCont    = document.getElementById("summaryContainer");
+    const deferredCont   = document.getElementById("deferredContainer");
 
+    // Hide all containers.
     branchesCont.style.display = "none";
-    summaryCont.style.display = "none";
+    summaryCont.style.display  = "none";
     deferredCont.style.display = "none";
+
+    // Remove active from all buttons.
     summaryButton.classList.remove("active");
     branchesButton.classList.remove("active");
     deferredButton.classList.remove("active");
@@ -467,6 +462,14 @@ function switchView(view) {
     }
 
     loading.style.display = "none";
+
+    // ---- OVERWRITE FILTERS for the new view ----
+    // When switching to deferred: populate from deferredData.
+    // When switching to other views: populate from allData.
+    // Reset selections to ALL since the data source changed.
+    populateFilters("ALL", "ALL");
+    document.getElementById("searchBox").value = "";
+
     applyFilters();
 }
 
@@ -492,10 +495,7 @@ function escapeHtml(value) {
 
 function updateKPIs(data) {
     let target = 0, achieved = 0;
-    data.forEach(row => {
-        target += Number(row.target) || 0;
-        achieved += Number(row.achieved) || 0;
-    });
+    data.forEach(row => { target += Number(row.target) || 0; achieved += Number(row.achieved) || 0; });
     const balance = target - achieved;
     const pct = target > 0 ? (achieved / target) * 100 : 0;
     document.getElementById("totalTarget").innerText = formatNumber(target);
@@ -505,8 +505,8 @@ function updateKPIs(data) {
 }
 
 /* ========== KPI: Deferred/Partial data ==========
-   TOTAL TARGET      = sum of row.target
-   WEEK 4 COLLECTION = sum of row.week4Collection
+   TOTAL TARGET      = Σ row.target
+   WEEK 4 COLLECTION = Σ row.week4Collection
    DEFICIT           = TOTAL TARGET - WEEK 4 COLLECTION
    % PERFORMANCE     = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
 ===================================================== */
@@ -580,11 +580,19 @@ function renderReportCard(cardId, headId, bodyId, reportData) {
     body.innerHTML = bodyHtml;
 }
 
-/* ========== RENDER DEFERRED SUMMARY (5 columns) ==========
-   DRI | TOTAL TARGET | WEEK 4 COLLECTION | DEFICIT | % PERFORMANCE
+/* =====================================================
+   RENDER DEFERRED SUMMARY (5 columns + TOTAL row)
+
+   Columns:
+     DRI | TOTAL TARGET | WEEK 4 COLLECTION | DEFICIT | % PERFORMANCE
+
    DEFICIT       = TOTAL TARGET - WEEK 4 COLLECTION
    % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
+
    Sorted by % PERFORMANCE descending.
+
+   After the last DRI, a TOTAL row is added showing
+   the grand totals.
 ===================================================== */
 
 function renderDeferredSummary() {
@@ -597,8 +605,9 @@ function renderDeferredSummary() {
 
     card.style.display = "block";
 
-    // Aggregate by DRI.
+    // ---- Step 1: Aggregate by DRI ----
     const driMap = new Map();
+
     deferredData.forEach(row => {
         const dri = String(row.dri || row.collectionTeam || "Unknown");
         if (!driMap.has(dri)) { driMap.set(dri, { dri: dri, totalTarget: 0, week4Collection: 0 }); }
@@ -607,15 +616,28 @@ function renderDeferredSummary() {
         item.week4Collection += Number(row.week4Collection || row.achieved || 0);
     });
 
-    // Calculate DEFICIT and % PERFORMANCE.
+    // ---- Step 2: Calculate DEFICIT + % PERFORMANCE ----
     const driData = Array.from(driMap.values()).map(item => {
         const deficit = item.totalTarget - item.week4Collection;
         let performance = 0;
-        if (item.totalTarget > 0) { performance = (item.week4Collection / item.totalTarget) * 100; }
-        return { dri: item.dri, totalTarget: item.totalTarget, week4Collection: item.week4Collection, deficit: deficit, performance: performance };
-    }).sort((a, b) => b.performance - a.performance);
+        if (item.totalTarget > 0) {
+            performance = (item.week4Collection / item.totalTarget) * 100;
+        }
+        return {
+            dri: item.dri,
+            totalTarget: item.totalTarget,
+            week4Collection: item.week4Collection,
+            deficit: deficit,
+            performance: performance
+        };
+    });
 
+    // ---- Step 3: Sort by % PERFORMANCE descending ----
+    driData.sort((a, b) => b.performance - a.performance);
+
+    // ---- Step 4: Render data rows ----
     let html = "";
+
     driData.forEach(item => {
         const barWidth = Math.min(Math.max(item.performance, 0), 100);
         html += `<tr>
@@ -628,6 +650,33 @@ function renderDeferredSummary() {
 <div class="percentage-text">${item.performance.toFixed(1)}%</div></div></td>
 </tr>`;
     });
+
+    // ---- Step 5: Add TOTAL row ----
+    let grandTotalTarget = 0;
+    let grandTotalWeek4   = 0;
+    let grandTotalDeficit  = 0;
+
+    driData.forEach(item => {
+        grandTotalTarget += item.totalTarget;
+        grandTotalWeek4  += item.week4Collection;
+        grandTotalDeficit += item.deficit;
+    });
+
+    const grandPct = grandTotalTarget > 0
+        ? (grandTotalWeek4 / grandTotalTarget) * 100
+        : 0;
+    const grandBarWidth = Math.min(Math.max(grandPct, 0), 100);
+
+    html += `<tr class="total-row">
+<td><strong>TOTAL</strong></td>
+<td>${formatNumber(grandTotalTarget)}</td>
+<td>${formatNumber(grandTotalWeek4)}</td>
+<td class="deficit-cell">${formatNumber(grandTotalDeficit)}</td>
+<td class="percentage-cell"><div class="percentage-wrapper">
+<div class="progress"><div class="progress-bar ${getStatusClass(grandPct)}" style="width:${grandBarWidth}%;"></div></div>
+<div class="percentage-text">${grandPct.toFixed(1)}%</div></div></td>
+</tr>`;
+
     tbody.innerHTML = html;
 }
 
@@ -645,27 +694,7 @@ function renderBranches(data) {
     tbody.innerHTML = html;
 }
 
-/* =====================================================
-   RENDER DEFERRED (14 columns — includes DEFICIT + % PERFORMANCE)
-
-   Columns:
-     0:  DRI
-     1:  BRANCH
-     2:  DEFFERED TARGET
-     3:  PARTIAL A/CS TARGET
-     4:  TOTAL TARGET
-     5:  MONDAY
-     6:  TUESDAY
-     7:  WEDNESDAY
-     8:  THURSDAY
-     9:  FRIDAY
-     10: WEEK 4 COLLECTION
-     11: DEFICIT        = TOTAL TARGET - WEEK 4 COLLECTION
-     12: % PERFORMANCE  = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
-     13: COLLECTION MARSHAL
-
-   Sorted by % PERFORMANCE descending.
-===================================================== */
+/* ========== RENDER DEFERRED (14 columns) ========== */
 
 function renderDeferred(data) {
     const tbody = document.getElementById("deferredBody");
@@ -674,7 +703,6 @@ function renderDeferred(data) {
         return;
     }
 
-    // Sort by % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
     const sortedData = [...data].sort((a, b) => {
         const wA = Number(a.week4Collection || a.achieved || 0);
         const tA = Number(a.target || a.totalTarget || 0);
@@ -688,7 +716,6 @@ function renderDeferred(data) {
     let html = "";
 
     sortedData.forEach(row => {
-        // Use fallback property names for robustness.
         const dri               = row.dri || row.collectionTeam || "";
         const branch            = row.branch || "";
         const deferredTarget    = Number(row.deferredTarget || 0);
@@ -700,14 +727,9 @@ function renderDeferred(data) {
         const thursday          = Number(row.thursday || 0);
         const friday            = Number(row.friday || 0);
         const week4Collection   = Number(row.week4Collection || row.achieved || 0);
-
-        // DEFICIT = TOTAL TARGET - WEEK 4 COLLECTION
-        const deficit = totalTarget - week4Collection;
-
-        // % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
-        const pct = totalTarget > 0 ? (week4Collection / totalTarget) * 100 : 0;
-        const safe = Math.min(Math.max(pct, 0), 100);
-
+        const deficit           = totalTarget - week4Collection;
+        const pct               = totalTarget > 0 ? (week4Collection / totalTarget) * 100 : 0;
+        const safe              = Math.min(Math.max(pct, 0), 100);
         const collectionMarshal = row.collectionMarshal || "";
 
         html += `<tr>
