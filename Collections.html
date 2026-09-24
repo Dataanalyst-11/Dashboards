@@ -26,21 +26,14 @@ body {
 
 .header {
     background: linear-gradient(135deg, #050d1f 0%, #0a1f3d 50%, #122a52 100%);
-    color: white;
-    padding: 20px 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, .45);
-    position: relative;
-    overflow: hidden;
-    border-bottom: 1px solid #1e3a5f;
+    color: white; padding: 20px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; box-shadow: 0 4px 18px rgba(0, 0, 0, .45);
+    position: relative; overflow: hidden; border-bottom: 1px solid #1e3a5f;
 }
 
 .header::before {
-    content: "";
-    position: absolute;
+    content: ""; position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: radial-gradient(circle at 90% 50%, rgba(96, 165, 250, .08) 0%, transparent 50%);
     pointer-events: none;
@@ -63,8 +56,7 @@ body {
     background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
     border-radius: 10px; padding: 18px 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, .35);
-    position: relative; overflow: hidden;
-    border: 1px solid #2a3a55;
+    position: relative; overflow: hidden; border: 1px solid #2a3a55;
     transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 
@@ -87,8 +79,7 @@ body {
 }
 
 select, input {
-    border: 1px solid #334155; border-radius: 7px;
-    padding: 9px 12px; font-size: 14px;
+    border: 1px solid #334155; border-radius: 7px; padding: 9px 12px; font-size: 14px;
     background: #0f172a; color: #e2e8f0; max-width: 100%;
     transition: border-color .2s ease, box-shadow .2s ease;
 }
@@ -157,8 +148,7 @@ th {
     background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%);
     color: #e2e8f0; padding: 14px 8px; font-size: 11px; font-weight: 700;
     text-align: center; white-space: normal; word-break: break-word;
-    text-transform: uppercase; letter-spacing: .5px;
-    border-bottom: 2px solid #2563eb;
+    text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid #2563eb;
 }
 
 th:nth-child(1), th:nth-child(2) { text-align: left; }
@@ -222,8 +212,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 .report-card-header {
     background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%);
     color: #93c5fd; padding: 14px 20px; font-size: 14px; font-weight: 700;
-    letter-spacing: 1.5px; text-transform: uppercase;
-    border-bottom: 2px solid #2563eb;
+    letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 2px solid #2563eb;
     display: flex; align-items: center; gap: 8px;
 }
 
@@ -245,10 +234,10 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 /* ========== DEFERRED SUMMARY TABLE (4 columns with progress bar) ========== */
 
 .deferred-summary-table { table-layout: fixed; }
-.deferred-summary-table th:nth-child(1), .deferred-summary-table td:nth-child(1) { width: 40%; }
-.deferred-summary-table th:nth-child(2), .deferred-summary-table td:nth-child(2),
+.deferred-summary-table th:nth-child(1), .deferred-summary-table td:nth-child(1) { width: 35%; }
+.deferred-summary-table th:nth-child(2), .deferred-summary-table td:nth-child(2) { width: 20%; }
 .deferred-summary-table th:nth-child(3), .deferred-summary-table td:nth-child(3) { width: 20%; }
-.deferred-summary-table th:nth-child(4), .deferred-summary-table td:nth-child(4) { width: 20%; }
+.deferred-summary-table th:nth-child(4), .deferred-summary-table td:nth-child(4) { width: 25%; }
 
 /* ========== EMPTY / LOADING / ERROR ========== */
 
@@ -360,7 +349,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
     </div>
 </div>
 
-<!-- ========== DEFERRED/PARTIAL VIEW (rows 51-77, 11 columns — same layout) ========== -->
+<!-- ========== DEFERRED/PARTIAL VIEW (rows 51-76, 11 columns — same layout as branches) ========== -->
 <div id="deferredContainer" style="display:none">
     <div class="table-container">
         <table id="deferredTable" class="eleven-col-view">
@@ -411,7 +400,10 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
         </div>
     </div>
 
-    <!-- Section 4: Deferred/Partial Summary card (4 columns, sorted by performance desc) -->
+    <!-- Section 4: Deferred/Partial Summary card -->
+    <!-- Columns: DRI | TOTAL TARGET | WEEK 4 COLLECTION | % PERFORMANCE -->
+    <!-- % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100 -->
+    <!-- Sorted by % PERFORMANCE descending -->
     <div class="report-card" id="deferredSummaryCard" style="display:none">
         <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
         <div class="report-table-wrapper">
@@ -420,7 +412,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
                 <tr>
                 <th>DRI</th>
                 <th>TOTAL TARGET</th>
-                <th>TOTAL ACHIEVED</th>
+                <th>WEEK 4 COLLECTION</th>
                 <th>% PERFORMANCE</th>
                 </tr>
                 </thead>
@@ -436,7 +428,7 @@ tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 <script>
 
 const API_URL =
-"https://script.google.com/macros/s/AKfycby3Kq9okQ9P1lDFZuG4WBjrpyAQ7bVScopmVjViRcdCy36DkMp9Tr3kbAUeQV1h40rj6w/exec";
+"https://script.google.com/macros/s/AKfycbysXlfvoc9Jomg-u5LWdFrCeKDTyTqq3kUUUj8WAaneUut1HlxHtubgTZ7eQPjJzEVJcg/exec";
 
 let allData = [];
 let deferredData = [];
@@ -570,12 +562,10 @@ function switchView(view) {
     const summaryCont = document.getElementById("summaryContainer");
     const deferredCont = document.getElementById("deferredContainer");
 
-    // Hide all containers.
     branchesCont.style.display = "none";
     summaryCont.style.display = "none";
     deferredCont.style.display = "none";
 
-    // Remove active from all buttons.
     summaryButton.classList.remove("active");
     branchesButton.classList.remove("active");
     deferredButton.classList.remove("active");
@@ -628,11 +618,15 @@ function renderSummaryView(data) {
     // Section 3: Monthly totals card
     renderReportCard("monthlyTotalsCard", "monthlyTotalsHead", "monthlyTotalsBody", monthlyTotals);
 
-    // Section 4: Deferred/Partial summary card (uses ALL deferredData, sorted by performance desc)
+    // Section 4: Deferred/Partial summary card
+    // Picks from deferredData (rows 51-76).
+    // Columns: DRI | TOTAL TARGET | WEEK 4 COLLECTION | % PERFORMANCE
+    // % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
+    // Sorted by % PERFORMANCE descending.
     renderDeferredSummary();
 }
 
-/* ========== RENDER TABLE (Collection team summary) ========== */
+/* ========== RENDER TABLE (Collection team summary — Section 1) ========== */
 
 function renderTable(data) {
     const tbody = document.getElementById("summaryBody");
@@ -676,7 +670,7 @@ function renderTable(data) {
     tbody.innerHTML = html;
 }
 
-/* ========== RENDER REPORT CARD (Weekly / Monthly) ========== */
+/* ========== RENDER REPORT CARD (Weekly / Monthly — Sections 2 & 3) ========== */
 
 function renderReportCard(cardId, headId, bodyId, reportData) {
     const card = document.getElementById(cardId);
@@ -710,12 +704,28 @@ function renderReportCard(cardId, headId, bodyId, reportData) {
     body.innerHTML = bodyHtml;
 }
 
-/* ========== RENDER DEFERRED SUMMARY (4 cols, sorted by performance desc) ========== */
+/* =====================================================
+   RENDER DEFERRED SUMMARY  (Section 4)
+
+   Picks from deferredData (rows 51-76 from the sheet).
+
+   Columns:
+     1. DRI                 = row.collectionTeam  (column 0)
+     2. TOTAL TARGET        = row.target           (column 2)
+     3. WEEK 4 COLLECTION   = row.achieved         (column 3)
+     4. % PERFORMANCE       = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
+
+   Aggregates by DRI (in case multiple rows share
+   the same DRI across different branches).
+
+   Sorted by % PERFORMANCE — DESCENDING (largest first).
+===================================================== */
 
 function renderDeferredSummary() {
     const card = document.getElementById("deferredSummaryCard");
     const tbody = document.getElementById("deferredSummaryBody");
 
+    // If no deferred data, hide the card.
     if (!deferredData || deferredData.length === 0) {
         card.style.display = "none";
         tbody.innerHTML = "";
@@ -724,37 +734,105 @@ function renderDeferredSummary() {
 
     card.style.display = "block";
 
-    // Aggregate by DRI (collection team).
+    /* ------------------------------------------------
+       Step 1: Aggregate by DRI (collection team).
+       Sum TOTAL TARGET and WEEK 4 COLLECTION (achieved).
+    ------------------------------------------------ */
+
     const driMap = new Map();
 
     deferredData.forEach(row => {
+
         const dri = String(row.collectionTeam || "Unknown");
+
         if (!driMap.has(dri)) {
-            driMap.set(dri, { dri: dri, target: 0, achieved: 0 });
+            // Initialize with zeros.
+            driMap.set(dri, {
+                dri: dri,
+                totalTarget: 0,
+                week4Collection: 0
+            });
         }
+
         const item = driMap.get(dri);
-        item.target += Number(row.target) || 0;
-        item.achieved += Number(row.achieved) || 0;
+
+        // TOTAL TARGET = row.target (column 2)
+        item.totalTarget += Number(row.target) || 0;
+
+        // WEEK 4 COLLECTION = row.achieved (column 3)
+        item.week4Collection += Number(row.achieved) || 0;
     });
 
-    // Convert to array and sort by performance descending.
+    /* ------------------------------------------------
+       Step 2: Calculate % PERFORMANCE for each DRI.
+       % PERFORMANCE = (WEEK 4 COLLECTION / TOTAL TARGET) * 100
+    ------------------------------------------------ */
+
     const driData = Array.from(driMap.values()).map(item => {
-        const pct = item.target > 0 ? (item.achieved / item.target) * 100 : 0;
-        return { ...item, pct };
-    }).sort((a, b) => b.pct - a.pct);
+
+        let performance = 0;
+
+        if (item.totalTarget > 0) {
+            performance = (item.week4Collection / item.totalTarget) * 100;
+        }
+
+        return {
+            dri: item.dri,
+            totalTarget: item.totalTarget,
+            week4Collection: item.week4Collection,
+            performance: performance
+        };
+    });
+
+    /* ------------------------------------------------
+       Step 3: Sort by % PERFORMANCE — DESCENDING.
+       Highest performance appears first.
+    ------------------------------------------------ */
+
+    driData.sort((a, b) => b.performance - a.performance);
+
+    /* ------------------------------------------------
+       Step 4: Render rows.
+    ------------------------------------------------ */
 
     let html = "";
+
     driData.forEach(item => {
-        const safe = Math.min(Math.max(item.pct, 0), 100);
+
+        // Clamp the progress bar width to 0-100.
+        const barWidth = Math.min(Math.max(item.performance, 0), 100);
+
         html += `<tr>
-<td><strong>${escapeHtml(item.dri)}</strong></td>
-<td>${formatNumber(item.target)}</td>
-<td>${formatNumber(item.achieved)}</td>
-<td class="percentage-cell"><div class="percentage-wrapper">
-<div class="progress"><div class="progress-bar ${getStatusClass(item.pct)}" style="width:${safe}%;"></div></div>
-<div class="percentage-text">${item.pct.toFixed(1)}%</div></div></td>
+
+<td>
+    <strong>${escapeHtml(item.dri)}</strong>
+</td>
+
+<td>
+    ${formatNumber(item.totalTarget)}
+</td>
+
+<td>
+    ${formatNumber(item.week4Collection)}
+</td>
+
+<td class="percentage-cell">
+    <div class="percentage-wrapper">
+        <div class="progress">
+            <div
+                class="progress-bar ${getStatusClass(item.performance)}"
+                style="width:${barWidth}%;"
+            ></div>
+        </div>
+        <div class="percentage-text">
+            ${item.performance.toFixed(1)}%
+        </div>
+    </div>
+</td>
+
 </tr>`;
     });
+
     tbody.innerHTML = html;
 }
 
@@ -784,7 +862,7 @@ function renderBranches(data) {
     tbody.innerHTML = html;
 }
 
-/* ========== RENDER DEFERRED (per-row, 11 cols, same layout as branches, sorted by % desc) ========== */
+/* ========== RENDER DEFERRED (per-row, 11 cols, same layout as branches) ========== */
 
 function renderDeferred(data) {
     const tbody = document.getElementById("deferredBody");
