@@ -1,5 +1,5 @@
+```html
 <!DOCTYPE html>
-
 <html>
 
 <head>
@@ -16,14 +16,28 @@ Collection Team Dashboard
 
 <style>
 
+/* =====================================================
+   GLOBAL
+===================================================== */
+
 * {
     box-sizing: border-box;
 }
 
-
+html,
 body {
 
     margin: 0;
+    padding: 0;
+
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: hidden;
+
+}
+
+body {
 
     font-family:
         Arial,
@@ -37,7 +51,9 @@ body {
 }
 
 
-/* ================= HEADER ================= */
+/* =====================================================
+   HEADER
+===================================================== */
 
 .header {
 
@@ -56,7 +72,6 @@ body {
 
 }
 
-
 .header-title {
 
     font-size: 25px;
@@ -64,7 +79,6 @@ body {
     font-weight: bold;
 
 }
-
 
 .header-subtitle {
 
@@ -76,7 +90,6 @@ body {
 
 }
 
-
 .last-update {
 
     font-size: 13px;
@@ -86,16 +99,24 @@ body {
 }
 
 
-/* ================= DASHBOARD ================= */
+/* =====================================================
+   DASHBOARD
+===================================================== */
 
 .dashboard {
+
+    width: 100%;
+
+    max-width: 100%;
 
     padding: 22px 30px;
 
 }
 
 
-/* ================= KPI ================= */
+/* =====================================================
+   KPI CARDS
+===================================================== */
 
 .kpis {
 
@@ -109,7 +130,6 @@ body {
     margin-bottom: 22px;
 
 }
-
 
 .card {
 
@@ -125,7 +145,6 @@ body {
 
 }
 
-
 .card-label {
 
     color: #6b7280;
@@ -135,7 +154,6 @@ body {
     font-weight: bold;
 
 }
-
 
 .card-value {
 
@@ -150,7 +168,9 @@ body {
 }
 
 
-/* ================= CONTROLS ================= */
+/* =====================================================
+   CONTROLS
+===================================================== */
 
 .controls {
 
@@ -172,7 +192,6 @@ body {
 
 }
 
-
 select,
 input {
 
@@ -187,15 +206,21 @@ input {
 
     background: white;
 
+    max-width: 100%;
+
 }
 
+select {
+
+    min-width: 170px;
+
+}
 
 input {
 
     min-width: 230px;
 
 }
-
 
 button {
 
@@ -213,7 +238,6 @@ button {
 
 }
 
-
 button:hover {
 
     opacity: .9;
@@ -221,7 +245,34 @@ button:hover {
 }
 
 
-/* ================= TABLE ================= */
+/* =====================================================
+   BACKGROUND REFRESH STATUS
+===================================================== */
+
+.refresh-status {
+
+    font-size: 12px;
+
+    color: #6b7280;
+
+    margin-left: auto;
+
+    white-space: nowrap;
+
+}
+
+.refresh-status.refreshing {
+
+    color: #17365d;
+
+    font-weight: bold;
+
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
 
 .table-container {
 
@@ -229,7 +280,11 @@ button:hover {
 
     border-radius: 8px;
 
-    overflow-x: auto;
+    overflow: hidden;
+
+    width: 100%;
+
+    max-width: 100%;
 
     box-shadow:
         0 2px 7px
@@ -238,16 +293,91 @@ button:hover {
 }
 
 
+/*
+   IMPORTANT:
+
+   The previous version had:
+
+       min-width:1200px;
+
+   That caused horizontal scrolling.
+
+   The table now uses the full available width.
+*/
+
 table {
 
     width: 100%;
 
+    max-width: 100%;
+
     border-collapse: collapse;
 
-    min-width: 1200px;
+    table-layout: fixed;
 
 }
 
+
+/* =====================================================
+   COLUMN WIDTHS
+===================================================== */
+
+th:nth-child(1),
+td:nth-child(1) {
+
+    width: 15%;
+
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+
+    width: 10%;
+
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+
+    width: 9%;
+
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+
+    width: 10%;
+
+}
+
+th:nth-child(5),
+td:nth-child(5),
+th:nth-child(6),
+td:nth-child(6),
+th:nth-child(7),
+td:nth-child(7),
+th:nth-child(8),
+td:nth-child(8),
+th:nth-child(9),
+td:nth-child(9),
+th:nth-child(10),
+td:nth-child(10) {
+
+    width: 6%;
+
+}
+
+th:nth-child(11),
+td:nth-child(11) {
+
+    width: 14%;
+
+}
+
+
+/* =====================================================
+   TABLE HEADER
+===================================================== */
 
 th {
 
@@ -255,16 +385,19 @@ th {
 
     color: white;
 
-    padding: 12px 10px;
+    padding: 10px 5px;
 
-    font-size: 12px;
+    font-size: 11px;
 
     text-align: center;
 
-    white-space: nowrap;
+    white-space: normal;
+
+    overflow-wrap: anywhere;
+
+    line-height: 1.2;
 
 }
-
 
 th:nth-child(1),
 th:nth-child(2) {
@@ -274,19 +407,26 @@ th:nth-child(2) {
 }
 
 
+/* =====================================================
+   TABLE BODY
+===================================================== */
+
 td {
 
-    padding: 11px 10px;
+    padding: 9px 5px;
 
     border-bottom:
         1px solid #e5e7eb;
 
-    font-size: 13px;
+    font-size: 12px;
 
     text-align: right;
 
-}
+    white-space: normal;
 
+    overflow-wrap: anywhere;
+
+}
 
 td:nth-child(1),
 td:nth-child(2) {
@@ -295,7 +435,6 @@ td:nth-child(2) {
 
 }
 
-
 tbody tr:hover {
 
     background: #f8fafc;
@@ -303,14 +442,15 @@ tbody tr:hover {
 }
 
 
-/* ================= PROGRESS ================= */
+/* =====================================================
+   PROGRESS BAR
+===================================================== */
 
 .percentage-cell {
 
-    min-width: 170px;
+    width: 100%;
 
 }
-
 
 .percentage-wrapper {
 
@@ -318,14 +458,15 @@ tbody tr:hover {
 
     align-items: center;
 
-    gap: 8px;
+    gap: 4px;
+
+    width: 100%;
 
 }
 
-
 .progress {
 
-    height: 9px;
+    height: 8px;
 
     background: #e5e7eb;
 
@@ -335,8 +476,9 @@ tbody tr:hover {
 
     flex: 1;
 
-}
+    min-width: 0;
 
+}
 
 .progress-bar {
 
@@ -346,13 +488,11 @@ tbody tr:hover {
 
 }
 
-
 .high {
 
     background: #16a34a;
 
 }
-
 
 .medium {
 
@@ -360,26 +500,30 @@ tbody tr:hover {
 
 }
 
-
 .low {
 
     background: #dc2626;
 
 }
 
-
 .percentage-text {
 
-    width: 52px;
+    width: 38px;
+
+    min-width: 38px;
 
     font-weight: bold;
 
     text-align: right;
 
+    font-size: 11px;
+
 }
 
 
-/* ================= LOADING ================= */
+/* =====================================================
+   LOADING
+===================================================== */
 
 #loading {
 
@@ -391,6 +535,10 @@ tbody tr:hover {
 
 }
 
+
+/* =====================================================
+   ERROR
+===================================================== */
 
 #error {
 
@@ -409,9 +557,64 @@ tbody tr:hover {
 }
 
 
-/* ================= RESPONSIVE ================= */
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:1200px) {
+
+    .dashboard {
+
+        padding: 18px;
+
+    }
+
+    th {
+
+        font-size: 10px;
+
+    }
+
+    td {
+
+        font-size: 11px;
+
+        padding: 8px 4px;
+
+    }
+
+    .percentage-text {
+
+        font-size: 10px;
+
+        width: 34px;
+
+        min-width: 34px;
+
+    }
+
+}
+
 
 @media(max-width:900px) {
+
+    .header {
+
+        padding: 15px;
+
+    }
+
+    .header-title {
+
+        font-size: 19px;
+
+    }
+
+    .header-subtitle {
+
+        font-size: 11px;
+
+    }
 
     .kpis {
 
@@ -422,11 +625,197 @@ tbody tr:hover {
 
     .dashboard {
 
-        padding: 15px;
+        padding: 12px;
+
+    }
+
+    th {
+
+        font-size: 9px;
+
+        padding: 7px 3px;
+
+    }
+
+    td {
+
+        font-size: 10px;
+
+        padding: 7px 3px;
+
+    }
+
+    .percentage-wrapper {
+
+        gap: 2px;
+
+    }
+
+    .progress {
+
+        height: 6px;
+
+    }
+
+    .percentage-text {
+
+        width: 31px;
+
+        min-width: 31px;
+
+        font-size: 9px;
 
     }
 
 }
+
+
+@media(max-width:600px) {
+
+    .header {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 8px;
+
+    }
+
+    .header-title {
+
+        font-size: 17px;
+
+    }
+
+    .last-update {
+
+        text-align: left;
+
+    }
+
+    .dashboard {
+
+        padding: 8px;
+
+    }
+
+    .kpis {
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+        gap: 8px;
+
+    }
+
+    .card {
+
+        padding: 12px;
+
+    }
+
+    .card-label {
+
+        font-size: 11px;
+
+    }
+
+    .card-value {
+
+        font-size: 19px;
+
+    }
+
+    .controls {
+
+        padding: 10px;
+
+        gap: 7px;
+
+    }
+
+    select,
+    input,
+    button {
+
+        font-size: 12px;
+
+        padding: 8px;
+
+    }
+
+    select {
+
+        min-width: 140px;
+
+    }
+
+    input {
+
+        min-width: 150px;
+
+        flex: 1;
+
+    }
+
+    .refresh-status {
+
+        width: 100%;
+
+        margin-left: 0;
+
+    }
+
+    th {
+
+        font-size: 8px;
+
+        padding: 6px 2px;
+
+    }
+
+    td {
+
+        font-size: 9px;
+
+        padding: 6px 2px;
+
+    }
+
+}
+
+
+/* =====================================================
+   VERY SMALL SCREENS
+===================================================== */
+
+@media(max-width:400px) {
+
+    th {
+
+        font-size: 7px;
+
+    }
+
+    td {
+
+        font-size: 8px;
+
+    }
+
+    .percentage-text {
+
+        font-size: 8px;
+
+        width: 27px;
+
+        min-width: 27px;
+
+    }
+
+}
+
 
 </style>
 
@@ -436,7 +825,9 @@ tbody tr:hover {
 <body>
 
 
-<!-- HEADER -->
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
 <div class="header">
 
@@ -482,7 +873,9 @@ tbody tr:hover {
 <div id="error"></div>
 
 
-<!-- KPI CARDS -->
+<!-- =====================================================
+     KPI CARDS
+===================================================== -->
 
 <div class="kpis">
 
@@ -570,10 +963,14 @@ tbody tr:hover {
 
 
 
-<!-- FILTERS -->
+<!-- =====================================================
+     FILTERS
+===================================================== -->
 
 <div class="controls">
 
+
+<!-- BRANCH -->
 
 <select
     id="branchFilter"
@@ -588,28 +985,59 @@ tbody tr:hover {
 </select>
 
 
+<!-- COLLECTION TEAM -->
+
+<select
+    id="teamFilter"
+    onchange="applyFilters()">
+
+    <option value="ALL">
+
+        All Collection Teams
+
+    </option>
+
+</select>
+
+
+<!-- SEARCH -->
 
 <input
     type="text"
     id="searchBox"
     placeholder="Search collection team..."
-    onkeyup="applyFilters()"
+    oninput="applyFilters()"
 >
 
 
+<!-- REFRESH -->
 
-<button onclick="loadData()">
+<button
+    onclick="loadData(true)">
 
     ↻ Refresh
 
 </button>
 
 
+<!-- STATUS -->
+
+<div
+    id="refreshStatus"
+    class="refresh-status">
+
+    Auto-refresh: 5 min
+
+</div>
+
+
 </div>
 
 
 
-<!-- TABLE -->
+<!-- =====================================================
+     TABLE
+===================================================== -->
 
 <div class="table-container">
 
@@ -632,47 +1060,47 @@ tbody tr:hover {
 <tr>
 
 <th>
-COLLECTION TEAM
+    COLLECTION TEAM
 </th>
 
 <th>
-BRANCH
+    BRANCH
 </th>
 
 <th>
-TOTAL - TARGET
+    TOTAL - TARGET
 </th>
 
 <th>
-TOTAL - ACHIEVED
+    TOTAL - ACHIEVED
 </th>
 
 <th>
-SUNDAY
+    SUNDAY
 </th>
 
 <th>
-MONDAY
+    MONDAY
 </th>
 
 <th>
-TUESDAY
+    TUESDAY
 </th>
 
 <th>
-WEDNESDAY
+    WEDNESDAY
 </th>
 
 <th>
-THURSDAY
+    THURSDAY
 </th>
 
 <th>
-FRIDAY
+    FRIDAY
 </th>
 
 <th>
-% ACHIEVED
+    % ACHIEVED
 </th>
 
 </tr>
@@ -686,6 +1114,7 @@ FRIDAY
 
 
 </table>
+
 
 </div>
 
@@ -705,38 +1134,155 @@ const API_URL =
 "https://script.google.com/macros/s/AKfycbysXlfvoc9Jomg-u5LWdFrCeKDTyTqq3kUUUj8WAaneUut1HlxHtubgTZ7eQPjJzEVJcg/exec";
 
 
+/* =====================================================
+   GLOBAL DATA
+===================================================== */
+
 let allData = [];
 
+
+/*
+   Prevent multiple refreshes from running
+   at the same time.
+*/
+
+let refreshInProgress = false;
 
 
 /* =====================================================
    LOAD DATA
 ===================================================== */
 
-async function loadData() {
+async function loadData(
+    manualRefresh = false
+) {
+
+
+    /*
+       Don't start another request if
+       one is already running.
+    */
+
+    if (refreshInProgress) {
+
+        return;
+
+    }
+
+
+    refreshInProgress = true;
+
 
     const loading =
-        document.getElementById("loading");
+        document.getElementById(
+            "loading"
+        );
 
     const table =
-        document.getElementById("dataTable");
+        document.getElementById(
+            "dataTable"
+        );
 
     const error =
-        document.getElementById("error");
+        document.getElementById(
+            "error"
+        );
+
+    const refreshStatus =
+        document.getElementById(
+            "refreshStatus"
+        );
 
 
-    loading.style.display = "block";
+    /*
+       First load is the ONLY time
+       we display the loading screen.
+    */
 
-    table.style.display = "none";
+    const firstLoad =
+        allData.length === 0;
 
-    error.style.display = "none";
+
+    if (firstLoad) {
+
+        loading.style.display =
+            "block";
+
+        table.style.display =
+            "none";
+
+    }
+
+
+    error.style.display =
+        "none";
+
+
+    /*
+       Background refresh indicator.
+    */
+
+    if (!firstLoad) {
+
+        refreshStatus.innerText =
+            "Updating data...";
+
+        refreshStatus.classList.add(
+            "refreshing"
+        );
+
+    }
 
 
     try {
 
 
+        /*
+           Capture the current filters
+           BEFORE fetching new data.
+        */
+
+        const currentBranch =
+            document
+                .getElementById(
+                    "branchFilter"
+                )
+                .value;
+
+
+        const currentTeam =
+            document
+                .getElementById(
+                    "teamFilter"
+                )
+                .value;
+
+
+        const currentSearch =
+            document
+                .getElementById(
+                    "searchBox"
+                )
+                .value;
+
+
+        /*
+           Fetch fresh data.
+
+           Timestamp prevents browser/cache
+           from returning an old API response.
+        */
+
         const response =
-            await fetch(API_URL);
+            await fetch(
+                API_URL +
+                "?t=" +
+                Date.now(),
+                {
+                    cache:
+                        "no-store"
+                }
+            );
 
 
         if (!response.ok) {
@@ -753,7 +1299,10 @@ async function loadData() {
             await response.json();
 
 
-        if (result.status !== "success") {
+        if (
+            result.status !==
+            "success"
+        ) {
 
             throw new Error(
                 result.message ||
@@ -763,20 +1312,76 @@ async function loadData() {
         }
 
 
-        allData =
+        /*
+           Only replace allData after
+           the complete request succeeds.
+        */
+
+        const newData =
             result.data || [];
 
 
-        populateBranches();
+        allData =
+            newData;
+
+
+        /*
+           Rebuild both filters while
+           preserving their selections.
+        */
+
+        populateFilters(
+            currentBranch,
+            currentTeam
+        );
+
+
+        /*
+           Restore search box.
+        */
+
+        document
+            .getElementById(
+                "searchBox"
+            )
+            .value =
+            currentSearch;
+
+
+        /*
+           Apply the preserved filters
+           to the new data.
+        */
 
         applyFilters();
 
 
+        /*
+           Update timestamp.
+        */
+
         document
-            .getElementById("lastUpdate")
+            .getElementById(
+                "lastUpdate"
+            )
             .innerText =
             new Date()
-                .toLocaleString("en-KE");
+                .toLocaleString(
+                    "en-KE"
+                );
+
+
+        /*
+           Background refresh completed.
+        */
+
+        refreshStatus.innerText =
+            "Auto-refresh: 5 min";
+
+
+        refreshStatus.classList.remove(
+            "refreshing"
+        );
 
 
     }
@@ -784,18 +1389,45 @@ async function loadData() {
     catch (err) {
 
 
-        loading.style.display =
-            "none";
+        /*
+           IMPORTANT:
 
+           If background refresh fails,
+           DO NOT remove the existing
+           dashboard data.
+        */
 
-        error.style.display =
-            "block";
+        if (firstLoad) {
 
+            loading.style.display =
+                "none";
 
-        error.innerText =
-            "Unable to load collection data: " +
-            err.message;
+            error.style.display =
+                "block";
 
+            error.innerText =
+                "Unable to load collection data: " +
+                err.message;
+
+        }
+
+        else {
+
+            refreshStatus.innerText =
+                "Update failed - retrying in 5 min";
+
+            refreshStatus.classList.remove(
+                "refreshing"
+            );
+
+        }
+
+    }
+
+    finally {
+
+        refreshInProgress =
+            false;
 
     }
 
@@ -804,65 +1436,176 @@ async function loadData() {
 
 
 /* =====================================================
-   BRANCH FILTER
+   POPULATE BRANCH + COLLECTION TEAM FILTERS
 ===================================================== */
 
-function populateBranches() {
+function populateFilters(
+    selectedBranch = "ALL",
+    selectedTeam = "ALL"
+) {
 
 
-    const select =
+    const branchSelect =
         document.getElementById(
             "branchFilter"
         );
 
 
+    const teamSelect =
+        document.getElementById(
+            "teamFilter"
+        );
+
+
+    /* =================================================
+       BRANCHES
+    ================================================= */
+
     const branches =
         [
             ...new Set(
                 allData
-                    .map(row => row.branch)
+                    .map(
+                        row =>
+                            row.branch
+                    )
                     .filter(Boolean)
             )
         ]
         .sort();
 
 
-    select.innerHTML =
+    branchSelect.innerHTML =
         `<option value="ALL">
             All Branches
         </option>`;
 
 
-    branches.forEach(branch => {
+    branches.forEach(
+        branch => {
 
 
-        const option =
-            document.createElement(
-                "option"
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                branch;
+
+
+            option.textContent =
+                branch;
+
+
+            branchSelect.appendChild(
+                option
             );
 
 
-        option.value =
-            branch;
+        }
+    );
 
 
-        option.textContent =
-            branch;
+    /* =================================================
+       COLLECTION TEAMS
+    ================================================= */
+
+    const teams =
+        [
+            ...new Set(
+                allData
+                    .map(
+                        row =>
+                            row.collectionTeam
+                    )
+                    .filter(Boolean)
+            )
+        ]
+        .sort();
 
 
-        select.appendChild(
-            option
+    teamSelect.innerHTML =
+        `<option value="ALL">
+            All Collection Teams
+        </option>`;
+
+
+    teams.forEach(
+        team => {
+
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                team;
+
+
+            option.textContent =
+                team;
+
+
+            teamSelect.appendChild(
+                option
+            );
+
+
+        }
+    );
+
+
+    /* =================================================
+       RESTORE BRANCH SELECTION
+    ================================================= */
+
+    const branchExists =
+        [
+            ...branchSelect.options
+        ]
+        .some(
+            option =>
+                option.value ===
+                selectedBranch
         );
 
 
-    });
+    branchSelect.value =
+        branchExists
+            ? selectedBranch
+            : "ALL";
+
+
+    /* =================================================
+       RESTORE COLLECTION TEAM SELECTION
+    ================================================= */
+
+    const teamExists =
+        [
+            ...teamSelect.options
+        ]
+        .some(
+            option =>
+                option.value ===
+                selectedTeam
+        );
+
+
+    teamSelect.value =
+        teamExists
+            ? selectedTeam
+            : "ALL";
 
 }
 
 
 
 /* =====================================================
-   FILTER DATA
+   APPLY FILTERS
 ===================================================== */
 
 function applyFilters() {
@@ -872,6 +1615,14 @@ function applyFilters() {
         document
             .getElementById(
                 "branchFilter"
+            )
+            .value;
+
+
+    const team =
+        document
+            .getElementById(
+                "teamFilter"
             )
             .value;
 
@@ -887,34 +1638,63 @@ function applyFilters() {
 
 
     const filtered =
-        allData.filter(row => {
+        allData.filter(
+            row => {
 
 
-            const branchMatch =
-                branch === "ALL" ||
-                row.branch === branch;
+                /*
+                   BRANCH FILTER
+                */
+
+                const branchMatch =
+                    branch === "ALL" ||
+                    row.branch ===
+                    branch;
 
 
-            const searchMatch =
-                !search ||
-                String(
-                    row.collectionTeam
-                )
-                .toLowerCase()
-                .includes(search);
+                /*
+                   COLLECTION TEAM FILTER
+                */
+
+                const teamMatch =
+                    team === "ALL" ||
+                    row.collectionTeam ===
+                    team;
 
 
-            return (
-                branchMatch &&
-                searchMatch
-            );
+                /*
+                   SEARCH FILTER
+                */
 
-        });
+                const searchMatch =
+                    !search ||
+                    String(
+                        row.collectionTeam
+                    )
+                    .toLowerCase()
+                    .includes(
+                        search
+                    );
 
 
-    renderTable(filtered);
+                return (
+                    branchMatch &&
+                    teamMatch &&
+                    searchMatch
+                );
 
-    updateKPIs(filtered);
+            }
+        );
+
+
+    renderTable(
+        filtered
+    );
+
+
+    updateKPIs(
+        filtered
+    );
 
 }
 
@@ -924,7 +1704,9 @@ function applyFilters() {
    RENDER TABLE
 ===================================================== */
 
-function renderTable(data) {
+function renderTable(
+    data
+) {
 
 
     const tbody =
@@ -933,119 +1715,208 @@ function renderTable(data) {
         );
 
 
-    tbody.innerHTML = "";
+    /*
+       Build the entire table in memory
+       before touching the screen.
+
+       This makes updates smoother.
+    */
+
+    let html = "";
 
 
-    data.forEach(row => {
+    data.forEach(
+        row => {
 
 
-        const tr =
-            document.createElement(
-                "tr"
-            );
+            html += `
 
-
-        tr.innerHTML = `
+<tr>
 
 <td>
+
     <strong>
+
         ${escapeHtml(
             row.collectionTeam
         )}
+
     </strong>
+
 </td>
 
-<td>
-    ${escapeHtml(row.branch)}
-</td>
 
 <td>
-    ${formatNumber(row.target)}
+
+    ${escapeHtml(
+        row.branch
+    )}
+
 </td>
 
-<td>
-    ${formatNumber(row.achieved)}
-</td>
 
 <td>
-    ${formatNumber(row.sunday)}
+
+    ${formatNumber(
+        row.target
+    )}
+
 </td>
 
-<td>
-    ${formatNumber(row.monday)}
-</td>
 
 <td>
-    ${formatNumber(row.tuesday)}
+
+    ${formatNumber(
+        row.achieved
+    )}
+
 </td>
 
-<td>
-    ${formatNumber(row.wednesday)}
-</td>
 
 <td>
-    ${formatNumber(row.thursday)}
+
+    ${formatNumber(
+        row.sunday
+    )}
+
 </td>
 
+
 <td>
-    ${formatNumber(row.friday)}
+
+    ${formatNumber(
+        row.monday
+    )}
+
 </td>
+
+
+<td>
+
+    ${formatNumber(
+        row.tuesday
+    )}
+
+</td>
+
+
+<td>
+
+    ${formatNumber(
+        row.wednesday
+    )}
+
+</td>
+
+
+<td>
+
+    ${formatNumber(
+        row.thursday
+    )}
+
+</td>
+
+
+<td>
+
+    ${formatNumber(
+        row.friday
+    )}
+
+</td>
+
 
 <td class="percentage-cell">
 
-<div class="percentage-wrapper">
+    <div
+        class="percentage-wrapper">
 
-<div class="progress">
 
-<div
-class="progress-bar ${getStatusClass(row.percentage)}"
-style="
-width:${Math.min(
-Math.max(row.percentage,0),
-100
-)}%
-">
-</div>
+        <div
+            class="progress">
 
-</div>
 
-<div class="percentage-text">
+            <div
+                class="progress-bar
+                ${getStatusClass(
+                    row.percentage
+                )}"
+                style="
+                    width:${Math.min(
+                        Math.max(
+                            Number(
+                                row.percentage
+                            ) || 0,
+                            0
+                        ),
+                        100
+                    )}%
+                ">
 
-${Number(row.percentage).toFixed(1)}%
+            </div>
 
-</div>
 
-</div>
+        </div>
+
+
+        <div
+            class="percentage-text">
+
+            ${Number(
+                row.percentage
+            ).toFixed(1)}%
+
+        </div>
+
+
+    </div>
 
 </td>
 
+
+</tr>
+
 `;
 
-
-        tbody.appendChild(tr);
-
-
-    });
+        }
+    );
 
 
-    document.getElementById(
-        "loading"
-    ).style.display = "none";
+    /*
+       One DOM update.
+    */
+
+    tbody.innerHTML =
+        html;
 
 
-    document.getElementById(
-        "dataTable"
-    ).style.display = "table";
+    document
+        .getElementById(
+            "loading"
+        )
+        .style.display =
+        "none";
+
+
+    document
+        .getElementById(
+            "dataTable"
+        )
+        .style.display =
+        "table";
 
 }
 
 
 
 /* =====================================================
-   KPI
+   UPDATE KPIs
 ===================================================== */
 
-function updateKPIs(data) {
+function updateKPIs(
+    data
+) {
 
 
     let target = 0;
@@ -1053,49 +1924,77 @@ function updateKPIs(data) {
     let achieved = 0;
 
 
-    data.forEach(row => {
+    data.forEach(
+        row => {
 
-        target +=
-            Number(row.target) || 0;
 
-        achieved +=
-            Number(row.achieved) || 0;
+            target +=
+                Number(
+                    row.target
+                ) || 0;
 
-    });
+
+            achieved +=
+                Number(
+                    row.achieved
+                ) || 0;
+
+        }
+    );
 
 
     const balance =
-        target - achieved;
+        target -
+        achieved;
 
 
     const percentage =
         target > 0
-            ? achieved / target * 100
+            ? (
+                achieved /
+                target
+            ) * 100
             : 0;
 
 
-    document.getElementById(
-        "totalTarget"
-    ).innerText =
-        formatNumber(target);
+    document
+        .getElementById(
+            "totalTarget"
+        )
+        .innerText =
+        formatNumber(
+            target
+        );
 
 
-    document.getElementById(
-        "totalAchieved"
-    ).innerText =
-        formatNumber(achieved);
+    document
+        .getElementById(
+            "totalAchieved"
+        )
+        .innerText =
+        formatNumber(
+            achieved
+        );
 
 
-    document.getElementById(
-        "balance"
-    ).innerText =
-        formatNumber(balance);
+    document
+        .getElementById(
+            "balance"
+        )
+        .innerText =
+        formatNumber(
+            balance
+        );
 
 
-    document.getElementById(
-        "overallPercentage"
-    ).innerText =
-        percentage.toFixed(1) + "%";
+    document
+        .getElementById(
+            "overallPercentage"
+        )
+        .innerText =
+        percentage.toFixed(
+            1
+        ) + "%";
 
 }
 
@@ -1105,7 +2004,13 @@ function updateKPIs(data) {
    STATUS
 ===================================================== */
 
-function getStatusClass(value) {
+function getStatusClass(
+    value
+) {
+
+
+    value =
+        Number(value) || 0;
 
 
     if (value >= 90) {
@@ -1132,12 +2037,20 @@ function getStatusClass(value) {
    NUMBER FORMAT
 ===================================================== */
 
-function formatNumber(value) {
+function formatNumber(
+    value
+) {
 
-    return Number(value || 0)
-        .toLocaleString("en-KE", {
-            maximumFractionDigits: 0
-        });
+    return Number(
+        value || 0
+    )
+    .toLocaleString(
+        "en-KE",
+        {
+            maximumFractionDigits:
+                0
+        }
+    );
 
 }
 
@@ -1147,14 +2060,33 @@ function formatNumber(value) {
    HTML ESCAPE
 ===================================================== */
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
-    return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        value || ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
 
 }
 
@@ -1166,18 +2098,27 @@ function escapeHtml(value) {
 
 window.addEventListener(
     "load",
-    loadData
+    function() {
+
+        loadData(false);
+
+    }
 );
 
 
+
 /* =====================================================
-   AUTO REFRESH
-   60 SECONDS
+   AUTOMATIC BACKGROUND REFRESH
+   EVERY 5 MINUTES
 ===================================================== */
 
 setInterval(
-    loadData,
-    60000
+    function() {
+
+        loadData(false);
+
+    },
+    300000
 );
 
 
@@ -1187,3 +2128,4 @@ setInterval(
 </body>
 
 </html>
+```
