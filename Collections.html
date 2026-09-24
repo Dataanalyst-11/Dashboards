@@ -7,17 +7,11 @@
 
 <style>
 
-/* =====================================================
-   GLOBAL
-===================================================== */
-
 * { box-sizing: border-box; }
 
 html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    max-width: 100%;
+    margin: 0; padding: 0;
+    width: 100%; max-width: 100%;
     overflow-x: hidden;
 }
 
@@ -28,9 +22,7 @@ body {
     min-height: 100vh;
 }
 
-/* =====================================================
-   HEADER
-===================================================== */
+/* ===================================================== HEADER */
 
 .header {
     background: linear-gradient(135deg, #050d1f 0%, #0a1f3d 50%, #122a52 100%);
@@ -54,55 +46,18 @@ body {
     pointer-events: none;
 }
 
-.header-title {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: .5px;
-    position: relative;
-    color: #f8fafc;
-}
+.header-title { font-size: 26px; font-weight: 800; letter-spacing: .5px; position: relative; color: #f8fafc; }
+.header-subtitle { font-size: 13px; margin-top: 5px; opacity: .8; font-weight: 500; position: relative; color: #93c5fd; }
+.last-update { font-size: 13px; text-align: right; position: relative; color: #cbd5e1; }
+.last-update #lastUpdate { font-weight: 600; color: #60a5fa; }
 
-.header-subtitle {
-    font-size: 13px;
-    margin-top: 5px;
-    opacity: .8;
-    font-weight: 500;
-    position: relative;
-    color: #93c5fd;
-}
+/* ===================================================== DASHBOARD */
 
-.last-update {
-    font-size: 13px;
-    text-align: right;
-    position: relative;
-    color: #cbd5e1;
-}
+.dashboard { width: 100%; max-width: 100%; padding: 22px 30px; }
 
-.last-update #lastUpdate {
-    font-weight: 600;
-    color: #60a5fa;
-}
+/* ===================================================== KPI CARDS */
 
-/* =====================================================
-   DASHBOARD
-===================================================== */
-
-.dashboard {
-    width: 100%;
-    max-width: 100%;
-    padding: 22px 30px;
-}
-
-/* =====================================================
-   KPI CARDS
-===================================================== */
-
-.kpis {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 22px;
-}
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
 
 .card {
     background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
@@ -115,55 +70,25 @@ body {
     transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
-    border-color: #3b555f;
-}
+.card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, .45); border-color: #3b555f; }
 
-.card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0;
-    width: 5px;
-    height: 100%;
-    background: var(--accent, #2563eb);
-}
-
+.card::before { content: ""; position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: var(--accent, #2563eb); }
 .card:nth-child(1) { --accent: #3b82f6; }
 .card:nth-child(2) { --accent: #10b981; }
 .card:nth-child(3) { --accent: #f59e0b; }
 .card:nth-child(4) { --accent: #a855f7; }
 
-.card-label {
-    color: #94a3b8;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-}
+.card-label { color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.card-value { font-size: 28px; font-weight: 800; color: #f1f5f9; margin-top: 8px; font-feature-settings: "tnum"; }
 
-.card-value {
-    font-size: 28px;
-    font-weight: 800;
-    color: #f1f5f9;
-    margin-top: 8px;
-    font-feature-settings: "tnum";
-}
-
-/* =====================================================
-   CONTROLS
-===================================================== */
+/* ===================================================== CONTROLS */
 
 .controls {
     background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
     padding: 16px;
     border-radius: 10px;
     margin-bottom: 18px;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
     box-shadow: 0 4px 12px rgba(0, 0, 0, .35);
     border: 1px solid #2a3a55;
 }
@@ -179,356 +104,246 @@ select, input {
     transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-select:focus,
-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, .2);
-}
-
+select:focus, input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .2); }
 select { min-width: 180px; cursor: pointer; }
-input  { min-width: 230px; flex: 1; }
-
+input { min-width: 230px; flex: 1; }
 input::placeholder { color: #64748b; }
 
 button {
-    padding: 9px 18px;
-    border: 0;
-    border-radius: 7px;
+    padding: 9px 18px; border: 0; border-radius: 7px;
     background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%);
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
+    color: white; cursor: pointer; font-size: 14px; font-weight: 600;
     transition: opacity .2s ease, transform .15s ease;
     box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
 }
 
 button:hover { opacity: .92; transform: translateY(-1px); }
 button:active { transform: translateY(0); }
+button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 
-button:disabled {
-    opacity: .55;
-    cursor: not-allowed;
-    transform: none;
-}
+/* ===================================================== REFRESH BUTTON */
 
-/* =====================================================
-   REFRESH BUTTON
-===================================================== */
+#refreshButton .refresh-icon { display: inline-block; transition: transform .3s ease; }
+#refreshButton.spinning .refresh-icon { animation: spin 1s linear infinite; }
+#refreshButton.spinning { background: linear-gradient(135deg, #475569 0%, #64748b 100%); }
 
-#refreshButton .refresh-icon {
-    display: inline-block;
-    transition: transform .3s ease;
-}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-#refreshButton.spinning .refresh-icon {
-    animation: spin 1s linear infinite;
-}
-
-#refreshButton.spinning {
-    background: linear-gradient(135deg, #475569 0%, #64748b 100%);
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-
-/* =====================================================
-   VIEW SWITCH
-===================================================== */
+/* ===================================================== VIEW SWITCH */
 
 .view-switch {
-    display: inline-flex;
-    align-items: center;
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 3px;
-    margin-left: auto;
+    display: inline-flex; align-items: center;
+    background: #0f172a; border: 1px solid #334155;
+    border-radius: 8px; padding: 3px; margin-left: auto;
 }
 
 .view-switch button {
-    background: transparent;
-    color: #94a3b8;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: .5px;
-    transition: all .2s ease;
-    box-shadow: none;
+    background: transparent; color: #94a3b8; border: none;
+    padding: 8px 20px; border-radius: 6px;
+    font-weight: 700; font-size: 13px; letter-spacing: .5px;
+    transition: all .2s ease; box-shadow: none;
 }
 
-.view-switch button:hover {
-    opacity: 1;
-    background: #1e293b;
-    color: #e2e8f0;
-    transform: none;
-}
-
+.view-switch button:hover { opacity: 1; background: #1e293b; color: #e2e8f0; transform: none; }
 .view-switch button.active {
     background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
+    color: white; box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
 }
 
-/* =====================================================
-   VIEW LABEL
-===================================================== */
+/* ===================================================== VIEW LABEL */
 
-.view-label {
-    width: 100%;
-    margin-top: -8px;
-    margin-bottom: 10px;
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 500;
-    font-style: italic;
-}
+.view-label { width: 100%; margin-top: -8px; margin-bottom: 10px; font-size: 12px; color: #64748b; font-weight: 500; font-style: italic; }
 
-/* =====================================================
-   TABLE CONTAINER
-===================================================== */
+/* ===================================================== TABLE CONTAINER */
 
 .table-container {
     background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
     border-radius: 10px;
     overflow: hidden;
-    width: 100%;
-    max-width: 100%;
+    width: 100%; max-width: 100%;
     box-shadow: 0 4px 16px rgba(0, 0, 0, .4);
     border: 1px solid #2a3a55;
 }
 
-table {
-    width: 100%;
-    max-width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
+table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; }
 
 th {
     background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%);
-    color: #e2e8f0;
-    padding: 14px 8px;
-    font-size: 11px;
-    font-weight: 700;
-    text-align: center;
-    white-space: normal;
-    word-break: break-word;
-    text-transform: uppercase;
-    letter-spacing: .5px;
+    color: #e2e8f0; padding: 14px 8px; font-size: 11px; font-weight: 700;
+    text-align: center; white-space: normal; word-break: break-word;
+    text-transform: uppercase; letter-spacing: .5px;
     border-bottom: 2px solid #2563eb;
 }
 
-th:nth-child(1),
-th:nth-child(2) { text-align: left; }
+th:nth-child(1), th:nth-child(2) { text-align: left; }
 
-td {
-    padding: 12px 8px;
-    border-bottom: 1px solid #1e293b;
-    font-size: 13px;
-    text-align: right;
-    word-break: break-word;
-    color: #cbd5e1;
-}
-
-td:nth-child(1),
-td:nth-child(2) { text-align: left; }
+td { padding: 12px 8px; border-bottom: 1px solid #1e293b; font-size: 13px; text-align: right; word-break: break-word; color: #cbd5e1; }
+td:nth-child(1), td:nth-child(2) { text-align: left; }
 
 tbody tr { transition: background .15s ease; }
-
 tbody tr:hover { background: rgba(59, 130, 246, .08); }
-
 tbody tr:nth-child(even) { background: rgba(15, 23, 42, .5); }
-
 tbody tr:nth-child(even):hover { background: rgba(59, 130, 246, .12); }
+tbody tr td strong { color: #f1f5f9; font-weight: 700; }
 
-tbody tr td strong {
-    color: #f1f5f9;
-    font-weight: 700;
-}
+/* ===================================================== TEN-COL VIEW WIDTHS */
 
-/* =====================================================
-   TEN-COLUMN VIEW WIDTHS  (SUMMARY VIEW)
-===================================================== */
+.ten-col-view th:nth-child(1), .ten-col-view td:nth-child(1) { width: 18%; }
+.ten-col-view th:nth-child(2), .ten-col-view td:nth-child(2),
+.ten-col-view th:nth-child(3), .ten-col-view td:nth-child(3) { width: 10%; }
+.ten-col-view th:nth-child(4), .ten-col-view td:nth-child(4),
+.ten-col-view th:nth-child(5), .ten-col-view td:nth-child(5),
+.ten-col-view th:nth-child(6), .ten-col-view td:nth-child(6),
+.ten-col-view th:nth-child(7), .ten-col-view td:nth-child(7),
+.ten-col-view th:nth-child(8), .ten-col-view td:nth-child(8),
+.ten-col-view th:nth-child(9), .ten-col-view td:nth-child(9) { width: 8%; }
+.ten-col-view th:nth-child(10), .ten-col-view td:nth-child(10) { width: 14%; }
 
-.ten-col-view th:nth-child(1),
-.ten-col-view td:nth-child(1) { width: 18%; }
+/* ===================================================== ELEVEN-COL VIEW WIDTHS */
 
-.ten-col-view th:nth-child(2),
-.ten-col-view td:nth-child(2),
-.ten-col-view th:nth-child(3),
-.ten-col-view td:nth-child(3) { width: 10%; }
+.eleven-col-view th:nth-child(1), .eleven-col-view td:nth-child(1) { width: 15%; }
+.eleven-col-view th:nth-child(2), .eleven-col-view td:nth-child(2) { width: 10%; }
+.eleven-col-view th:nth-child(3), .eleven-col-view td:nth-child(3) { width: 9%; }
+.eleven-col-view th:nth-child(4), .eleven-col-view td:nth-child(4) { width: 10%; }
+.eleven-col-view th:nth-child(5), .eleven-col-view td:nth-child(5),
+.eleven-col-view th:nth-child(6), .eleven-col-view td:nth-child(6),
+.eleven-col-view th:nth-child(7), .eleven-col-view td:nth-child(7),
+.eleven-col-view th:nth-child(8), .eleven-col-view td:nth-child(8),
+.eleven-col-view th:nth-child(9), .eleven-col-view td:nth-child(9),
+.eleven-col-view th:nth-child(10), .eleven-col-view td:nth-child(10) { width: 6.5%; }
+.eleven-col-view th:nth-child(11), .eleven-col-view td:nth-child(11) { width: 12%; }
 
-.ten-col-view th:nth-child(4),
-.ten-col-view td:nth-child(4),
-.ten-col-view th:nth-child(5),
-.ten-col-view td:nth-child(5),
-.ten-col-view th:nth-child(6),
-.ten-col-view td:nth-child(6),
-.ten-col-view th:nth-child(7),
-.ten-col-view td:nth-child(7),
-.ten-col-view th:nth-child(8),
-.ten-col-view td:nth-child(8),
-.ten-col-view th:nth-child(9),
-.ten-col-view td:nth-child(9) { width: 8%; }
-
-.ten-col-view th:nth-child(10),
-.ten-col-view td:nth-child(10) { width: 14%; }
-
-/* =====================================================
-   ELEVEN-COLUMN VIEW WIDTHS  (BRANCHES VIEW — original layout)
-   COLLECTION TEAM | BRANCH | TARGET | ACHIEVED |
-   SUN | MON | TUE | WED | THU | FRI | % ACHIEVED
-===================================================== */
-
-.eleven-col-view th:nth-child(1),
-.eleven-col-view td:nth-child(1) { width: 15%; }
-
-.eleven-col-view th:nth-child(2),
-.eleven-col-view td:nth-child(2) { width: 10%; }
-
-.eleven-col-view th:nth-child(3),
-.eleven-col-view td:nth-child(3) { width: 9%; }
-
-.eleven-col-view th:nth-child(4),
-.eleven-col-view td:nth-child(4) { width: 10%; }
-
-.eleven-col-view th:nth-child(5),
-.eleven-col-view td:nth-child(5),
-.eleven-col-view th:nth-child(6),
-.eleven-col-view td:nth-child(6),
-.eleven-col-view th:nth-child(7),
-.eleven-col-view td:nth-child(7),
-.eleven-col-view th:nth-child(8),
-.eleven-col-view td:nth-child(8),
-.eleven-col-view th:nth-child(9),
-.eleven-col-view td:nth-child(9),
-.eleven-col-view th:nth-child(10),
-.eleven-col-view td:nth-child(10) { width: 6.5%; }
-
-.eleven-col-view th:nth-child(11),
-.eleven-col-view td:nth-child(11) { width: 12%; }
-
-/* =====================================================
-   PROGRESS
-===================================================== */
+/* ===================================================== PROGRESS */
 
 .percentage-cell { min-width: 0; }
+.percentage-wrapper { display: flex; align-items: center; gap: 8px; width: 100%; }
+.progress { height: 10px; background: #1e293b; border-radius: 20px; overflow: hidden; flex: 1; min-width: 25px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .4); }
+.progress-bar { height: 100%; border-radius: 20px; transition: width .4s ease; }
+.high { background: linear-gradient(90deg, #059669 0%, #10b981 100%); }
+.medium { background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%); }
+.low { background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%); }
+.percentage-text { width: 52px; min-width: 52px; font-weight: 700; text-align: right; color: #f1f5f9; font-size: 12px; }
 
-.percentage-wrapper {
+/* ===================================================== REPORT CARDS */
+
+.report-card {
+    background: linear-gradient(135deg, #1e293b 0%, #172033 100%);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+    border: 1px solid #2a3a55;
+    margin-top: 22px;
+}
+
+.report-card-header {
+    background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%);
+    color: #93c5fd;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #2563eb;
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.report-card-header::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: #2563eb;
+    border-radius: 2px;
+}
+
+.report-table {
     width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
 }
 
-.progress {
-    height: 10px;
-    background: #1e293b;
-    border-radius: 20px;
-    overflow: hidden;
-    flex: 1;
-    min-width: 25px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .4);
-}
-
-.progress-bar {
-    height: 100%;
-    border-radius: 20px;
-    transition: width .4s ease;
-}
-
-.high   { background: linear-gradient(90deg, #059669 0%, #10b981 100%); }
-.medium { background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%); }
-.low    { background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%); }
-
-.percentage-text {
-    width: 52px;
-    min-width: 52px;
+.report-table th {
+    background: transparent;
+    color: #94a3b8;
+    padding: 12px 10px;
+    font-size: 11px;
     font-weight: 700;
     text-align: right;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    border-bottom: 1px solid #2a3a55;
+    white-space: nowrap;
+}
+
+.report-table th:first-child { text-align: left; }
+
+.report-table td {
+    padding: 11px 10px;
+    border-bottom: 1px solid #1e293b;
+    font-size: 13px;
+    text-align: right;
+    color: #cbd5e1;
+    white-space: nowrap;
+    font-feature-settings: "tnum";
+}
+
+.report-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.report-table tbody tr:hover { background: rgba(59, 130, 246, .08); }
+.report-table tbody tr:nth-child(even) { background: rgba(15, 23, 42, .4); }
+.report-table tbody tr:nth-child(even):hover { background: rgba(59, 130, 246, .12); }
+
+.report-table tbody tr.total-row { background: rgba(37, 99, 235, .1); }
+.report-table tbody tr.total-row td {
+    font-weight: 800;
     color: #f1f5f9;
-    font-size: 12px;
+    border-top: 2px solid #2563eb;
+    border-bottom: 2px solid #2563eb;
 }
+.report-table tbody tr.total-row:hover { background: rgba(37, 99, 235, .15); }
 
-/* =====================================================
-   EMPTY STATE
-===================================================== */
+.report-table-wrapper { overflow-x: auto; }
 
-.empty-state {
-    text-align: center;
-    padding: 50px 20px;
-    color: #64748b;
-    font-size: 14px;
-    font-style: italic;
-}
+/* ===================================================== EMPTY STATE / LOADING / ERROR */
 
-/* =====================================================
-   LOADING / ERROR / REFRESH STATUS
-===================================================== */
+.empty-state { text-align: center; padding: 50px 20px; color: #64748b; font-size: 14px; font-style: italic; }
 
-#loading {
-    padding: 60px;
-    text-align: center;
-    color: #94a3b8;
-    font-size: 14px;
-    font-style: italic;
-}
+#loading { padding: 60px; text-align: center; color: #94a3b8; font-size: 14px; font-style: italic; }
 
 #error {
     display: none;
     background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
     color: #fecaca;
-    padding: 15px 18px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    border: 1px solid #991b1b;
-    font-size: 13px;
-    font-weight: 500;
+    padding: 15px 18px; margin-bottom: 15px;
+    border-radius: 8px; border: 1px solid #991b1b;
+    font-size: 13px; font-weight: 500;
 }
 
-.refresh-status {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-left: 3px;
-    margin-top: 2px;
-    font-weight: 500;
-}
+.refresh-status { font-size: 12px; color: #94a3b8; margin-left: 3px; margin-top: 2px; font-weight: 500; }
+.refresh-status.updating { color: #60a5fa; font-weight: 600; }
 
-.refresh-status.updating {
-    color: #60a5fa;
-    font-weight: 600;
-}
-
-/* =====================================================
-   RESPONSIVE
-===================================================== */
+/* ===================================================== RESPONSIVE */
 
 @media(max-width:1100px) {
     .dashboard { padding: 18px; }
-    .header    { padding: 16px 18px; }
-    .ten-col-view th,
-    .ten-col-view td,
-    .eleven-col-view th,
-    .eleven-col-view td {
-        font-size: 11px;
-        padding: 9px 5px;
-    }
+    .header { padding: 16px 18px; }
+    .ten-col-view th, .ten-col-view td,
+    .eleven-col-view th, .eleven-col-view td { font-size: 11px; padding: 9px 5px; }
     .progress { min-width: 20px; }
     .percentage-text { width: 45px; min-width: 45px; font-size: 11px; }
+    .report-table th, .report-table td { font-size: 11px; padding: 9px 6px; }
 }
 
 @media(max-width:900px) {
     .kpis { grid-template-columns: repeat(2,1fr); }
     .controls { align-items: stretch; }
-    .controls select,
-    .controls input,
-    .controls button { width: 100%; }
+    .controls select, .controls input, .controls button { width: 100%; }
     .view-switch { margin-left: 0; width: 100%; }
     .view-switch button { flex: 1; }
 }
@@ -543,8 +358,6 @@ tbody tr td strong {
     .card-label { font-size: 10px; }
     .header-title { font-size: 19px; }
     .header-subtitle { font-size: 11px; }
-    .table-container { overflow-x: hidden; }
-    table { table-layout: fixed; }
     th, td { font-size: 10px; padding: 8px 4px; }
     .percentage-wrapper { gap: 4px; }
     .percentage-text { width: 40px; min-width: 40px; font-size: 10px; }
@@ -560,26 +373,16 @@ tbody tr td strong {
 
 <body>
 
-<!-- =====================================================
-     HEADER
-===================================================== -->
-
+<!-- HEADER -->
 <div class="header">
     <div>
         <div class="header-title">COLLECTION TEAM PERFORMANCE</div>
-        <div class="header-subtitle">
-            Target vs Achieved |
-            Daily Collection Monitoring
-        </div>
+        <div class="header-subtitle">Target vs Achieved | Daily Collection Monitoring</div>
     </div>
-
     <div class="last-update">
-        Last Updated
-        <br>
+        Last Updated<br>
         <span id="lastUpdate">Loading...</span>
-        <div id="refreshStatus" class="refresh-status">
-            Auto-refresh: 5 min
-        </div>
+        <div id="refreshStatus" class="refresh-status">Auto-refresh: 5 min</div>
     </div>
 </div>
 
@@ -587,122 +390,111 @@ tbody tr td strong {
 
 <div id="error"></div>
 
-<!-- =====================================================
-     KPI CARDS
-===================================================== -->
-
+<!-- KPI CARDS -->
 <div class="kpis">
-
-<div class="card">
-    <div class="card-label">Total Target</div>
-    <div class="card-value" id="totalTarget">0</div>
+    <div class="card"><div class="card-label">Total Target</div><div class="card-value" id="totalTarget">0</div></div>
+    <div class="card"><div class="card-label">Total Achieved</div><div class="card-value" id="totalAchieved">0</div></div>
+    <div class="card"><div class="card-label">Balance</div><div class="card-value" id="balance">0</div></div>
+    <div class="card"><div class="card-label">Overall Achievement</div><div class="card-value" id="overallPercentage">0%</div></div>
 </div>
 
-<div class="card">
-    <div class="card-label">Total Achieved</div>
-    <div class="card-value" id="totalAchieved">0</div>
-</div>
-
-<div class="card">
-    <div class="card-label">Balance</div>
-    <div class="card-value" id="balance">0</div>
-</div>
-
-<div class="card">
-    <div class="card-label">Overall Achievement</div>
-    <div class="card-value" id="overallPercentage">0%</div>
-</div>
-
-</div>
-
-<!-- =====================================================
-     CONTROLS
-===================================================== -->
-
+<!-- CONTROLS -->
 <div class="controls">
-
-<select id="branchFilter" onchange="applyFilters()">
-    <option value="ALL">All Branches</option>
-</select>
-
-<select id="teamFilter" onchange="applyFilters()">
-    <option value="ALL">All Collection Teams</option>
-</select>
-
-<input
-    type="text"
-    id="searchBox"
-    placeholder="Search collection team..."
-    oninput="applyFilters()">
-
-<button id="refreshButton" onclick="manualRefresh()" type="button">
-    <span class="refresh-icon">↻</span>
-    <span class="refresh-text">Refresh</span>
-</button>
-
-<div class="view-switch">
-    <button id="summaryButton" onclick="switchView('summary')" type="button">SUMMARY</button>
-    <button id="branchesButton" class="active" onclick="switchView('branches')" type="button">BRANCHES</button>
+    <select id="branchFilter" onchange="applyFilters()"><option value="ALL">All Branches</option></select>
+    <select id="teamFilter" onchange="applyFilters()"><option value="ALL">All Collection Teams</option></select>
+    <input type="text" id="searchBox" placeholder="Search collection team..." oninput="applyFilters()">
+    <button id="refreshButton" onclick="manualRefresh()" type="button">
+        <span class="refresh-icon">↻</span><span class="refresh-text">Refresh</span>
+    </button>
+    <div class="view-switch">
+        <button id="summaryButton" onclick="switchView('summary')" type="button">SUMMARY</button>
+        <button id="branchesButton" class="active" onclick="switchView('branches')" type="button">BRANCHES</button>
+    </div>
 </div>
 
-</div>
+<div class="view-label"><span id="viewDescription">Detailed daily collection performance</span></div>
 
-<div class="view-label">
-    <span id="viewDescription">Detailed daily collection performance</span>
-</div>
-
-<!-- =====================================================
-     TABLE
-===================================================== -->
-
-<div class="table-container" id="tableContainer">
-
+<!-- LOADING -->
 <div id="loading">Loading collection data...</div>
 
 <!-- =====================================================
-     SUMMARY VIEW  (10 columns — aggregated by collection team)
+     BRANCHES VIEW  (rows 1-27 — per-row, 11 columns)
 ===================================================== -->
 
-<table id="summaryTable" class="ten-col-view" style="display:none">
-<thead>
-<tr>
-<th>COLLECTION TEAM</th>
-<th>TOTAL TARGET</th>
-<th>TOTAL ACHIEVED</th>
-<th>SUNDAY</th>
-<th>MONDAY</th>
-<th>TUESDAY</th>
-<th>WEDNESDAY</th>
-<th>THURSDAY</th>
-<th>FRIDAY</th>
-<th>% ACHIEVED</th>
-</tr>
-</thead>
-<tbody id="summaryBody"></tbody>
-</table>
+<div id="branchesContainer" style="display:none">
+    <div class="table-container">
+        <table id="branchesTable" class="eleven-col-view">
+        <thead>
+        <tr>
+        <th>COLLECTION TEAM</th>
+        <th>BRANCH</th>
+        <th>TOTAL - TARGET</th>
+        <th>TOTAL - ACHIEVED</th>
+        <th>SUNDAY</th>
+        <th>MONDAY</th>
+        <th>TUESDAY</th>
+        <th>WEDNESDAY</th>
+        <th>THURSDAY</th>
+        <th>FRIDAY</th>
+        <th>% ACHIEVED</th>
+        </tr>
+        </thead>
+        <tbody id="branchesBody"></tbody>
+        </table>
+    </div>
+</div>
 
 <!-- =====================================================
-     BRANCHES VIEW  (11 columns — original per-row layout)
+     SUMMARY VIEW
+     Section 1: Collection team summary (aggregated)
+     Section 2: Weekly totals card (rows 31-37)
+     Section 3: Monthly totals card (rows 41-46)
 ===================================================== -->
 
-<table id="branchesTable" class="eleven-col-view" style="display:none">
-<thead>
-<tr>
-<th>COLLECTION TEAM</th>
-<th>BRANCH</th>
-<th>TOTAL - TARGET</th>
-<th>TOTAL - ACHIEVED</th>
-<th>SUNDAY</th>
-<th>MONDAY</th>
-<th>TUESDAY</th>
-<th>WEDNESDAY</th>
-<th>THURSDAY</th>
-<th>FRIDAY</th>
-<th>% ACHIEVED</th>
-</tr>
-</thead>
-<tbody id="branchesBody"></tbody>
-</table>
+<div id="summaryContainer" style="display:none">
+
+    <!-- Section 1: Collection team summary -->
+    <div class="table-container">
+        <table id="summaryTable" class="ten-col-view">
+        <thead>
+        <tr>
+        <th>COLLECTION TEAM</th>
+        <th>TOTAL TARGET</th>
+        <th>TOTAL ACHIEVED</th>
+        <th>SUNDAY</th>
+        <th>MONDAY</th>
+        <th>TUESDAY</th>
+        <th>WEDNESDAY</th>
+        <th>THURSDAY</th>
+        <th>FRIDAY</th>
+        <th>% ACHIEVED</th>
+        </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Section 2: Weekly Totals card -->
+    <div class="report-card" id="weeklyTotalsCard" style="display:none">
+        <div class="report-card-header">WEEKLY TOTALS</div>
+        <div class="report-table-wrapper">
+            <table class="report-table">
+                <thead id="weeklyTotalsHead"></thead>
+                <tbody id="weeklyTotalsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section 3: Monthly Totals card -->
+    <div class="report-card" id="monthlyTotalsCard" style="display:none">
+        <div class="report-card-header">MONTHLY TOTALS</div>
+        <div class="report-table-wrapper">
+            <table class="report-table">
+                <thead id="monthlyTotalsHead"></thead>
+                <tbody id="monthlyTotalsBody"></tbody>
+            </table>
+        </div>
+    </div>
 
 </div>
 
@@ -711,9 +503,11 @@ tbody tr td strong {
 <script>
 
 const API_URL =
-"https://script.google.com/macros/s/AKfycbysXlfvoc9Jomg-u5LWdFrCeKDTyTqq3kUUUj8WAaneUut1HlxHtubgTZ7eQPjJzEVJcg/exec";
+"https://script.google.com/macros/s/AKfycbypOY3IcmQOWlahTrebRdNaWBHuw_niXWPoCQbuemUpPwHIJMhvTNk7epNSzIpZ-C3qHA/exec";
 
 let allData = [];
+let weeklyTotals = null;
+let monthlyTotals = null;
 let currentView = "branches";
 let refreshInProgress = false;
 
@@ -724,7 +518,6 @@ let refreshInProgress = false;
 async function loadData(manual = false) {
 
     if (refreshInProgress) return;
-
     refreshInProgress = true;
 
     const loading       = document.getElementById("loading");
@@ -735,17 +528,13 @@ async function loadData(manual = false) {
 
     refreshButton.disabled = true;
     refreshButton.classList.add("spinning");
-    if (manual) {
-        refreshText.innerText = "Refreshing...";
-    }
+    if (manual) refreshText.innerText = "Refreshing...";
 
     const selectedBranch = document.getElementById("branchFilter").value;
     const selectedTeam   = document.getElementById("teamFilter").value;
     const searchText     = document.getElementById("searchBox").value;
 
-    if (allData.length === 0) {
-        loading.style.display = "block";
-    }
+    if (allData.length === 0) loading.style.display = "block";
 
     error.style.display = "none";
     refreshStatus.innerText = "Updating data...";
@@ -753,44 +542,29 @@ async function loadData(manual = false) {
 
     try {
 
-        const response = await fetch(
-            API_URL + "?t=" + Date.now(),
-            { cache: "no-store" }
-        );
-
-        if (!response.ok) {
-            throw new Error("HTTP error: " + response.status);
-        }
+        const response = await fetch(API_URL + "?t=" + Date.now(), { cache: "no-store" });
+        if (!response.ok) throw new Error("HTTP error: " + response.status);
 
         const result = await response.json();
+        if (result.status !== "success") throw new Error(result.message || "API returned an error.");
 
-        if (result.status !== "success") {
-            throw new Error(result.message || "API returned an error.");
-        }
-
-        allData = result.data || [];
+        allData        = result.data || [];
+        weeklyTotals   = result.weeklyTotals || null;
+        monthlyTotals  = result.monthlyTotals || null;
 
         populateFilters(selectedBranch, selectedTeam);
         document.getElementById("searchBox").value = searchText;
         applyFilters();
 
-        document.getElementById("lastUpdate").innerText =
-            new Date().toLocaleString("en-KE");
-
-        refreshStatus.innerText = manual
-            ? "Manual refresh complete — Auto-refresh: 5 min"
-            : "Auto-refresh: 5 min";
+        document.getElementById("lastUpdate").innerText = new Date().toLocaleString("en-KE");
+        refreshStatus.innerText = manual ? "Manual refresh complete — Auto-refresh: 5 min" : "Auto-refresh: 5 min";
         refreshStatus.classList.remove("updating");
 
     } catch (err) {
 
-        if (allData.length === 0) {
-            loading.style.display = "none";
-        }
-
+        if (allData.length === 0) loading.style.display = "none";
         error.style.display = "block";
         error.innerText = "Unable to refresh collection data: " + err.message;
-
         refreshStatus.innerText = "Refresh failed — existing data retained";
         refreshStatus.classList.remove("updating");
 
@@ -799,23 +573,17 @@ async function loadData(manual = false) {
         refreshButton.disabled = false;
         refreshButton.classList.remove("spinning");
         refreshText.innerText = "Refresh";
-
         refreshInProgress = false;
 
         if (manual) {
             setTimeout(() => {
-                if (!refreshInProgress) {
-                    refreshStatus.innerText = "Auto-refresh: 5 min";
-                }
+                if (!refreshInProgress) refreshStatus.innerText = "Auto-refresh: 5 min";
             }, 4000);
         }
     }
-
 }
 
-function manualRefresh() {
-    loadData(true);
-}
+function manualRefresh() { loadData(true); }
 
 /* =====================================================
    POPULATE FILTERS
@@ -826,36 +594,19 @@ function populateFilters(selectedBranch = "ALL", selectedTeam = "ALL") {
     const branchSelect = document.getElementById("branchFilter");
     const teamSelect   = document.getElementById("teamFilter");
 
-    const branches = [...new Set(
-        allData.map(row => row.branch).filter(Boolean)
-    )].sort((a,b) => String(a).localeCompare(String(b)));
+    const branches = [...new Set(allData.map(r => r.branch).filter(Boolean))]
+        .sort((a,b) => String(a).localeCompare(String(b)));
 
     branchSelect.innerHTML = `<option value="ALL">All Branches</option>`;
-
-    branches.forEach(branch => {
-        const option = document.createElement("option");
-        option.value = branch;
-        option.textContent = branch;
-        branchSelect.appendChild(option);
-    });
-
+    branches.forEach(b => { const o = document.createElement("option"); o.value = b; o.textContent = b; branchSelect.appendChild(o); });
     branchSelect.value = branches.includes(selectedBranch) ? selectedBranch : "ALL";
 
-    const teams = [...new Set(
-        allData.map(row => row.collectionTeam).filter(Boolean)
-    )].sort((a,b) => String(a).localeCompare(String(b)));
+    const teams = [...new Set(allData.map(r => r.collectionTeam).filter(Boolean))]
+        .sort((a,b) => String(a).localeCompare(String(b)));
 
     teamSelect.innerHTML = `<option value="ALL">All Collection Teams</option>`;
-
-    teams.forEach(team => {
-        const option = document.createElement("option");
-        option.value = team;
-        option.textContent = team;
-        teamSelect.appendChild(option);
-    });
-
+    teams.forEach(t => { const o = document.createElement("option"); o.value = t; o.textContent = t; teamSelect.appendChild(o); });
     teamSelect.value = teams.includes(selectedTeam) ? selectedTeam : "ALL";
-
 }
 
 /* =====================================================
@@ -869,32 +620,19 @@ function applyFilters() {
     const search = document.getElementById("searchBox").value.toLowerCase().trim();
 
     const filtered = allData.filter(row => {
-
-        const branchMatch =
-            branch === "ALL" ||
-            String(row.branch || "") === branch;
-
-        const teamMatch =
-            team === "ALL" ||
-            String(row.collectionTeam || "") === team;
-
-        const searchMatch =
-            !search ||
-            String(row.collectionTeam || "")
-                .toLowerCase()
-                .includes(search);
-
-        return (branchMatch && teamMatch && searchMatch);
+        const bm = branch === "ALL" || String(row.branch || "") === branch;
+        const tm = team === "ALL" || String(row.collectionTeam || "") === team;
+        const sm = !search || String(row.collectionTeam || "").toLowerCase().includes(search);
+        return bm && tm && sm;
     });
 
     updateKPIs(filtered);
 
     if (currentView === "summary") {
-        renderTable(filtered);
+        renderSummaryView(filtered);
     } else {
         renderBranches(filtered);
     }
-
 }
 
 /* =====================================================
@@ -904,82 +642,105 @@ function applyFilters() {
 function switchView(view) {
 
     currentView = view;
-
     const summaryButton  = document.getElementById("summaryButton");
     const branchesButton = document.getElementById("branchesButton");
     const description    = document.getElementById("viewDescription");
+    const loading        = document.getElementById("loading");
+    const branchesCont   = document.getElementById("branchesContainer");
+    const summaryCont    = document.getElementById("summaryContainer");
 
     if (view === "summary") {
         summaryButton.classList.add("active");
         branchesButton.classList.remove("active");
-        description.innerText =
-            "Collection team summary — total target, total achieved, daily totals and performance";
+        description.innerText = "Collection team summary, weekly totals and monthly totals";
+        branchesCont.style.display = "none";
+        summaryCont.style.display  = "block";
     } else {
         branchesButton.classList.add("active");
         summaryButton.classList.remove("active");
-        description.innerText =
-            "Detailed daily collection performance";
+        description.innerText = "Detailed daily collection performance";
+        summaryCont.style.display  = "none";
+        branchesCont.style.display = "block";
     }
 
+    loading.style.display = "none";
     applyFilters();
-
 }
 
 /* =====================================================
-   HELPER: compute percentage for sorting
+   HELPERS
 ===================================================== */
 
 function calcPct(item) {
-    return item.target > 0
-        ? (item.achieved / item.target) * 100
-        : 0;
+    return item.target > 0 ? (item.achieved / item.target) * 100 : 0;
+}
+
+function getPercentage(target, achieved) {
+    const t = Number(target) || 0;
+    const a = Number(achieved) || 0;
+    return t <= 0 ? 0 : (a / t) * 100;
+}
+
+function getStatusClass(v) {
+    if (v >= 90) return "high";
+    if (v >= 70) return "medium";
+    return "low";
+}
+
+function formatNumber(value) {
+    return Number(value || 0).toLocaleString("en-KE", { maximumFractionDigits: 0 });
+}
+
+function formatReportCell(value) {
+    if (value === "" || value === null || value === undefined) return "";
+    const num = Number(value);
+    if (!isNaN(num) && value !== "") return formatNumber(num);
+    return escapeHtml(String(value));
+}
+
+function escapeHtml(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 /* =====================================================
-   RENDER TABLE  (SUMMARY VIEW — aggregated by team)
-   Sorted by % ACHIEVED  (LARGEST → SMALLEST)
+   RENDER SUMMARY VIEW  (all 3 sections)
+===================================================== */
+
+function renderSummaryView(data) {
+
+    // ---- Section 1: Collection team summary ----
+    renderTable(data);
+
+    // ---- Section 2: Weekly totals card ----
+    renderReportCard("weeklyTotalsCard", "weeklyTotalsHead", "weeklyTotalsBody", weeklyTotals);
+
+    // ---- Section 3: Monthly totals card ----
+    renderReportCard("monthlyTotalsCard", "monthlyTotalsHead", "monthlyTotalsBody", monthlyTotals);
+}
+
+/* =====================================================
+   RENDER TABLE  (Collection team summary — Section 1)
 ===================================================== */
 
 function renderTable(data) {
 
-    const loading       = document.getElementById("loading");
-    const summaryTable  = document.getElementById("summaryTable");
-    const branchesTable = document.getElementById("branchesTable");
-    const tbody         = document.getElementById("summaryBody");
-
-    branchesTable.style.display = "none";
+    const tbody = document.getElementById("summaryBody");
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="10">
-                    <div class="empty-state">
-                        No collection data found for the selected filters.
-                    </div>
-                </td>
-            </tr>`;
-        loading.style.display      = "none";
-        summaryTable.style.display = "table";
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">No collection data found for the selected filters.</div></td></tr>`;
         return;
     }
 
     const summaryMap = new Map();
 
     data.forEach(row => {
-
         const team = String(row.collectionTeam || "Unknown");
-
         if (!summaryMap.has(team)) {
-            summaryMap.set(team, {
-                collectionTeam: team,
-                target: 0, achieved: 0,
-                sunday: 0, monday: 0, tuesday: 0,
-                wednesday: 0, thursday: 0, friday: 0
-            });
+            summaryMap.set(team, { collectionTeam: team, target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 });
         }
-
         const item = summaryMap.get(team);
-
         item.target    += Number(row.target)    || 0;
         item.achieved  += Number(row.achieved)  || 0;
         item.sunday    += Number(row.sunday)    || 0;
@@ -990,18 +751,13 @@ function renderTable(data) {
         item.friday    += Number(row.friday)    || 0;
     });
 
-    const summaryData = Array.from(summaryMap.values())
-        .sort((a, b) => calcPct(b) - calcPct(a));
+    const summaryData = Array.from(summaryMap.values()).sort((a, b) => calcPct(b) - calcPct(a));
 
     let html = "";
-
     summaryData.forEach(item => {
-
-        const percentage = calcPct(item);
-        const safePct    = Math.min(Math.max(percentage, 0), 100);
-
-        html += `
-<tr>
+        const pct = calcPct(item);
+        const safe = Math.min(Math.max(pct, 0), 100);
+        html += `<tr>
 <td><strong>${escapeHtml(item.collectionTeam)}</strong></td>
 <td>${formatNumber(item.target)}</td>
 <td>${formatNumber(item.achieved)}</td>
@@ -1011,75 +767,94 @@ function renderTable(data) {
 <td>${formatNumber(item.wednesday)}</td>
 <td>${formatNumber(item.thursday)}</td>
 <td>${formatNumber(item.friday)}</td>
-<td class="percentage-cell">
-    <div class="percentage-wrapper">
-        <div class="progress">
-            <div class="progress-bar ${getStatusClass(percentage)}"
-                 style="width:${safePct}%;">
-            </div>
-        </div>
-        <div class="percentage-text">${percentage.toFixed(1)}%</div>
-    </div>
-</td>
-</tr>`;
+<td class="percentage-cell"><div class="percentage-wrapper">
+<div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div>
+<div class="percentage-text">${pct.toFixed(1)}%</div>
+</div></td></tr>`;
     });
 
     tbody.innerHTML = html;
-
-    loading.style.display      = "none";
-    summaryTable.style.display = "table";
 }
 
 /* =====================================================
-   RENDER BRANCHES  (BRANCHES VIEW — original per-row layout)
-   11 columns, NO aggregation, sorted by % ACHIEVED
-   (largest → smallest)
+   RENDER REPORT CARD  (Weekly / Monthly totals)
+   Dynamically renders all columns from the API data.
+===================================================== */
+
+function renderReportCard(cardId, headId, bodyId, reportData) {
+
+    const card  = document.getElementById(cardId);
+    const head  = document.getElementById(headId);
+    const body  = document.getElementById(bodyId);
+
+    // If no data from API, hide the card.
+    if (!reportData || !reportData.headers || !reportData.rows || reportData.rows.length === 0) {
+        card.style.display = "none";
+        head.innerHTML = "";
+        body.innerHTML = "";
+        return;
+    }
+
+    card.style.display = "block";
+
+    // ---- Build thead dynamically ----
+    let headHtml = "<tr>";
+    reportData.headers.forEach(h => {
+        headHtml += `<th>${escapeHtml(h)}</th>`;
+    });
+    headHtml += "</tr>";
+    head.innerHTML = headHtml;
+
+    // ---- Build tbody dynamically ----
+    let bodyHtml = "";
+    reportData.rows.forEach(row => {
+
+        // Skip completely empty rows.
+        const hasData = row.some(v => v !== "" && v !== null && v !== undefined);
+        if (!hasData) return;
+
+        // Check if this is a TOTAL row.
+        const firstCell = String(row[0] || "").toUpperCase().trim();
+        const isTotal = firstCell === "TOTAL" || firstCell === "TOTAL ";
+
+        bodyHtml += `<tr class="${isTotal ? "total-row" : ""}">`;
+
+        row.forEach((cell, idx) => {
+            if (idx === 0) {
+                bodyHtml += `<td><strong>${escapeHtml(cell)}</strong></td>`;
+            } else {
+                bodyHtml += `<td>${formatReportCell(cell)}</td>`;
+            }
+        });
+
+        bodyHtml += "</tr>";
+    });
+    body.innerHTML = bodyHtml;
+}
+
+/* =====================================================
+   RENDER BRANCHES  (per-row, 11 columns, rows 1-27)
 ===================================================== */
 
 function renderBranches(data) {
 
-    const loading       = document.getElementById("loading");
-    const summaryTable  = document.getElementById("summaryTable");
-    const branchesTable = document.getElementById("branchesTable");
-    const tbody         = document.getElementById("branchesBody");
-
-    summaryTable.style.display = "none";
+    const tbody = document.getElementById("branchesBody");
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="11">
-                    <div class="empty-state">
-                        No collection data found for the selected filters.
-                    </div>
-                </td>
-            </tr>`;
-        loading.style.display       = "none";
-        branchesTable.style.display = "table";
+        tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">No collection data found for the selected filters.</div></td></tr>`;
         return;
     }
 
-    // ---------- Sort rows by % ACHIEVED (largest → smallest) ----------
     const sortedData = [...data].sort((a, b) => {
-        const pctA = getPercentage(a.target, a.achieved);
-        const pctB = getPercentage(b.target, b.achieved);
-        return pctB - pctA;
+        return getPercentage(b.target, b.achieved) - getPercentage(a.target, a.achieved);
     });
 
     let html = "";
-
     sortedData.forEach(row => {
-
-        const percentage = getPercentage(row.target, row.achieved);
-        const safePct    = Math.min(Math.max(percentage, 0), 100);
-
-        html += `
-<tr>
-
-<td>
-    <strong>${escapeHtml(row.collectionTeam)}</strong>
-</td>
-
+        const pct = getPercentage(row.target, row.achieved);
+        const safe = Math.min(Math.max(pct, 0), 100);
+        html += `<tr>
+<td><strong>${escapeHtml(row.collectionTeam)}</strong></td>
 <td>${escapeHtml(row.branch)}</td>
 <td>${formatNumber(row.target)}</td>
 <td>${formatNumber(row.achieved)}</td>
@@ -1089,33 +864,13 @@ function renderBranches(data) {
 <td>${formatNumber(row.wednesday)}</td>
 <td>${formatNumber(row.thursday)}</td>
 <td>${formatNumber(row.friday)}</td>
-
-<td class="percentage-cell">
-
-    <div class="percentage-wrapper">
-
-        <div class="progress">
-            <div
-                class="progress-bar ${getStatusClass(percentage)}"
-                style="width:${safePct}%;">
-            </div>
-        </div>
-
-        <div class="percentage-text">
-            ${percentage.toFixed(1)}%
-        </div>
-
-    </div>
-
-</td>
-
-</tr>`;
+<td class="percentage-cell"><div class="percentage-wrapper">
+<div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div>
+<div class="percentage-text">${pct.toFixed(1)}%</div>
+</div></td></tr>`;
     });
 
     tbody.innerHTML = html;
-
-    loading.style.display       = "none";
-    branchesTable.style.display = "table";
 }
 
 /* =====================================================
@@ -1123,71 +878,25 @@ function renderBranches(data) {
 ===================================================== */
 
 function updateKPIs(data) {
-
-    let target = 0;
-    let achieved = 0;
-
+    let target = 0, achieved = 0;
     data.forEach(row => {
         target   += Number(row.target)   || 0;
         achieved += Number(row.achieved) || 0;
     });
-
     const balance = target - achieved;
-    const percentage = target > 0 ? (achieved / target) * 100 : 0;
-
+    const pct = target > 0 ? (achieved / target) * 100 : 0;
     document.getElementById("totalTarget").innerText       = formatNumber(target);
     document.getElementById("totalAchieved").innerText      = formatNumber(achieved);
     document.getElementById("balance").innerText           = formatNumber(balance);
-    document.getElementById("overallPercentage").innerText = percentage.toFixed(1) + "%";
-
+    document.getElementById("overallPercentage").innerText = pct.toFixed(1) + "%";
 }
 
 /* =====================================================
-   PERCENTAGE / STATUS / FORMAT / ESCAPE
+   INIT + AUTO REFRESH
 ===================================================== */
 
-function getPercentage(target, achieved) {
-    const t = Number(target) || 0;
-    const a = Number(achieved) || 0;
-    if (t <= 0) return 0;
-    return (a / t) * 100;
-}
-
-function getStatusClass(value) {
-    if (value >= 90) return "high";
-    if (value >= 70) return "medium";
-    return "low";
-}
-
-function formatNumber(value) {
-    return Number(value || 0)
-        .toLocaleString("en-KE", { maximumFractionDigits: 0 });
-}
-
-function escapeHtml(value) {
-    return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-/* =====================================================
-   INITIAL LOAD
-===================================================== */
-
-window.addEventListener("load", function() {
-    loadData();
-});
-
-/* =====================================================
-   AUTO REFRESH — EVERY 5 MINUTES
-===================================================== */
-
-setInterval(function() {
-    loadData();
-}, 300000);
+window.addEventListener("load", () => loadData());
+setInterval(() => loadData(), 300000);
 
 </script>
 
