@@ -134,6 +134,20 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .cluster-table tbody td:nth-child(even) { color: #93c5fd; }
 .cluster-table tbody tr.total-row td:nth-child(even) { color: #93c5fd; }
 
+/* ===== CLUSTER CARDS VIEW ===== */
+.clusters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; margin-top: 10px; }
+.cluster-card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; display: flex; flex-direction: column; }
+.cluster-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0, 0, 0, .5); border-color: #3b555f; }
+.cluster-card-header { background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%); color: #93c5fd; padding: 14px 18px; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-bottom: 2px solid #2563eb; }
+.cluster-card-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.cluster-stat { display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 1px solid rgba(42, 58, 85, 0.5); padding-bottom: 6px; }
+.cluster-stat:last-of-type { border-bottom: none; }
+.stat-label { color: #94a3b8; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+.stat-value { font-weight: 700; color: #f1f5f9; font-feature-settings: "tnum"; font-size: 14px; }
+.stat-value.achieved { color: #10b981; }
+.stat-value.deficit { color: #fca5a5; }
+.cluster-progress { margin-top: auto; }
+
 .empty-state { text-align: center; padding: 50px 20px; color: #64748b; font-size: 14px; font-style: italic; }
 #loading { padding: 60px; text-align: center; color: #94a3b8; font-size: 14px; font-style: italic; }
 #error { display: none; background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%); color: #fecaca; padding: 15px 18px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #991b1b; font-size: 13px; font-weight: 500; }
@@ -184,6 +198,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <button id="summaryButton" onclick="switchView('summary')" type="button">SUMMARY</button>
         <button id="branchesButton" class="active" onclick="switchView('branches')" type="button">BRANCHES</button>
         <button id="deferredButton" onclick="switchView('deferred')" type="button">DEFERRED/PARTIAL</button>
+        <button id="clustersButton" onclick="switchView('clusters')" type="button">CLUSTER CARDS</button>
     </div>
 </div>
 
@@ -265,6 +280,11 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <div class="report-table-wrapper"><table class="report-table"><thead id="monthlyTotalsHead"></thead><tbody id="monthlyTotalsBody"></tbody></table></div>
     </div>
 
+</div>
+
+<!-- CLUSTER CARDS VIEW -->
+<div id="clustersContainer" style="display:none">
+    <div class="clusters-grid" id="clustersGrid"></div>
 </div>
 
 </div>
@@ -397,6 +417,8 @@ function applyFilters() {
 
     if (currentView === "deferred") {
         updateKPIsDeferred(filteredDeferred);
+    } else if (currentView === "clusters") {
+        updateKPIsClusters();
     } else {
         updateKPIs(filtered);
     }
@@ -405,6 +427,8 @@ function applyFilters() {
         renderSummaryView(filtered);
     } else if (currentView === "deferred") {
         renderDeferred(filteredDeferred);
+    } else if (currentView === "clusters") {
+        renderClusterCards();
     } else {
         renderBranches(filtered);
     }
@@ -418,18 +442,22 @@ function switchView(view) {
     const summaryButton  = document.getElementById("summaryButton");
     const branchesButton = document.getElementById("branchesButton");
     const deferredButton = document.getElementById("deferredButton");
+    const clustersButton = document.getElementById("clustersButton");
     const description    = document.getElementById("viewDescription");
     const loading        = document.getElementById("loading");
     const branchesCont   = document.getElementById("branchesContainer");
     const summaryCont    = document.getElementById("summaryContainer");
     const deferredCont   = document.getElementById("deferredContainer");
+    const clustersCont   = document.getElementById("clustersContainer");
 
     branchesCont.style.display = "none";
     summaryCont.style.display  = "none";
     deferredCont.style.display = "none";
+    clustersCont.style.display = "none";
     summaryButton.classList.remove("active");
     branchesButton.classList.remove("active");
     deferredButton.classList.remove("active");
+    clustersButton.classList.remove("active");
 
     if (view === "summary") {
         summaryButton.classList.add("active");
@@ -439,6 +467,10 @@ function switchView(view) {
         deferredButton.classList.add("active");
         description.innerText = "Deferred / Partial — detailed collection performance";
         deferredCont.style.display = "block";
+    } else if (view === "clusters") {
+        clustersButton.classList.add("active");
+        description.innerText = "Cluster cards — aggregated targets and achieved per cluster";
+        clustersCont.style.display = "block";
     } else {
         branchesButton.classList.add("active");
         description.innerText = "Detailed daily collection performance";
@@ -498,6 +530,27 @@ function updateKPIsDeferred(data) {
     document.getElementById("totalTarget").innerText = formatNumber(target);
     document.getElementById("totalAchieved").innerText = formatNumber(week4Collection);
     document.getElementById("balance").innerText = formatNumber(deficit);
+    document.getElementById("overallPercentage").innerText = pct.toFixed(1) + "%";
+}
+
+/* ========== KPI: Clusters data ========== */
+
+function updateKPIsClusters() {
+    let target = 0, achieved = 0;
+    if (clusterData && clusterData.rows) {
+        clusterData.rows.forEach(row => {
+            if (String(row[0]).toUpperCase() === "TOTAL") return;
+            for (let i = 1; i < row.length; i += 2) {
+                target += Number(row[i]) || 0;
+                achieved += Number(row[i+1]) || 0;
+            }
+        });
+    }
+    const balance = target - achieved;
+    const pct = target > 0 ? (achieved / target) * 100 : 0;
+    document.getElementById("totalTarget").innerText = formatNumber(target);
+    document.getElementById("totalAchieved").innerText = formatNumber(achieved);
+    document.getElementById("balance").innerText = formatNumber(balance);
     document.getElementById("overallPercentage").innerText = pct.toFixed(1) + "%";
 }
 
@@ -645,6 +698,61 @@ function renderCluster() {
         bodyHtml += "</tr>";
     });
     body.innerHTML = bodyHtml;
+}
+
+/* ========== RENDER CLUSTER CARDS VIEW ========== */
+
+function renderClusterCards() {
+    const grid = document.getElementById("clustersGrid");
+
+    if (!clusterData || !clusterData.rows || clusterData.rows.length === 0) {
+        grid.innerHTML = '<div class="empty-state">No cluster data found.</div>';
+        return;
+    }
+
+    let html = "";
+    
+    clusterData.rows.forEach(row => {
+        const clusterName = String(row[0] || "").trim();
+        // Skip the TOTAL row as we want to show individual cards
+        if (clusterName.toUpperCase() === "TOTAL") return;
+
+        let target = 0, achieved = 0;
+        // row structure: [Name, MonTarget, MonAch, TueTarget, TueAch, ...]
+        for (let i = 1; i < row.length; i += 2) {
+            target += Number(row[i]) || 0;
+            achieved += Number(row[i+1]) || 0;
+        }
+
+        const balance = target - achieved;
+        const pct = target > 0 ? (achieved / target) * 100 : 0;
+        const safe = Math.min(Math.max(pct, 0), 100);
+
+        html += `
+        <div class="cluster-card">
+            <div class="cluster-card-header">${escapeHtml(clusterName)}</div>
+            <div class="cluster-card-body">
+                <div class="cluster-stat">
+                    <span class="stat-label">Total Target</span>
+                    <span class="stat-value">${formatNumber(target)}</span>
+                </div>
+                <div class="cluster-stat">
+                    <span class="stat-label">Total Achieved</span>
+                    <span class="stat-value achieved">${formatNumber(achieved)}</span>
+                </div>
+                <div class="cluster-stat">
+                    <span class="stat-label">Balance</span>
+                    <span class="stat-value deficit">${formatNumber(balance)}</span>
+                </div>
+                <div class="percentage-wrapper cluster-progress">
+                    <div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div>
+                    <div class="percentage-text">${pct.toFixed(1)}%</div>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    grid.innerHTML = html;
 }
 
 /* ========== RENDER REPORT CARD (Weekly / Monthly) ========== */
