@@ -117,6 +117,23 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .deferred-summary-table th:nth-child(2), .deferred-summary-table td:nth-child(2), .deferred-summary-table th:nth-child(3), .deferred-summary-table td:nth-child(3), .deferred-summary-table th:nth-child(4), .deferred-summary-table td:nth-child(4) { width: 15%; }
 .deferred-summary-table th:nth-child(5), .deferred-summary-table td:nth-child(5) { width: 30%; }
 
+/* ===== CLUSTER TABLE ===== */
+.cluster-table { table-layout: auto; min-width: 100%; }
+.cluster-table th { white-space: nowrap; font-size: 10px; padding: 10px 6px; text-align: center; }
+.cluster-table td { white-space: nowrap; font-size: 12px; padding: 10px 8px; text-align: right; }
+.cluster-table td:first-child, .cluster-table th:first-child { text-align: left; }
+.cluster-table .date-row th {
+    font-size: 9px;
+    color: #60a5fa;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    border-bottom: 1px solid #2a3a55;
+    padding: 6px 6px;
+}
+.cluster-table tbody td:nth-child(even) { color: #93c5fd; }
+.cluster-table tbody tr.total-row td:nth-child(even) { color: #93c5fd; }
+
 .empty-state { text-align: center; padding: 50px 20px; color: #64748b; font-size: 14px; font-style: italic; }
 #loading { padding: 60px; text-align: center; color: #94a3b8; font-size: 14px; font-style: italic; }
 #error { display: none; background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%); color: #fecaca; padding: 15px 18px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #991b1b; font-size: 13px; font-weight: 500; }
@@ -215,7 +232,19 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <tbody id="summaryBody"></tbody>
         </table>
     </div>
-  <div class="report-card" id="deferredSummaryCard" style="display:none">
+    
+    <!-- CLUSTER PERFORMANCE CARD -->
+    <div class="report-card" id="clusterCard" style="display:none">
+        <div class="report-card-header">CLUSTER PERFORMANCE</div>
+        <div class="report-table-wrapper">
+            <table class="report-table cluster-table">
+                <thead id="clusterHead"></thead>
+                <tbody id="clusterBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="report-card" id="deferredSummaryCard" style="display:none">
         <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
         <div class="report-table-wrapper">
             <table class="report-table deferred-summary-table">
@@ -236,18 +265,6 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <div class="report-table-wrapper"><table class="report-table"><thead id="monthlyTotalsHead"></thead><tbody id="monthlyTotalsBody"></tbody></table></div>
     </div>
 
-    <div class="report-card" id="deferredSummaryCard" style="display:none">
-        <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
-        <div class="report-table-wrapper">
-            <table class="report-table deferred-summary-table">
-                <thead><tr>
-                <th>DRI</th><th>TOTAL TARGET</th><th>WEEK 4 COLLECTION</th><th>DEFICIT</th><th>% PERFORMANCE</th>
-                </tr></thead>
-                <tbody id="deferredSummaryBody"></tbody>
-            </table>
-        </div>
-    </div>
-
 </div>
 
 </div>
@@ -255,12 +272,13 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 <script>
 
 const API_URL =
-"https://script.google.com/macros/s/AKfycbw2NHgGCV28w84Gg-tLtpKyKjmQmGJOkpme1SeMLSUljXCNkEt2Bm3ClAgPF83eCv7dFQ/exec";
+"https://script.google.com/macros/s/AKfycbzGl0I0AaEQyjks2hLBDUidp3Y1v62WGW9fSiO4ED4GpdmuSJj06SEsiJcPzYOLyK9R5w/exec";
 
 let allData = [];
 let deferredData = [];
 let weeklyTotals = null;
 let monthlyTotals = null;
+let clusterData = null;
 let currentView = "branches";
 let refreshInProgress = false;
 
@@ -300,6 +318,7 @@ async function loadData(manual = false) {
         deferredData = result.deferredData || [];
         weeklyTotals = result.weeklyTotals || null;
         monthlyTotals = result.monthlyTotals || null;
+        clusterData = result.clusterData || null;
 
         populateFilters(selectedBranch, selectedTeam);
         document.getElementById("searchBox").value = searchText;
@@ -486,6 +505,7 @@ function updateKPIsDeferred(data) {
 
 function renderSummaryView(data) {
     renderTable(data);
+    renderCluster();
     renderReportCard("weeklyTotalsCard", "weeklyTotalsHead", "weeklyTotalsBody", weeklyTotals);
     renderReportCard("monthlyTotalsCard", "monthlyTotalsHead", "monthlyTotalsBody", monthlyTotals);
     renderDeferredSummary();
@@ -551,6 +571,80 @@ function renderTable(data) {
 </tr>`;
 
     tbody.innerHTML = html;
+}
+
+/* ========== RENDER CLUSTER PERFORMANCE ========== */
+
+function renderCluster() {
+    const card = document.getElementById("clusterCard");
+    const head = document.getElementById("clusterHead");
+    const body = document.getElementById("clusterBody");
+
+    if (!clusterData || !clusterData.headers || !clusterData.rows || clusterData.rows.length === 0) {
+        card.style.display = "none";
+        head.innerHTML = "";
+        body.innerHTML = "";
+        return;
+    }
+
+    card.style.display = "block";
+
+    const headers = clusterData.headers;
+    const dates   = clusterData.dates || [];
+
+    /* ---- Extract unique day names from header pairs ---- */
+    /* headers = ["CLUSTER","MONDAY TARGET","MONDAY ACHIEVED","TUESDAY TARGET",...] */
+    const dayNames = [];
+    for (let i = 1; i < headers.length; i += 2) {
+        const parts = String(headers[i] || "").trim().split(/\s+/);
+        dayNames.push(parts[0]);  // "MONDAY", "TUESDAY", ...
+    }
+
+    /* ---- Build grouped <thead> ---- */
+    /* Row 1: CLUSTER (rowspan 2) | MONDAY (colspan 2) | TUESDAY (colspan 2) | … */
+    let headHtml = "<tr>";
+    headHtml += '<th rowspan="2">CLUSTER</th>';
+    dayNames.forEach(day => {
+        headHtml += `<th colspan="2">${escapeHtml(day)}</th>`;
+    });
+    headHtml += "</tr>";
+
+    /* Row 2: TARGET | ACHIEVED repeated */
+    headHtml += "<tr>";
+    dayNames.forEach(() => {
+        headHtml += "<th>TARGET</th><th>ACHIEVED</th>";
+    });
+    headHtml += "</tr>";
+
+    /* Row 3 (dates): one date per day-pair, colspan 2 */
+    if (dates.length > 0) {
+        headHtml += '<tr class="date-row">';
+        headHtml += "<th></th>";
+        for (let i = 1; i < dates.length; i += 2) {
+            const dateStr = String(dates[i] || "").trim();
+            headHtml += `<th colspan="2" class="date-header">${escapeHtml(dateStr)}</th>`;
+        }
+        headHtml += "</tr>";
+    }
+
+    head.innerHTML = headHtml;
+
+    /* ---- Build <tbody> ---- */
+    let bodyHtml = "";
+    clusterData.rows.forEach(row => {
+        const firstCell = String(row[0] || "").toUpperCase().trim();
+        const isTotal   = firstCell === "TOTAL";
+        bodyHtml += `<tr class="${isTotal ? "total-row" : ""}">`;
+        row.forEach((cell, idx) => {
+            if (idx === 0) {
+                bodyHtml += `<td><strong>${escapeHtml(cell)}</strong></td>`;
+            } else {
+                bodyHtml += `<td>${formatReportCell(cell)}</td>`;
+            }
+        });
+        bodyHtml += "</tr>";
+    });
+    body.innerHTML = bodyHtml;
 }
 
 /* ========== RENDER REPORT CARD (Weekly / Monthly) ========== */
