@@ -1305,6 +1305,9 @@
     "orgbranch-6a588cbdcd53be440ed40590": "Nolimit Healthcare",
     "orgbranch-6908bd8a4397ba1eb009baf2": "Rongai Retail",
     "orgbranch-6a588c18cd53be440ec8a011": "Kawangware Retail 2"
+
+    
+    
   };
 
   /* ── Branch Group Classification ─────────────────────────── */
@@ -1329,6 +1332,7 @@
     "orgbranch-6aab9a173cab8a51560a996e", // PHARMAWEB MIGORI
     "orgbranch-6a588cbdcd53be440ed40590", // Nolimit Healthcare
     "orgbranch-6908be314397ba1eb00cbd10"// Mombasa Retail (High Value 80k override)
+    
   ]);
 
   // Branches explicitly listed as Semi Wholesales (Fixed Target: 150,000 daily)
@@ -1597,6 +1601,7 @@
     const json = await fetchWithRetry(url, {
       signal,
       headers: {
+        
         "Content-Type": "application/json"
       }
     });
@@ -1618,6 +1623,7 @@
     const json = await fetchWithRetry(url, {
       signal,
       headers: {
+        
         "Content-Type": "application/json"
       }
     });
@@ -1664,133 +1670,124 @@
   /* ── Client-side range aggregation ───────────────────────── */
 
   function aggregateSalesPeople(startDate, endDate, selectedBranchId) {
-    const dailyMap = new Map();
+  const dailyMap = new Map();
 
-    for (const row of allRawData) {
-      const rowDate = getRecordDate(row);
-      if (!isDateInRange(rowDate, startDate, endDate)) continue;
+  for (const row of allRawData) {
+    const rowDate = getRecordDate(row);
+    if (!isDateInRange(rowDate, startDate, endDate)) continue;
 
-      const branchId = getBranchIdFromRow(row);
-      const branchName = getBranchNameFromSalesRow(row);
+    const branchId = getBranchIdFromRow(row);
+    const branchName = getBranchNameFromSalesRow(row);
 
-      if (selectedBranchId) {
-        const selectedName = branchNames[selectedBranchId] || "";
-        if (
-          branchId &&
-          branchId !== selectedBranchId &&
-          branchName.toLowerCase() !== selectedName.toLowerCase()
-        ) {
-          continue;
-        }
-
-        if (
-          !branchId &&
-          branchName.toLowerCase() !== selectedName.toLowerCase()
-        ) {
-          continue;
-        }
+    if (selectedBranchId) {
+      const selectedName = branchNames[selectedBranchId] || "";
+      if (
+        branchId &&
+        branchId !== selectedBranchId &&
+        branchName.toLowerCase() !== selectedName.toLowerCase()
+      ) {
+        continue;
       }
 
-      const name = String(
-        row.salesPersonName ||
-        row.salespersonName ||
-        row.salesPerson ||
-        row.name ||
-        ""
-      ).trim();
-
-      if (!name) continue;
-
-      const rowNetSales = getNetSales(row);
-      if (rowNetSales <= 0) continue;
-
-      const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
-
-      if (!dailyMap.has(dailyKey)) {
-        dailyMap.set(dailyKey, {
-          salesPersonName: name,
-          branchName,
-          orgBranchId: branchId || getBranchIdByName(branchName),
-          date: rowDate,
-          netValue: 0,
-          target: 0,
-          orders: 0,
-          deficit: 0
-        });
+      if (
+        !branchId &&
+        branchName.toLowerCase() !== selectedName.toLowerCase()
+      ) {
+        continue;
       }
-
-      const d = dailyMap.get(dailyKey);
-
-      d.netValue += rowNetSales;
-      d.target   += getSalesTarget(row);
-      d.orders   += getCustomerOrders(row);
-      d.deficit  += getSalesDeficit(row);
     }
 
-    const personMap = new Map();
+    const name = String(
+      row.salesPersonName ||
+      row.salespersonName ||
+      row.salesPerson ||
+      row.name ||
+      ""
+    ).trim();
 
-    for (const d of dailyMap.values()) {
-      if (d.netValue <= 0) continue;
+    if (!name) continue;
 
-      const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
+    const rowNetSales = getNetSales(row);
+    if (rowNetSales <= 0) continue;
 
-      if (!personMap.has(personKey)) {
-        personMap.set(personKey, {
-          salesPersonName: d.salesPersonName,
-          branchName: d.branchName,
-          orgBranchId: d.orgBranchId,
-          netValue: 0,
-          target: 0,
-          orders: 0,
-          deficit: 0,
-          daysWorked: 0
-        });
-      }
+    const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
 
-      const p = personMap.get(personKey);
-
-      p.netValue   += d.netValue;
-      p.orders     += d.orders;
-      p.target     += d.target;
-      p.deficit    += d.deficit;
-      p.daysWorked += 1;
+    if (!dailyMap.has(dailyKey)) {
+      dailyMap.set(dailyKey, {
+        salesPersonName: name,
+        branchName,
+        orgBranchId: branchId || getBranchIdByName(branchName),
+        date: rowDate,
+        netValue: 0,
+        target: 0,
+        orders: 0,
+        deficit: 0
+      });
     }
 
-    return [...personMap.values()]
-      .map(g => ({
-        salesPersonName: g.salesPersonName,
-        branchName: g.branchName,
-        orgBranchId: g.orgBranchId,
-        netValue: g.netValue,
-        target: g.target,
-        orders: g.orders,
-        deficit: g.deficit,
-        days: g.daysWorked,
-        score: g.target > 0 ? (g.netValue / g.target) * 100 : 0,
-        totalDaysCustomers: g.orders
-      }))
-      .filter(g => g.score > 0);
+    const d = dailyMap.get(dailyKey);
+
+    d.netValue += rowNetSales;
+    d.target   += getSalesTarget(row);
+    d.orders   += getCustomerOrders(row);
+    d.deficit  += getSalesDeficit(row);
   }
+
+  const personMap = new Map();
+
+  for (const d of dailyMap.values()) {
+    if (d.netValue <= 0) continue;
+
+    const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
+
+    if (!personMap.has(personKey)) {
+      personMap.set(personKey, {
+        salesPersonName: d.salesPersonName,
+        branchName: d.branchName,
+        orgBranchId: d.orgBranchId,
+        netValue: 0,
+        target: 0,
+        orders: 0,
+        deficit: 0,
+        daysWorked: 0
+      });
+    }
+
+    const p = personMap.get(personKey);
+
+    p.netValue   += d.netValue;
+    p.orders     += d.orders;
+    p.target     += d.target;
+    p.deficit    += d.deficit;
+    p.daysWorked += 1;
+  }
+
+  return [...personMap.values()]
+    .map(g => ({
+      salesPersonName: g.salesPersonName,
+      branchName: g.branchName,
+      orgBranchId: g.orgBranchId,
+      netValue: g.netValue,
+      target: g.target,
+      orders: g.orders,
+      deficit: g.deficit,
+      days: g.daysWorked,
+      score: g.target > 0 ? (g.netValue / g.target) * 100 : 0,
+      totalDaysCustomers: g.orders
+    }))
+    .filter(g => g.score > 0);
+}
 
 
   function aggregateBranches(startDate, endDate) {
     const daily = new Map();
 
-    // --- NEW VARIABLES FOR HEAD OFFICE DEDUCTION ---
-    const ID_HEAD_OFFICE = "orgbranch-683976e3994a072a600cbd7a";
-    const DEDUCTION_AMOUNT = 2274943;
-    const todayStr = formatDate(getToday());
-    // -----------------------------------------------
-
     // Special Targets Population logic
     function addDaily(name, date, target, netSales, branchId) {
       if (!name || !date) return;
       const key = `${name.toLowerCase().trim()}||${date}`;
-      if (!daily.has(key)) daily.set(key, { name, date, target: 0, netSales: 0, rawTarget: 0, branchId: branchId || "" });
+      if (!daily.has(key)) daily.set(key, { name, date, target: 0, netSales: 0, rawTarget: 0 });
       const d = daily.get(key);
-      
-      // Ensure we capture the branchId if it wasn't set on the first pass
-      if (!d.branchId && branchId) d.branchId = branchId;
 
       let finalTarget = Number(target) || 0;
 
@@ -1844,18 +1841,7 @@
       const g = groups.get(key);
       g.target += d.target;
       g.rawTarget += d.rawTarget;
-      
-      let dailyNetSales = d.netSales;
-      
-      // --- DEDUCTION LOGIC FOR HEAD OFFICE ---
-      if (d.branchId === ID_HEAD_OFFICE && d.date === todayStr) {
-        dailyNetSales -= DEDUCTION_AMOUNT;
-        // Prevent sales from going negative if deduction is larger than sales
-        if (dailyNetSales < 0) dailyNetSales = 0; 
-      }
-      // ---------------------------------------
-      
-      g.netSales += dailyNetSales;
+      g.netSales += d.netSales;
       g.days += 1;
     }
 
