@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Salesperson Performance</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+ 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #ffffff;
+    color: #0f172a;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Hide all dashboard data visually, but keep it in DOM for JS logic */
+  .hidden-ui { display: none !important; }
+
+  .reader-card {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 90%;
+  }
+
+  .reader-title {
+    font-size: 42px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 30px;
+    letter-spacing: -1px;
+  }
+
+  .audio-wave-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    height: 80px;
+    margin-bottom: 30px;
+  }
+
+  .wave-bar {
+    width: 10px;
+    background: #ba9305;
+    border-radius: 5px;
+    animation: wave 1.2s infinite ease-in-out;
+  }
+
+  @keyframes wave {
+    0%, 100% { height: 15px; opacity: 0.5; }
+    50% { height: 70px; opacity: 1; }
+  }
+
+  .reader-timestamp {
+    font-size: 20px;
+    color: #334155;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .reader-status {
+    font-size: 14px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+    margin-bottom: 40px;
+  }
+
+  .manual-announce-btn {
+    background: #ba9305;
+    color: #ffffff;
+    border: none;
+    padding: 14px 36px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 15px rgba(186, 147, 5, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .manual-announce-btn:hover {
+    background: #d4a807;
+    transform: translateY(-2px);
+  }
+  .manual-announce-btn:active {
+    transform: translateY(0);
+  }
+  .manual-announce-btn.speaking {
+    background: #334155;
+    color: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+    70% { box-shadow: 0 0 0 12px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+
+  /* Hidden Data Elements Styling (Required for JS logic) */
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 20px; }
+  thead th { position: sticky; top: 0; background: #1e293b; color: #94a3b8; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-weight: 700; z-index: 2; padding: 20px 20px; border-bottom: 2px solid #334155; text-align: left; user-select: none; white-space: nowrap; }
+  td { padding: 13px 20px; border-bottom: 1px solid #1e293b; vertical-align: middle; color: #cbd5e1; }
+  .toast {
+    position: fixed; bottom: 30px; right: 30px; background: #1e293b; border: 1px solid #334155;
+    border-left: 4px solid #ef4444; color: #f1f5f9; padding: 16px 24px; border-radius: 12px;
+    font-size: 20px; font-weight: 600; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 999;
+    transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); max-width: 380px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.toast-warn { border-left-color: #f59e0b; }
+  .toast.toast-retry { border-left-color: #38bdf8; }
+</style>
+</head>
+
+<body>
+
+<!-- ═══════════════ VISIBLE WAVE UI ═══════════════ -->
+<div class="reader-card">
+  <div class="reader-title">Salesperson Performance</div>
+  <div class="audio-wave-container">
+    <div class="wave-bar" style="animation-delay: 0s;"></div>
+    <div class="wave-bar" style="animation-delay: 0.2s;"></div>
+    <div class="wave-bar" style="animation-delay: 0.4s;"></div>
+    <div class="wave-bar" style="animation-delay: 0.6s;"></div>
+    <div class="wave-bar" style="animation-delay: 0.8s;"></div>
+  </div>
+  <div class="reader-timestamp" id="lastUpdated">Awaiting Data...</div>
+  <div class="reader-status">Reading performance from backend...</div>
+  
+  <button id="manualAnnounceBtn" class="manual-announce-btn" onclick="speakBranchPerformance()">
+    🔊 Announce Now
+  </button>
+</div>
+
+<!-- ═══════════════ HIDDEN DASHBOARD FOR BACKEND LOGIC ═══════════════ -->
+<div class="hidden-ui">
+  <header>
+    <div class="header-left">
+      <div class="header-logo">TS</div>
+      <div>
+        <div class="header-title" id="headerTitle">Telesales Performance Dashboard</div>
+        <div class="header-subtitle" id="headerSubtitle">Management Overview — Real-time Sales Tracking</div>
+      </div>
+    </div>
+    <div class="header-right" id="headerRight">
+      <div class="header-loading-overlay" id="headerLoading">
+        <div class="mini-spinner"></div>
+      </div>
+      <div class="filter-select date-selector">
+        <select id="dateSelect">
+          <option value="today" selected>Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="7days">Last 7 Days</option>
+          <option value="30days">Last 30 Days</option>
+          <option value="90days">Last 90 Days</option>
+          <option value="custom">Custom Range</option>
+        </select>
+      </div>
+      <div class="custom-date-range" id="customDateRange">
+        <div class="date-range-group">
+          <span class="date-range-label">From</span>
+          <div class="date-range-input-wrap">
+            <input type="date" id="dateFrom">
+          </div>
+        </div>
+        <div class="date-range-group">
+          <span class="date-range-label">To</span>
+          <div class="date-range-input-wrap">
+            <input type="date" id="dateTo">
+          </div>
+        </div>
+      </div>
+      <div class="view-toggle">
+        <button id="btnTelesales" class="active" onclick="switchView('telesales')">Telesales</button>
+        <button id="btnBranches" onclick="switchView('branches')">Branches</button>
+      </div>
+      <div class="filter-select branch-selector" id="branchSelectorWrap">
+        <select id="branchSelect">
+          <option value="">All Branches</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div id="telesalesView">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Customer Orders</div>
+        <div class="stat-value" id="statOrders">—</div>
+        <div class="stat-sub" id="statOrdersSub">across all telesales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Telesales</div>
+        <div class="stat-value" id="statActive">—</div>
+        <div class="stat-sub" id="statActiveSub">with recorded sales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="deficitLabel">Sales Deficit</div>
+        <div class="stat-value" id="statDeficit">—</div>
+        <div class="stat-sub" id="statDeficitSub">vs branch target</div>
+      </div>
+    </div>
+
+    <div class="branch-perf-section">
+      <div class="branch-perf-card">
+        <div class="branch-perf-info">
+          <div class="label">Branch Performance on Special Target</div>
+          <div class="value" id="branchPerfValue">—</div>
+          <div class="detail" id="branchPerfDetail">loading...</div>
+        </div>
+        <div class="perf-bar-wrap">
+          <div class="perf-bar-track">
+            <div class="perf-bar-fill" id="branchPerfBar" style="width:0%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="table-header">
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <span class="table-title">Telesales Ranking</span>
+          <span class="table-count" id="tableCount">0 people</span>
+          <span class="sort-hint" id="sortHint">Click column headers to sort</span>
+        </div>
+        <input type="text" class="search-box" id="searchBox" placeholder="Search by name or branch...">
+      </div>
+      <div class="table-wrap" id="tableWrap">
+        <table>
+          <thead>
+            <tr>
+            <th>#</th>
+            <th class="sortable" data-sort="name">Telesale Name <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="branch">Branch <span class="sort-icon">▲</span></th>
+            <th class="sortable active-sort sort-desc" data-sort="score" style="text-align:center;">Sales % <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="orders" style="text-align:center;">Orders <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="value" style="text-align:right;">Order Value <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="deficit" style="text-align:right;">Sales Deficit <span class="sort-icon">▲</span></th>
+            <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr class="loading-row">
+              <td colspan="8">
+                <span class="loading-spinner"></span>
+                Loading sales data...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="branchView">
+    <div class="branch-summary-row">
+      <div class="stat-card">
+        <div class="stat-label">Special Targets Performance</div>
+        <div class="stat-value" id="bsOverallPct">—</div>
+        <div class="stat-sub" id="bsOverallPctSub">aggregated all branches</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Net Sales</div>
+        <div class="stat-value" id="bsTotalSales">—</div>
+        <div class="stat-sub" id="bsTotalSalesSub">across all branches</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Branches Achieved</div>
+        <div class="stat-value perf-high" id="bsOnTrack">—</div>
+        <div class="stat-sub" id="bsOnTrackSub">at 80% or above</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Actual Score (Raw)</div>
+        <div class="stat-value" id="bsRawPerf">—</div>
+        <div class="stat-sub" id="bsRawPerfSub">against original targets</div>
+      </div>
+    </div>
+
+    <div class="branch-grid-wrap">
+      <div class="branch-grid-header">
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <span class="table-title" id="branchGridTitle">All Branches</span>
+          <span class="table-count" id="branchCount">0 branches</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div class="group-toggle" id="branchGroupToggle">
+            <button id="btnWholesale" class="active" onclick="switchBranchGroup('wholesale')">Wholesales</button>
+            <button id="btnSemiWholesale" onclick="switchBranchGroup('semi')">Semi Wholesales</button>
+            <button id="btnRetail" onclick="switchBranchGroup('retail')">Retails</button>
+          </div>
+          <button id="btnTTS" onclick="speakBranchPerformance()" class="tts-btn" title="Announce Branch Performance">
+            🔊 Announce
+          </button>
+          <input type="text" class="search-box" id="branchSearchBox" placeholder="Search branch...">
+        </div>
+      </div>
+      <div class="branch-grid" id="branchGrid">
+        <div class="no-branch-data">Loading branch data...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  window.API_CONFIG = {
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/"
+  };
+</script>
+
+<script>
+  /* ============================================================
+     DATA ENGINE
+     ============================================================ */
+
+  const AUTO_REFRESH_MS = 600000; // 10 minutes
+  const DATA_LOOKBACK_DAYS = 365;
+
+  let currentSort = { key: "score", dir: "desc" };
+  let currentView = "branches"; // Default to branches for TTS
+  let isLoading = false;
+  let currentAbortCtrl = null;
+
+  let allRawData = [];
+  let branchPerfData = [];
+  let filteredData = [];
+  let displayedData = [];
+  let lastDataFetchAt = null;
+  let currentDaysInRange = 0;
+
+  // Preload TTS Voices
+  let availableVoices = [];
+  if ('speechSynthesis' in window) {
+    availableVoices = window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => {
+      availableVoices = window.speechSynthesis.getVoices();
+    };
+  }
+
+  /* ── Date helpers ────────────────────────────────────────── */
+  function formatDate(d) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function parseDateKey(value) {
+    if (!value) return null;
+    const s = String(value);
+    const match = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : null;
+  }
+
+  function getRecordDate(record) {
+    return parseDateKey(
+      record.reportingDate ||
+      record.reportDate ||
+      record.salesDate ||
+      record.date ||
+      record.createdAt ||
+      record.updatedAt
+    );
+  }
+
+  function getToday() { return new Date(); }
+
+  function getFetchRange() {
+    const end = getToday();
+    const start = new Date(end);
+    start.setDate(start.getDate() - DATA_LOOKBACK_DAYS + 1);
+    return { startDate: formatDate(start), endDate: formatDate(end) };
+  }
+
+  function getDateRange() {
+    const preset = document.getElementById("dateSelect").value;
+    const today = getToday();
+    const endDate = formatDate(today);
+
+    if (preset === "custom") {
+      let startDate = document.getElementById("dateFrom").value || endDate;
+      let customEnd = document.getElementById("dateTo").value || endDate;
+      if (startDate > customEnd) { [startDate, customEnd] = [customEnd, startDate]; }
+      return { startDate, endDate: customEnd };
+    }
+
+    if (preset === "yesterday") {
+      const d = new Date(today);
+      d.setDate(d.getDate() - 1);
+      const day = formatDate(d);
+      return { startDate: day, endDate: day };
+    }
+
+    const daysMap = { today: 1, "7days": 7, "30days": 30, "90days": 90 };
+    const days = daysMap[preset] || 1;
+    const start = new Date(today);
+    start.setDate(start.getDate() - days + 1);
+    return { startDate: formatDate(start), endDate };
+  }
+
+  function syncDateInputsFromPreset(preset) {
+    const today = getToday();
+    const todayStr = formatDate(today);
+    let fromStr = todayStr;
+    let toStr = todayStr;
+
+    switch (preset) {
+      case "today": break;
+      case "yesterday": {
+        const y = new Date(today);
+        y.setDate(y.getDate() - 1);
+        fromStr = toStr = formatDate(y);
+        break;
+      }
+      case "7days": {
+        const d = new Date(today);
+        d.setDate(d.getDate() - 6);
+        fromStr = formatDate(d);
+        break;
+      }
+      case "30days": {
+        const d = new Date(today);
+        d.setDate(d.getDate() - 29);
+        fromStr = formatDate(d);
+        break;
+      }
+      case "90days": {
+        const d = new Date(today);
+        d.setDate(d.getDate() - 89);
+        fromStr = formatDate(d);
+        break;
+      }
+      case "custom": return;
+    }
+
+    document.getElementById("dateFrom").value = fromStr;
+    document.getElementById("dateTo").value = toStr;
+  }
+
+  function toggleCustomDateRange(show) {
+    document.getElementById("customDateRange").classList.toggle("visible", show);
+  }
+
+  function isDateInRange(dateKey, startDate, endDate) {
+    return !!dateKey && dateKey >= startDate && dateKey <= endDate;
+  }
+
+  function getDaysInRange(startDate, endDate) {
+    if (!startDate || !endDate) return 0;
+    let count = 0;
+    let currentDate = new Date(startDate + "T00:00:00");
+    const end = new Date(endDate + "T00:00:00");
+    while (currentDate <= end) {
+      if (currentDate.getDay() !== 6) count++;
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return count;
+  }
+
+  /* ── Branch names & IDs ────────────────────────────────────── */
+  const branchNames = {
+    "orgbranch-683976e3994a072a600cbd7a": "Head Office",
+    "orgbranch-684558f576bd774c32f00d8e": "Naivasha",
+    "orgbranch-68455bea76bd774c32f031cc": "Kitengela",
+    "orgbranch-68458a4b76bd774c32f10527": "Githurai",
+    "orgbranch-684593b176bd774c32f150c6": "Kawangware Wholesale",
+    "orgbranch-685001107d3c6f75c8c1d42e": "Karatina",
+    "orgbranch-685001217d3c6f75c8c1d491": "Meru",
+    "orgbranch-6850012f7d3c6f75c8c1d4f4": "Busia",
+    "orgbranch-685001387d3c6f75c8c1d557": "Mombasa Wholesale",
+    "orgbranch-685001457d3c6f75c8c1d5ba": "Kisii",
+    "orgbranch-685001557d3c6f75c8c1d61d": "Philton",
+    "orgbranch-6850015d7d3c6f75c8c1d680": "Kitui Wholesale",
+    "orgbranch-685001667d3c6f75c8c1d6e3": "Philmed Malindi",
+    "orgbranch-685001967d3c6f75c8c1d746": "Kericho",
+    "orgbranch-6850019e7d6f75c8c1d7a9": "Nakuru",
+    "orgbranch-685001a77d3c6f75c8c1d80c": "Kisumu",
+    "orgbranch-685001b17d3c6f75c8c1d86f": "Philmed Eldoret",
+    "orgbranch-685001c17d3c6f75c8c1d8d2": "Philmed Thika",
+    "orgbranch-685001ce7d3c6f75c8c1d935": "Voi Branch",
+    "orgbranch-685001e27d3c6f75c8c1d998": "Kendia",
+    "orgbranch-685001f37d3c6f75c8c1d9fb": "Kakamega",
+    "orgbranch-685001ff7d3c6f75c8c1da5e": "Bungoma",
+    "orgbranch-685002097d3c6f75c8c1dac1": "Makindu",
+    "orgbranch-685002137d3c6f75c8c1db4f": "Rongai Wholesale",
+    "orgbranch-685002247d3c6f75c8c1dc25": "Embu",
+    "orgbranch-69df9dc58418a65253e015a6": "Arms Narok Wholesale",
+    "orgbranch-69f7511b83ba28b7dda7ccd1": "Ol Kalou",
+    "orgbranch-6a8c509e44cec8b9b30ec559": "Wote",
+    "orgbranch-6a840bfb1936a960f8ec3e7a": "Migori",
+    "orgbranch-6a14177260c3a453acb56ceb": "Nanyuki",
+    "orgbranch-6a588d82cd53be440ee3078b": "Umoja",
+    "orgbranch-6a589046cd53be440e2444b8": "Mwiki",
+    "orgbranch-6a5891b4cd53be440e4edbcb": "Silvergates Rongai",
+    "orgbranch-6a58930bcd53be440e78342f": "Nanyuki Chemist",
+    "orgbranch-6aab99c53cab8a51560407fb": "Silvergate Jacaranda",
+    "orgbranch-6908bd9a4397ba1eb00a1783": "Kawangware Retail",
+    "orgbranch-69d903089ca75f00087a0446": "Silvergates Imara",
+    "orgbranch-6aab9a513cab8a51560d379c": "Arms Agrovet",
+    "orgbranch-6a588df2cd53be440eec1dca": "Mihang'o",
+    "orgbranch-6a684b171ba6be0c08f8f715": "Arms Ol Kalou",
+    "orgbranch-6a5894cdcd53be440ec28678": "Arms Narok Retail",
+    "orgbranch-6aab9ac13cab8a5156147c48": "Pharmaweb Wote",
+    "orgbranch-6aab9a173cab8a51560a996e": "Pharmaweb Migori",
+    "orgbranch-6908be314397ba1eb00cbd10": "Mombasa Retail",
+    "orgbranch-6909a662c9bd2cf7596be81d": "Kitui Retail",
+    "orgbranch-6a588d19cd53be440eda95d1": "Silvergates Health Solutions",
+    "orgbranch-6a588cbdcd53be440ed40590": "Nolimit Healthcare",
+    "orgbranch-6908bd8a4397ba1eb009baf2": "Rongai Retail",
+    "orgbranch-6a588c18cd53be440ec8a011": "Kawangware Retail 2"
+  };
+
+  const HIGH_VALUE_RETAIL_IDS = new Set([
+    "orgbranch-6a588cbdcd53be440ed40590",
+    "orgbranch-6908be314397ba1eb00cbd10"
+  ]);
+
+  const RETAIL_BRANCH_IDS = new Set([
+    "orgbranch-6a5891b4cd53be440e4edbcb", "orgbranch-6a58930bcd53be440e78342f", "orgbranch-6aab99c53cab8a51560407fb",
+    "orgbranch-6908bd9a4397ba1eb00a1783", "orgbranch-69d903089ca75f00087a0446", "orgbranch-6aab9a513cab8a51560d379c",
+    "orgbranch-6a684b171ba6be0c08f8f715", "orgbranch-6a5894cdcd53be440ec28678", "orgbranch-6aab9ac13cab8a5156147c48",
+    "orgbranch-6aab9a173cab8a51560a996e", "orgbranch-6a588cbdcd53be440ed40590", "orgbranch-6908be314397ba1eb00cbd10"
+  ]);
+
+  const SEMI_WHOLESALE_BRANCH_IDS = new Set([
+    "orgbranch-6a588d82cd53be440ee3078b", "orgbranch-6a589046cd53be440e2444b8", "orgbranch-6a588df2cd53be440eec1dca",
+    "orgbranch-6909a662c9bd2cf7596be81d", "orgbranch-6908bd8a4397ba1eb009baf2", "orgbranch-6a588d19cd53be440eda95d1",
+    "orgbranch-6a588c18cd53be440ec8a011"
+  ]);
+
+  const WHOLESALE_BRANCH_IDS = new Set(
+    Object.keys(branchNames).filter(id => !RETAIL_BRANCH_IDS.has(id) && !SEMI_WHOLESALE_BRANCH_IDS.has(id))
+  );
+
+  let currentBranchGroup = "wholesale"; // Default to wholesale for TTS
+
+  const branchSelect = document.getElementById("branchSelect");
+  Object.entries(branchNames)
+  .sort((a, b) => a[1].localeCompare(b[1]))
+  .forEach(([id, name]) => {
+    if (RETAIL_BRANCH_IDS.has(id) || SEMI_WHOLESALE_BRANCH_IDS.has(id)) return;
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = name;
+    branchSelect.appendChild(opt);
+  });
+
+  /* ── Formatting & Helpers ──────────────────────────────────── */
+  function formatValue(num) {
+    const n = Number(num) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(2) + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+    return Math.round(n).toLocaleString();
+  }
+
+  function formatCurrency(num) {
+    const n = Number(num) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(2) + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+    return Math.round(n).toLocaleString();
+  }
+
+  function formatFullCurrency(num) { return "KES " + Math.round(Number(num) || 0).toLocaleString(); }
+
+  function toNumber(value) {
+    if (value === null || value === undefined || value === "") return 0;
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    const cleaned = String(value).replace(/,/g, "").replace(/%/g, "").trim();
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function getSalesTarget(row) { return toNumber(row.dailySalesTarget ?? row.salesTarget ?? row.target ?? row.dailyTarget ?? row.targetSales); }
+  function getNetSales(row) { return toNumber(row.netDailySales ?? row.netSales ?? row.dailyNetSales ?? row.branchNetSales); }
+  function getCustomerOrders(row) { return toNumber(row.totalDaysCustomers ?? row.dailyCustomers ?? row.customerOrders ?? row.totalCustomers); }
+  function getSalesDeficit(row) { return toNumber(row.dailySalesDeficit ?? row.salesDeficit ?? row.deficit); }
+  function getBranchNameFromSalesRow(row) { return String(row.branchName || row.orgBranchName || branchNames[row.orgBranchId] || "").trim(); }
+  function getBranchIdFromRow(row) { return row.orgBranchId || row.branchId || ""; }
+  function getBranchIdByName(name) {
+    const normalized = String(name || "").trim().toLowerCase();
+    for (const [id, branchName] of Object.entries(branchNames)) {
+      if (branchName.toLowerCase() === normalized) return id;
+    }
+    return "";
+  }
+
+  const ID_KAWANGWARE = "orgbranch-684593b176bd774c32f150c6";
+  const ID_RONGAI = "orgbranch-685002137d3c6f75c8c1db4f";
+  const ID_KITENGEELA = "orgbranch-68455bea76bd774c32f031cc";
+  const ID_KITUI = "orgbranch-6850015d7d3c6f75c8c1d680";
+
+  function getTargetMultiplier(dateStr, branchId) {
+    const dateSelectVal = document.getElementById("dateSelect").value;
+    const todayStr = formatDate(getToday());
+    if (dateSelectVal !== "today" || dateStr !== todayStr) return 1;
+
+    const dateObj = new Date(dateStr + "T00:00:00");
+    const dayOfWeek = dateObj.getDay();
+
+    function isLastWeekdayOfMonth(date, targetDay) {
+      if (date.getDay() !== targetDay) return false;
+      const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      return date.getDate() + 7 > lastDayOfMonth.getDate();
+    }
+
+    if (dayOfWeek === 2 && isLastWeekdayOfMonth(dateObj, 2) && branchId === ID_KITUI) return 1.5;
+    if (dayOfWeek === 3 && isLastWeekdayOfMonth(dateObj, 3) && branchId === ID_KAWANGWARE) return 1.5;
+    if (dayOfWeek === 5 && isLastWeekdayOfMonth(dateObj, 5) && (branchId === ID_KITENGEELA || branchId === ID_RONGAI)) return 1.5;
+    if (dayOfWeek === 4 && isLastWeekdayOfMonth(dateObj, 4)) {
+      if (![ID_KITUI, ID_KAWANGWARE, ID_KITENGEELA, ID_RONGAI].includes(branchId)) return 1.5;
+    }
+
+    if (dayOfWeek === 1) return 0.7;
+    if (dayOfWeek === 2) return (branchId === ID_KAWANGWARE || branchId === ID_RONGAI) ? 0.6 : 0.8;
+    if (dayOfWeek === 3) return (branchId === ID_KAWANGWARE || branchId === ID_RONGAI) ? 0.8 : 0.6;
+    if (dayOfWeek === 4) {
+      if (branchId === ID_KITENGEELA || branchId === ID_KAWANGWARE || branchId === ID_RONGAI) return 0.6;
+      return 0.8;
+    }
+    if (dayOfWeek === 5) {
+      if (branchId === ID_KAWANGWARE || branchId === ID_RONGAI || branchId === ID_KITENGEELA) return 0.8;
+      return 0.6;
+    }
+    if (dayOfWeek === 0) return 0.5;
+    return 1.0;
+  }
+
+  let toastTimer = null;
+  function showToast(msg, type) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast" + (type ? " toast-" + type : "");
+    void t.offsetWidth;
+    t.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 4500);
+  }
+
+  function abortPreviousRequests() {
+    if (currentAbortCtrl) { currentAbortCtrl.abort(); currentAbortCtrl = null; }
+    currentAbortCtrl = new AbortController();
+    return currentAbortCtrl.signal;
+  }
+
+  async function fetchWithRetry(url, options, maxRetries = 3) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (response.status === 409 && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
+          showToast(`Rate limited — retrying in ${Math.round(delay / 1000)}s...`, "retry");
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return await response.json();
+      } catch (err) {
+        if (err.name === "AbortError") throw err;
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 700 + Math.random() * 300;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
+  async function fetchSalesData(signal) {
+    const { startDate, endDate } = getFetchRange();
+    const url = `${window.API_CONFIG.API_URL}sales-person-performance?pageSize=10000&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    const json = await fetchWithRetry(url, { signal, headers: { "Content-Type": "application/json" } });
+    return Array.isArray(json) ? json : (json.data || []);
+  }
+
+  async function fetchBranchPerformanceData(signal) {
+    const { startDate, endDate } = getFetchRange();
+    const url = `${window.API_CONFIG.API_URL}branch-sales-performance-reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=10000`;
+    const json = await fetchWithRetry(url, { signal, headers: { "Content-Type": "application/json" } });
+    return Array.isArray(json) ? json : (json.data || []);
+  }
+
+  function setLoadingState(loading) {
+    isLoading = loading;
+    const overlay = document.getElementById("headerLoading");
+    const dateSelect = document.getElementById("dateSelect");
+    const dateFrom = document.getElementById("dateFrom");
+    const dateTo = document.getElementById("dateTo");
+    const branchSel = document.getElementById("branchSelect");
+
+    if (loading) {
+      if (overlay) overlay.classList.add("active");
+      if (dateSelect) dateSelect.disabled = true;
+      if (dateFrom) dateFrom.disabled = true;
+      if (dateTo) dateTo.disabled = true;
+      if (branchSel) branchSel.disabled = true;
+    } else {
+      if (overlay) overlay.classList.remove("active");
+      if (dateSelect) dateSelect.disabled = false;
+      if (dateFrom) dateFrom.disabled = false;
+      if (dateTo) dateTo.disabled = false;
+      if (branchSel) branchSel.disabled = false;
+    }
+  }
+
+  function aggregateSalesPeople(startDate, endDate, selectedBranchId) {
+    const dailyMap = new Map();
+    for (const row of allRawData) {
+      const rowDate = getRecordDate(row);
+      if (!isDateInRange(rowDate, startDate, endDate)) continue;
+      const branchId = getBranchIdFromRow(row);
+      const branchName = getBranchNameFromSalesRow(row);
+      if (selectedBranchId) {
+        const selectedName = branchNames[selectedBranchId] || "";
+        if (branchId && branchId !== selectedBranchId && branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
+        if (!branchId && branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
+      }
+      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
+      if (!name) continue;
+      const rowNetSales = getNetSales(row);
+      if (rowNetSales <= 0) continue;
+      const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
+      if (!dailyMap.has(dailyKey)) {
+        dailyMap.set(dailyKey, { salesPersonName: name, branchName, orgBranchId: branchId || getBranchIdByName(branchName), date: rowDate, netValue: 0, target: 0, orders: 0, deficit: 0 });
+      }
+      const d = dailyMap.get(dailyKey);
+      d.netValue += rowNetSales;
+      d.target   += getSalesTarget(row);
+      d.orders   += getCustomerOrders(row);
+      d.deficit  += getSalesDeficit(row);
+    }
+
+    const personMap = new Map();
+    for (const d of dailyMap.values()) {
+      if (d.netValue <= 0) continue;
+      const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
+      if (!personMap.has(personKey)) {
+        personMap.set(personKey, { salesPersonName: d.salesPersonName, branchName: d.branchName, orgBranchId: d.orgBranchId, netValue: 0, target: 0, orders: 0, deficit: 0, daysWorked: 0 });
+      }
+      const p = personMap.get(personKey);
+      p.netValue += d.netValue;
+      p.orders += d.orders;
+      p.target += d.target;
+      p.deficit += d.deficit;
+      p.daysWorked += 1;
+    }
+
+    return [...personMap.values()]
+      .map(g => ({
+        salesPersonName: g.salesPersonName, branchName: g.branchName, orgBranchId: g.orgBranchId,
+        netValue: g.netValue, target: g.target, orders: g.orders, deficit: g.deficit, days: g.daysWorked,
+        score: g.target > 0 ? (g.netValue / g.target) * 100 : 0,
+        totalDaysCustomers: g.orders
+      }))
+      .filter(g => g.score > 0);
+  }
+
+  function aggregateBranches(startDate, endDate) {
+    const daily = new Map();
+    function addDaily(name, date, target, netSales, branchId) {
+      if (!name || !date) return;
+      const key = `${name.toLowerCase().trim()}||${date}`;
+      if (!daily.has(key)) daily.set(key, { name, date, target: 0, netSales: 0, rawTarget: 0 });
+      const d = daily.get(key);
+      let finalTarget = Number(target) || 0;
+      if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId)) finalTarget = 150000;
+      else if (HIGH_VALUE_RETAIL_IDS.has(branchId)) finalTarget = 80000;
+      else if (RETAIL_BRANCH_IDS.has(branchId)) finalTarget = 50000;
+      else finalTarget = Number(target) * getTargetMultiplier(date, branchId);
+      d.target += finalTarget;
+      d.rawTarget += Number(target) || 0;
+      d.netSales += Number(netSales) || 0;
+    }
+
+    for (const row of branchPerfData) {
+      const date = getRecordDate(row);
+      if (!isDateInRange(date, startDate, endDate) || !date) continue;
+      const name = String(row.orgBranchName || row.branchName || branchNames[row.orgBranchId] || '').trim();
+      if (!name) continue;
+      addDaily(name, date, getSalesTarget(row), getNetSales(row), row.orgBranchId || getBranchIdByName(name));
+    }
+
+    const salesDaily = new Map();
+    for (const row of allRawData) {
+      const date = getRecordDate(row);
+      if (!isDateInRange(date, startDate, endDate) || !date) continue;
+      const name = getBranchNameFromSalesRow(row);
+      if (!name) continue;
+      const key = `${name.toLowerCase().trim()}||${date}`;
+      const branchId = getBranchIdFromRow(row);
+      if (!salesDaily.has(key)) salesDaily.set(key, { name, date, target: getSalesTarget(row), netSales: 0, branchId });
+      const d = salesDaily.get(key);
+      d.netSales += getNetSales(row);
+      if (!d.target) d.target = getSalesTarget(row);
+    }
+    for (const [key, d] of salesDaily) {
+      if (!daily.has(key)) addDaily(d.name, d.date, d.target, d.netSales, d.branchId);
+    }
+
+    const groups = new Map();
+    for (const d of daily.values()) {
+      const key = d.name.toLowerCase().trim();
+      if (!groups.has(key)) groups.set(key, { name: d.name, target: 0, netSales: 0, days: 0, hasData: true, rawTarget: 0 });
+      const g = groups.get(key);
+      g.target += d.target;
+      g.rawTarget += d.rawTarget;
+      g.netSales += d.netSales;
+      g.days += 1;
+    }
+
+    return [...groups.values()].map(b => ({
+      ...b,
+      pct: b.target > 0 ? (b.netSales / b.target) * 100 : 0,
+      rawPct: b.rawTarget > 0 ? (b.netSales / b.rawTarget) * 100 : 0
+    }));
+  }
+
+  async function loadAllData() {
+    if (isLoading) return;
+    const signal = abortPreviousRequests();
+    setLoadingState(true);
+
+    try {
+      const [salesData, branchData] = await Promise.all([fetchSalesData(signal), fetchBranchPerformanceData(signal)]);
+      if (signal.aborted) return;
+      allRawData = salesData;
+      branchPerfData = branchData;
+      lastDataFetchAt = new Date();
+      processAndRender();
+      if (currentView === "branches") renderBranchView();
+      
+      const tsEl = document.getElementById("lastUpdated");
+      if (tsEl) tsEl.textContent = "Last Updated: " + lastDataFetchAt.toLocaleTimeString();
+
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      console.error(err);
+      showToast("Failed to load data: " + err.message, "warn");
+    } finally {
+      if (!signal.aborted) setLoadingState(false);
+    }
+  }
+
+  function switchView(view) {
+    currentView = view;
+    if (view === "branches") renderBranchView();
+    else processAndRender();
+  }
+
+  function switchBranchGroup(group) {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    currentBranchGroup = group;
+    renderBranchView();
+  }
+
+  function renderBranchView() {
+    if (!branchPerfData.length) return;
+    const { startDate, endDate } = getDateRange();
+    const aggregated = aggregateBranches(startDate, endDate);
+    const byName = new Map(aggregated.map(b => [b.name.toLowerCase().trim(), b]));
+
+    const branchIdsToShow = currentBranchGroup === "retail" ? RETAIL_BRANCH_IDS : currentBranchGroup === "semi" ? SEMI_WHOLESALE_BRANCH_IDS : WHOLESALE_BRANCH_IDS;
+    const branches = [];
+
+    for (const id in branchNames) {
+      if (!branchIdsToShow.has(id)) continue;
+      const name = branchNames[id];
+      const entry = byName.get(name.toLowerCase().trim());
+      if (entry) {
+        branches.push({ name, target: entry.target, rawTarget: entry.rawTarget, netSales: entry.netSales, pct: entry.pct, rawPct: entry.rawPct, hasData: true });
+      } else {
+        branches.push({ name, target: 0, rawTarget: 0, netSales: 0, pct: 0, rawPct: 0, hasData: false });
+      }
+    }
+
+    branches.sort((a, b) => {
+      if (a.hasData && !b.hasData) return -1;
+      if (!a.hasData && b.hasData) return 1;
+      if (!a.hasData && !b.hasData) return a.name.localeCompare(b.name);
+      return b.pct - a.pct;
+    });
+
+    window.currentRenderedBranches = branches;
+  }
+
+  /* ── Text-to-Speech Logic ───────────────────────────────── */
+
+  const phoneticNames = {
+    "Head Office": "Head Office", "Naivasha": "Nai-vasha", "Kitengela": "Kitte-ngela",
+    "Githurai": "Githu-rai", "Kawangware Wholesale": "kahwahng-wah-reh Wholesale",
+    "Karatina": "Kara-tina", "Meru": "Meru", "Busia": "Busia",
+    "Mombasa Wholesale": "Mom-basa Wholesale", "Kisii": "Kisii", "Philton": "Phil-ton",
+    "Kitui Wholesale": "Kitui Wholesale", "Philmed Malindi": "Philm-ed Ma-lindi",
+    "Kericho": "Keri-choh", "Nakuru": "Naku-ruh", "Kisumu": "Kisuh-moo",
+    "Philmed Eldoret": "Philm-ed El-doh-ret", "Philmed Thika": "Philm-ed Thi-ka",
+    "Voi Branch": "Voi Branch", "Kendia": "Kendia", "Kakamega": "Kakamega",
+    "Bungoma": "Boon-go-ma", "Makindu": "Ma-kin-du", "Rongai Wholesale": "Rong-ai Wholesale",
+    "Embu": "Embu", "Arms Narok Wholesale": "Arms Narok Wholesale", "Ol Kalou": "Ol Kalou",
+    "Wote": "Wo-tee", "Migori": "Migori", "Nanyuki": "Nanyuki",
+    "Umoja": "Umo-ja", "Mwiki": "M-wik-ee", "Silvergates Rongai": "Silvergates Rong-ai",
+    "Nanyuki Chemist": "Nan-yoo-kee Chemist", "Silvergate Jacaranda": "Silvergate Jaca-randa",
+    "Kawangware Retail": "Ka-wang-ware Retail", "Silvergates Imara": "Silvergates Imara",
+    "Arms Agrovet": "Arms Ag-ro-vet", "Mihang'o": "Mi-hang-o", "Arms Ol Kalou": "Arms Ol Kal-au",
+    "Arms Narok Retail": "Arms Narok Retail", "Pharmaweb Wote": "Pharmaweb Wo-te",
+    "Pharmaweb Migori": "Pharmaweb Mig-or-ee", "Mombasa Retail": "Mom-basa Retail",
+    "Kitui Retail": "Kit-oo-ee Retail", "Silvergates Health Solutions": "Silvergates Health Solutions",
+    "Nolimit Healthcare": "Nolimit Healthcare", "Rongai Retail": "Rong-ai Retail",
+    "Kawangware Retail 2": "Ka-wang-ware Retail Two"
+  };
+
+  function formatPctForSpeech(pct) {
+    const num = Number(pct) || 0;
+    const parts = num.toFixed(1).split('.');
+    const intPart = parts[0];
+    const decPart = parts[1];
+    const intWord = intPart === '0' ? 'zero' : intPart; // Force "zero" instead of "o"
+    const decWord = decPart === '0' ? 'zero' : decPart; // Force "zero" instead of "o"
+    return `${intWord} point ${decWord}`;
+  }
+
+  function speakCurrency(num) {
+    const n = Number(num) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(2) + " million shillings";
+    if (n >= 1000) return (n / 1000).toFixed(1) + " thousand shillings";
+    if (n === 0) return "zero shillings"; // Explicit spelling for zero
+    return Math.round(n) + " shillings";
+  }
+
+  function playBell() {
+    return new Promise(resolve => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const playBellStrike = (startTime, baseFreq, volume = 0.5) => {
+          const partials = [
+            { ratio: 1.0,  gain: 1.00, duration: 1.6 },
+            { ratio: 2.0,  gain: 0.45, duration: 1.3 },
+            { ratio: 2.4,  gain: 0.30, duration: 1.1 },
+            { ratio: 3.0,  gain: 0.20, duration: 0.9 },
+            { ratio: 4.5,  gain: 0.12, duration: 0.7 },
+            { ratio: 5.4,  gain: 0.06, duration: 0.5 }
+          ];
+          partials.forEach(p => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = baseFreq * p.ratio;
+            gain.gain.setValueAtTime(0.001, startTime);
+            gain.gain.exponentialRampToValueAtTime(volume * p.gain, startTime + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + p.duration);
+            osc.start(startTime);
+            osc.stop(startTime + p.duration);
+          });
+        };
+        const now = ctx.currentTime;
+        playBellStrike(now, 329.63, 0.55);
+        playBellStrike(now + 0.45, 329.63, 0.45);
+        setTimeout(resolve, 1900);
+      } catch (e) { resolve(); }
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // DEEP FEMALE VOICE PICKER (No "tweng")
+  // Selects high-quality female voices (Google UK, Samantha, etc.)
+  // Sets pitch to 0.85 — deep enough to be authoritative, but
+  // NOT so low that it causes the metallic "tweng" distortion.
+  // ═══════════════════════════════════════════════════════════
+  function pickDeepFemaleVoice() {
+    if (!availableVoices.length) {
+      availableVoices = window.speechSynthesis.getVoices();
+    }
+
+    const FEMALE_NAMES = ['female','zira','susan','hazel','catherine','linda',
+      'heather','samantha','victoria','karen','moira','tessa','fiona','serena',
+      'kate','amelie','veena','ava','anna','joanna','salli','kendra','ivy',
+      'kimberly','monica','amy','emma','google us english'];
+
+    function isFemale(v) {
+      const n = (v.name || '').toLowerCase();
+      return FEMALE_NAMES.some(t => n.includes(t));
+    }
+
+    // Priority 1: Google UK English Female (neural, extremely smooth)
+    let v = availableVoices.find(vv => /google.*uk.*female/i.test(vv.name));
+    if (v) return v;
+
+    // Priority 2: Google US English Female
+    v = availableVoices.find(vv => /google.*us.*female/i.test(vv.name));
+    if (v) return v;
+
+    // Priority 3: Samantha (Apple macOS — naturally smooth and deep enough)
+    v = availableVoices.find(vv => /samantha/i.test(vv.name));
+    if (v) return v;
+
+    // Priority 4: Karen (Apple en-AU — naturally deeper female voice)
+    v = availableVoices.find(vv => /karen/i.test(vv.name));
+    if (v) return v;
+
+    // Priority 5: Catherine (Apple en-GB)
+    v = availableVoices.find(vv => /catherine/i.test(vv.name));
+    if (v) return v;
+
+    // Priority 6: Fiona (Apple en-IE)
+    v = availableVoices.find(vv => /fiona/i.test(vv.name));
+    if (v) return v;
+
+    // Priority 7: Any female voice in alternate locale order
+    const altLocales = ['en-IE','en-AU','en-IN','en-GB','en-ZA','en-NG','en-KE','en-US'];
+    for (const loc of altLocales) {
+      v = availableVoices.find(vv => vv.lang === loc && isFemale(vv));
+      if (v) return v;
+    }
+
+    // Priority 8: ANY female voice at all
+    v = availableVoices.find(vv => isFemale(vv));
+    if (v) return v;
+
+    return null;
+  }
+
+  let lastScheduledHour = null;
+  function checkScheduledAnnouncement() {
+    const now = new Date();
+    const hour = now.getHours();
+    const minutes = now.getMinutes();
+    const ANNOUNCE_HOURS = [9, 11, 13, 15, 17, 19];
+
+    if (minutes <= 2 && ANNOUNCE_HOURS.includes(hour)) {
+      if (lastScheduledHour !== hour) {
+        lastScheduledHour = hour;
+        if (currentView !== 'branches') switchView('branches');
+        if (currentBranchGroup !== 'wholesale') switchBranchGroup('wholesale');
+        setTimeout(() => speakBranchPerformance(), 1500);
+      }
+    }
+    if (hour === 0 && minutes === 0) lastScheduledHour = null;
+  }
+
+  async function speakBranchPerformance() {
+    if (!('speechSynthesis' in window)) return;
+    if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
+    if (currentBranchGroup !== "wholesale") return;
+
+    const branches = window.currentRenderedBranches || [];
+    const withData = branches.filter(b => b.hasData);
+    if (!withData.length) return;
+
+    // ── UPDATED SEQUENCE ──
+    // Announcing the rest of the wholesale branches excluding the previous set
+    const customAnnouncementOrder = [
+      "Kakamega", "Embu", "Mombasa Wholesale", "Philmed Eldoret",
+      "Philmed Malindi", "Kisii","Migori","Kericho", "Karatina",
+      "Nanyuki", "Meru", "Ol Kalou", "Arms Narok Wholesale",
+      "Nakuru", "Philton"
+    ];
+
+    let text = `Branch Sales Alert. `;
+    let announcedAny = false;
+
+    // Strictly announce in sequence, no cap logic
+    for (const branchName of customAnnouncementOrder) {
+      const b = withData.find(x => x.name === branchName);
+      if (b) {
+        announcedAny = true;
+        const speakName = phoneticNames[b.name] || b.name;
+        text += `${speakName}. `;
+        text += `${formatPctForSpeech(b.pct)} percent. `;
+
+        const isSpecialDay = b.rawTarget > 0 && b.target !== b.rawTarget;
+        const specialDeficit = b.target - b.netSales;
+
+        if (isSpecialDay) {
+          if (specialDeficit > 0) text += `Deficit on special target: ${speakCurrency(specialDeficit)}. `;
+          else if (specialDeficit < 0) text += `Surplus on special target: ${speakCurrency(Math.abs(specialDeficit))}. `;
+          else text += `Deficit on special target: zero shillings. `;
+        } else {
+          if (specialDeficit > 0) text += `Deficit: ${speakCurrency(specialDeficit)}. `;
+          else if (specialDeficit < 0) text += `Surplus: ${speakCurrency(Math.abs(specialDeficit))}. `;
+          else text += `Deficit: zero shillings. `;
+        }
+        text += " ";
+      }
+    }
+
+    if (!announcedAny) return;
+
+    await playBell();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (availableVoices.length === 0) availableVoices = window.speechSynthesis.getVoices();
+    
+    const selectedVoice = pickDeepFemaleVoice();
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang;
+    } else {
+      utterance.lang = 'en-KE';
+    }
+    
+    // Pitch 0.85 — deep enough for a female voice but completely avoids the "tweng"
+    utterance.pitch = 0.85;
+    utterance.rate = 0.9;
+    
+    const btn = document.getElementById("manualAnnounceBtn");
+    if (btn) {
+      utterance.onstart = () => btn.classList.add("speaking");
+      utterance.onend = () => btn.classList.remove("speaking");
+      utterance.onerror = () => btn.classList.remove("speaking");
+    }
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function processAndRender() {
+    const { startDate, endDate } = getDateRange();
+    currentDaysInRange = getDaysInRange(startDate, endDate);
+    const selectedBranch = branchSelect.value;
+    const selectedBranchName = selectedBranch ? (branchNames[selectedBranch] || "") : "";
+    const processed = aggregateSalesPeople(startDate, endDate, selectedBranch);
+    processed.sort((a, b) => b.score - a.score);
+    filteredData = processed;
+    applySearchAndSort();
+  }
+
+  function getSortValue(item, key) {
+    switch (key) {
+      case "name": return (item.salesPersonName || "").toLowerCase();
+      case "branch": return (item.branchName || "").toLowerCase();
+      case "score": return item.score;
+      case "orders": return Number(item.totalDaysCustomers || 0);
+      case "value": return item.netValue;
+      case "deficit": return Number(item.deficit || 0);
+      default: return 0;
+    }
+  }
+
+  function sortData(data) {
+    const { key, dir } = currentSort;
+    const sorted = [...data];
+    sorted.sort((a, b) => {
+      const va = getSortValue(a, key);
+      const vb = getSortValue(b, key);
+      if (typeof va === "string") return dir === "asc" ? va.localeCompare(vb) : -va.localeCompare(vb);
+      return dir === "asc" ? va - vb : vb - va;
+    });
+    return sorted;
+  }
+
+  function applySearchAndSort() {
+    let data = filteredData;
+    displayedData = sortData(data);
+  }
+
+  document.getElementById("dateSelect").addEventListener("change", () => {
+    const val = document.getElementById("dateSelect").value;
+    if (val === "custom") {
+      toggleCustomDateRange(true);
+      if (!document.getElementById("dateFrom").value && !document.getElementById("dateTo").value) {
+        const todayStr = formatDate(getToday());
+        document.getElementById("dateFrom").value = todayStr;
+        document.getElementById("dateTo").value = todayStr;
+      }
+      return;
+    }
+    toggleCustomDateRange(false);
+    syncDateInputsFromPreset(val);
+    if (!allRawData.length && !branchPerfData.length) return;
+    processAndRender();
+    if (currentView === "branches") renderBranchView();
+  });
+
+  function onCustomDateChange() {
+    if (document.getElementById("dateSelect").value !== "custom") {
+      document.getElementById("dateSelect").value = "custom";
+      toggleCustomDateRange(true);
+    }
+    const from = document.getElementById("dateFrom").value;
+    const to = document.getElementById("dateTo").value;
+    if (from && to && from > to) document.getElementById("dateTo").value = from;
+    if (!allRawData.length && !branchPerfData.length) return;
+    processAndRender();
+    if (currentView === "branches") renderBranchView();
+  }
+
+  document.getElementById("dateFrom").addEventListener("change", onCustomDateChange);
+  document.getElementById("dateTo").addEventListener("change", onCustomDateChange);
+  branchSelect.addEventListener("change", () => {
+    currentSort = { key: "score", dir: "desc" };
+    if (!allRawData.length && !branchPerfData.length) return;
+    processAndRender();
+  });
+
+  syncDateInputsFromPreset("today");
+  toggleCustomDateRange(false);
+  loadAllData();
+
+  setInterval(() => { if (!isLoading) loadAllData(); }, AUTO_REFRESH_MS);
+  setInterval(checkScheduledAnnouncement, 30000);
+  setTimeout(checkScheduledAnnouncement, 5000);
+
+  // AUTO-ANNOUNCE ON PAGE OPEN IF WITHIN SCHEDULED HOURS
+  (function() {
+    var ANNOUNCE_HOURS = [9, 11, 13, 15, 17, 19];
+    var autoFired = false;
+
+    function tryAutoAnnounce() {
+      if (autoFired) return;
+      var now = new Date();
+      var hour = now.getHours();
+      if (ANNOUNCE_HOURS.indexOf(hour) === -1) return;
+
+      if (typeof allRawData === 'undefined' || !allRawData.length) return;
+      if (typeof branchPerfData === 'undefined' || !branchPerfData.length) return;
+
+      if (typeof renderBranchView === 'function') renderBranchView();
+      if (!window.currentRenderedBranches || !window.currentRenderedBranches.length) return;
+
+      var withData = window.currentRenderedBranches.filter(function(b) { return b.hasData; });
+      if (!withData.length) return;
+
+      autoFired = true;
+      if (typeof lastScheduledHour !== 'undefined') lastScheduledHour = hour;
+
+      setTimeout(function() {
+        if (typeof speakBranchPerformance === 'function') speakBranchPerformance();
+      }, 3000);
+    }
+
+    setInterval(tryAutoAnnounce, 10000);
+    setTimeout(tryAutoAnnounce, 15000);
+  })();
+</script>
+</body>
+</html>
