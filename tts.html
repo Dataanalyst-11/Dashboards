@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Salesperson Performance</title>
 
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
  
@@ -326,7 +325,8 @@
 
 <script>
   window.API_CONFIG = {
-    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/"
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/",
+    BEIBORA_API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/beibora/"
   };
 </script>
 
@@ -479,7 +479,7 @@
     return count;
   }
 
-  /* ── Branch names & IDs ────────────────────────────────────── */
+  /* ── Branch names & IDs (Pharma + Bei Bora) ─────────────────── */
   const branchNames = {
     "orgbranch-683976e3994a072a600cbd7a": "Head Office",
     "orgbranch-684558f576bd774c32f00d8e": "Naivasha",
@@ -529,7 +529,14 @@
     "orgbranch-6a588d19cd53be440eda95d1": "Silvergates Health Solutions",
     "orgbranch-6a588cbdcd53be440ed40590": "Nolimit Healthcare",
     "orgbranch-6908bd8a4397ba1eb009baf2": "Rongai Retail",
-    "orgbranch-6a588c18cd53be440ec8a011": "Kawangware Retail 2"
+    "orgbranch-6a588c18cd53be440ec8a011": "Kawangware Retail 2",
+    // Bei Bora Branches
+    "orgbranch-6a74b425a74cd8c01f57e287": "Bei Bora Head Office",
+    "orgbranch-6a74b353a74cd8c01f57e046": "Bei Bora Githurai",
+    "orgbranch-6a74b35fa74cd8c01f57e0c7": "Bei Bora Kitengela",
+    "orgbranch-6a74b34da74cd8c01f57e006": "Bei Bora Thika",
+    "orgbranch-6a74b358a74cd8c01f57e086": "Bei Bora Rongai",
+    "orgbranch-6aa000f3374af26d46f95a9a": "Bei Bora Shoppers"
   };
 
   const HIGH_VALUE_RETAIL_IDS = new Set([
@@ -541,13 +548,24 @@
     "orgbranch-6a5891b4cd53be440e4edbcb", "orgbranch-6a58930bcd53be440e78342f", "orgbranch-6aab99c53cab8a51560407fb",
     "orgbranch-6908bd9a4397ba1eb00a1783", "orgbranch-69d903089ca75f00087a0446", "orgbranch-6aab9a513cab8a51560d379c",
     "orgbranch-6a684b171ba6be0c08f8f715", "orgbranch-6a5894cdcd53be440ec28678", "orgbranch-6aab9ac13cab8a5156147c48",
-    "orgbranch-6aab9a173cab8a51560a996e", "orgbranch-6a588cbdcd53be440ed40590", "orgbranch-6908be314397ba1eb00cbd10"
+    "orgbranch-6aab9a173cab8a51560a996e", "orgbranch-6a588cbdcd53be440ed40590", "orgbranch-6908be314397ba1eb00cbd10",
+    // Treat Shoppers as Retail internally if not wholesale target logic applies, or just let it be wholesale by default. We'll leave it out of retail so it shows in Wholesale group.
   ]);
 
   const SEMI_WHOLESALE_BRANCH_IDS = new Set([
     "orgbranch-6a588d82cd53be440ee3078b", "orgbranch-6a589046cd53be440e2444b8", "orgbranch-6a588df2cd53be440eec1dca",
     "orgbranch-6909a662c9bd2cf7596be81d", "orgbranch-6908bd8a4397ba1eb009baf2", "orgbranch-6a588d19cd53be440eda95d1",
     "orgbranch-6a588c18cd53be440ec8a011"
+  ]);
+
+  // Beibora Branches explicit set so they DO NOT use the Pharma special target multiplier logic
+  const BEIBORA_BRANCH_IDS = new Set([
+    "orgbranch-6a74b425a74cd8c01f57e287",
+    "orgbranch-6a74b353a74cd8c01f57e046",
+    "orgbranch-6a74b35fa74cd8c01f57e0c7",
+    "orgbranch-6a74b34da74cd8c01f57e006",
+    "orgbranch-6a74b358a74cd8c01f57e086",
+    "orgbranch-6aa000f3374af26d46f95a9a"
   ]);
 
   const WHOLESALE_BRANCH_IDS = new Set(
@@ -688,18 +706,45 @@
     }
   }
 
+  /* ── MERGED API REQUESTS (Pharma + Beibora) ──────────────── */
   async function fetchSalesData(signal) {
     const { startDate, endDate } = getFetchRange();
-    const url = `${window.API_CONFIG.API_URL}sales-person-performance?pageSize=10000&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-    const json = await fetchWithRetry(url, { signal, headers: { "Content-Type": "application/json" } });
-    return Array.isArray(json) ? json : (json.data || []);
+    
+    const pharmaUrl = `${window.API_CONFIG.API_URL}sales-person-performance?pageSize=10000&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    const beiboraUrl = `${window.API_CONFIG.BEIBORA_API_URL}sales-person/performance-reports?pageSize=10000&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    
+    const [pharmaRes, beiboraRes] = await Promise.allSettled([
+      fetchWithRetry(pharmaUrl, { signal, headers: { "Content-Type": "application/json" } }),
+      fetchWithRetry(beiboraUrl, { signal, headers: { "Content-Type": "application/json" } })
+    ]);
+
+    let pharmaData = pharmaRes.status === 'fulfilled' ? pharmaRes.value : [];
+    let beiboraData = beiboraRes.status === 'fulfilled' ? beiboraRes.value : [];
+
+    if (!Array.isArray(pharmaData)) pharmaData = pharmaData.data || [];
+    if (!Array.isArray(beiboraData)) beiboraData = beiboraData.data || [];
+
+    return [...pharmaData, ...beiboraData];
   }
 
   async function fetchBranchPerformanceData(signal) {
     const { startDate, endDate } = getFetchRange();
-    const url = `${window.API_CONFIG.API_URL}branch-sales-performance-reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=10000`;
-    const json = await fetchWithRetry(url, { signal, headers: { "Content-Type": "application/json" } });
-    return Array.isArray(json) ? json : (json.data || []);
+    
+    const pharmaUrl = `${window.API_CONFIG.API_URL}branch-sales-performance-reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=10000`;
+    const beiboraUrl = `${window.API_CONFIG.BEIBORA_API_URL}branch-performance/reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=10000`;
+    
+    const [pharmaRes, beiboraRes] = await Promise.allSettled([
+      fetchWithRetry(pharmaUrl, { signal, headers: { "Content-Type": "application/json" } }),
+      fetchWithRetry(beiboraUrl, { signal, headers: { "Content-Type": "application/json" } })
+    ]);
+
+    let pharmaData = pharmaRes.status === 'fulfilled' ? pharmaRes.value : [];
+    let beiboraData = beiboraRes.status === 'fulfilled' ? beiboraRes.value : [];
+
+    if (!Array.isArray(pharmaData)) pharmaData = pharmaData.data || [];
+    if (!Array.isArray(beiboraData)) beiboraData = beiboraData.data || [];
+
+    return [...pharmaData, ...beiboraData];
   }
 
   function setLoadingState(loading) {
@@ -785,10 +830,20 @@
       if (!daily.has(key)) daily.set(key, { name, date, target: 0, netSales: 0, rawTarget: 0 });
       const d = daily.get(key);
       let finalTarget = Number(target) || 0;
-      if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId)) finalTarget = 150000;
-      else if (HIGH_VALUE_RETAIL_IDS.has(branchId)) finalTarget = 80000;
-      else if (RETAIL_BRANCH_IDS.has(branchId)) finalTarget = 50000;
-      else finalTarget = Number(target) * getTargetMultiplier(date, branchId);
+      
+      if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId)) {
+        finalTarget = 150000;
+      } else if (HIGH_VALUE_RETAIL_IDS.has(branchId)) {
+        finalTarget = 80000;
+      } else if (RETAIL_BRANCH_IDS.has(branchId)) {
+        finalTarget = 50000;
+      } else if (BEIBORA_BRANCH_IDS.has(branchId)) {
+        // Beibora units: NO special target multiplier logic, use exactly what comes from the backend
+        finalTarget = Number(target) || 0;
+      } else {
+        finalTarget = Number(target) * getTargetMultiplier(date, branchId);
+      }
+      
       d.target += finalTarget;
       d.rawTarget += Number(target) || 0;
       d.netSales += Number(netSales) || 0;
@@ -907,7 +962,7 @@
 
   /* ── Text-to-Speech Logic ───────────────────────────────── */
 
-  const phoneticNames = {
+ const phoneticNames = {
     "Head Office": "Head Office",
     "Naivasha": "Nai-vasha",
     "Kitengela": "Kitengela",
@@ -923,19 +978,19 @@
     "Philmed Malindi": "Philm-ed mahLIN-dee",
     "Kericho": "Keri-choh",
     "Nakuru": "Naku-ruh",
-    "Kisumu": "Kisuh-moo",
+    "Kisumu": "Kisumu",
     "Philmed Eldoret": "Philm-ed El-DOR-et",
     "Philmed Thika": "Philm-ed THEE-kah",
     "Voi Branch": "Voi Branch",
     "Kendia": "Kendia",
     "Kakamega": "kahkah-MAY-gah",
     "Bungoma": "Bungoma",
-    "Makindu": "Ma-kindu",
+    "Makindu": "Makindu",
     "Rongai Wholesale": "Rongai Wholesale",
     "Embu": "Embu",
     "Arms Narok Wholesale": "Arms Nah-rok Wholesale",
     "Ol Kalou": "ol KAH-loh",
-    "Wote": "Wo-tee",
+    "Wote": "Wote",
     "Migori": "mihGaw-ree",
     "Nanyuki": "Nah-nyookee",
     "Umoja": "Umo-ja",
@@ -956,9 +1011,15 @@
     "Silvergates Health Solutions": "Silvergates Health Solutions",
     "Nolimit Healthcare": "Nolimit Healthcare",
     "Rongai Retail": "Rong-ai Retail",
-    "Kawangware Retail 2": "Ka-wang-ware Retail Two"
+    "Kawangware Retail 2": "Ka-wang-ware Retail Two",
+    // Beibora Phonetics
+    "Bei Bora Head Office": "Bay Bora Head Office", 
+    "Bei Bora Githurai": "Bay Bora Githu-rai",
+    "Bei Bora Kitengela": "Bay Bora Kitengela", 
+    "Bei Bora Thika": "Bay Bora THEE-ka",
+    "Bei Bora Rongai": "Bay Bora Rongai",
+    "Bei Bora Shoppers": "Bay Bora Shoppers"
   };
-
   function formatPctForSpeech(pct) {
     const num = Number(pct) || 0;
     const parts = num.toFixed(1).split('.');
@@ -1098,11 +1159,14 @@
     const withData = branches.filter(b => b.hasData);
     if (!withData.length) return;
 
+    // ── UPDATED SEQUENCE ──
+    // Incorporates Bei Bora branches immediately after Githurai
     const customAnnouncementOrder = [
       "Kawangware Wholesale", "Naivasha", "Kitengela", "Makindu",
       "Kitui Wholesale", "Wote", "Kisumu", "Head Office",
-      "Voi Branch", "Busia", "Rongai Wholesale", "Philmed Thika",
-      "Bungoma", "Githurai"
+      "Voi Branch", "Kendia", "Busia", "Rongai Wholesale", "Philmed Thika",
+      "Bungoma", "Githurai",
+      "Bei Bora Head Office", "Bei Bora Rongai", "Bei Bora Githurai", "Bei Bora Kitengela", "Bei Bora Thika"
     ];
 
     let text = `Branch Sales Alert. `;
@@ -1125,6 +1189,7 @@
           else if (specialDeficit < 0) text += `Surplus on special target: ${speakCurrency(Math.abs(specialDeficit))}. `;
           else text += `Deficit on special target: zero shillings. `;
         } else {
+          // This block executes for Beibora branches (since target === rawTarget)
           if (specialDeficit > 0) text += `Deficit: ${speakCurrency(specialDeficit)}. `;
           else if (specialDeficit < 0) text += `Surplus: ${speakCurrency(Math.abs(specialDeficit))}. `;
           else text += `Deficit: zero shillings. `;
