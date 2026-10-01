@@ -1142,14 +1142,13 @@
     };
   }
 
-  function getDateRange() {
+    function getDateRange() {
     const preset = document.getElementById("dateSelect").value;
     const today = getToday();
-    const endDate = formatDate(today);
 
     if (preset === "custom") {
-      let startDate = document.getElementById("dateFrom").value || endDate;
-      let customEnd = document.getElementById("dateTo").value || endDate;
+      let startDate = document.getElementById("dateFrom").value || formatDate(today);
+      let customEnd = document.getElementById("dateTo").value || formatDate(today);
 
       if (startDate > customEnd) {
         [startDate, customEnd] = [customEnd, startDate];
@@ -1158,31 +1157,41 @@
       return { startDate, endDate: customEnd };
     }
 
+    if (preset === "today") {
+      const todayStr = formatDate(today);
+      return { startDate: todayStr, endDate: todayStr };
+    }
+
     if (preset === "yesterday") {
-      const d = new Date(today);
-      d.setDate(d.getDate() - 1);
-      const day = formatDate(d);
+      const y = new Date(today);
+      y.setDate(y.getDate() - 1);
+      const day = formatDate(y);
       return { startDate: day, endDate: day };
     }
 
     const daysMap = {
-      today: 1,
       "7days": 7,
       "30days": 30,
       "90days": 90
     };
 
-    const days = daysMap[preset] || 1;
-    const start = new Date(today);
-    start.setDate(start.getDate() - days + 1);
+    const days = daysMap[preset] || 7;
+    
+    // End date should be yesterday
+    const endDateObj = new Date(today);
+    endDateObj.setDate(endDateObj.getDate() - 1);
+    
+    // Start date should be yesterday minus (days - 1)
+    const startDateObj = new Date(endDateObj);
+    startDateObj.setDate(startDateObj.getDate() - (days - 1));
 
     return {
-      startDate: formatDate(start),
-      endDate
+      startDate: formatDate(startDateObj),
+      endDate: formatDate(endDateObj)
     };
   }
 
-  function syncDateInputsFromPreset(preset) {
+    function syncDateInputsFromPreset(preset) {
     const today = getToday();
     const todayStr = formatDate(today);
     let fromStr = todayStr;
@@ -1199,24 +1208,21 @@
         break;
       }
 
-      case "7days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 6);
-        fromStr = formatDate(d);
-        break;
-      }
-
-      case "30days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 29);
-        fromStr = formatDate(d);
-        break;
-      }
-
+      case "7days":
+      case "30days":
       case "90days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 89);
-        fromStr = formatDate(d);
+        const daysMap = { "7days": 7, "30days": 30, "90days": 90 };
+        const days = daysMap[preset] || 7;
+        
+        // End date is yesterday
+        const end = new Date(today);
+        end.setDate(end.getDate() - 1);
+        toStr = formatDate(end);
+        
+        // Start date is yesterday minus (days - 1)
+        const start = new Date(end);
+        start.setDate(start.getDate() - (days - 1));
+        fromStr = formatDate(start);
         break;
       }
 
