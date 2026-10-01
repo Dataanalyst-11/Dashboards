@@ -294,7 +294,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 <script>
 
 const API_URL =
-"https://script.google.com/macros/s/AKfycbyruqmLn460wnSkYjI6rgIPA5lecK89HpE1oA77yysORy2Zj8ogYz6bcmX04ijxHRtN/exec";
+"https://script.google.com/macros/s/AKfycbylSf6Rggeg3uoiylhrTNl48g1nvzyqrZnBgm8Jz8TY9XiaXW5TDCz9hC53gaEhB15d/exec";
 
 let allData = [];
 let deferredData = [];
@@ -703,7 +703,12 @@ function switchView(view) {
 function calcPct(item) { return item.target > 0 ? (item.achieved / item.target) * 100 : 0; }
 function getPercentage(target, achieved) { const t = Number(target) || 0, a = Number(achieved) || 0; return t <= 0 ? 0 : (a / t) * 100; }
 function getStatusClass(v) { if (v >= 90) return "high"; if (v >= 70) return "medium"; return "low"; }
-function formatNumber(value) { return Number(value || 0).toLocaleString("en-KE", { maximumFractionDigits: 0 }); }
+
+// FIX: Allow up to 2 decimal places to prevent truncating values like 5.2 or 1.1
+function formatNumber(value) { 
+    const num = Number(value || 0);
+    return num.toLocaleString("en-KE", { maximumFractionDigits: 2 }); 
+}
 
 function formatReportCell(value) {
     if (value === "" || value === null || value === undefined) return "";
