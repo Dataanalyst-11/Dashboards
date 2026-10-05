@@ -3,15 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Salesperson Performance</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
- 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background: #ffffff;
@@ -22,104 +17,39 @@
     align-items: center;
     justify-content: center;
   }
-
-  /* Hide all dashboard data visually, but keep it in DOM for JS logic */
-  .hidden-ui { display: none !important; }
-
-  .reader-card {
-    background: #ffffff;
-    padding: 40px;
-    border-radius: 20px;
-    text-align: center;
-    max-width: 90%;
+  .reader-card { background: #ffffff; padding: 40px; border-radius: 20px; text-align: center; max-width: 90%; }
+  .reader-title { font-size: 42px; font-weight: 800; color: #0f172a; margin-bottom: 30px; letter-spacing: -1px; }
+  .audio-wave-container { display: flex; justify-content: center; align-items: center; gap: 10px; height: 80px; margin-bottom: 30px; }
+  .wave-bar { width: 10px; background: #ba9305; border-radius: 5px; animation: wave 1.2s infinite ease-in-out; }
+  @keyframes wave { 0%, 100% { height: 15px; opacity: 0.5; } 50% { height: 70px; opacity: 1; } }
+  .reader-timestamp { font-size: 20px; color: #334155; font-weight: 600; margin-bottom: 10px; }
+  .reader-status { font-size: 14px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 40px; }
+  
+  .activate-btn {
+    background: transparent; color: #64748b; border: 2px solid #cbd5e1;
+    padding: 12px 30px; font-size: 15px; font-weight: 700; border-radius: 12px;
+    cursor: pointer; transition: all 0.3s ease; margin-bottom: 20px;
+    text-transform: uppercase; letter-spacing: 1px;
   }
-
-  .reader-title {
-    font-size: 42px;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 30px;
-    letter-spacing: -1px;
-  }
-
-  .audio-wave-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    height: 80px;
-    margin-bottom: 30px;
-  }
-
-  .wave-bar {
-    width: 10px;
-    background: #ba9305;
-    border-radius: 5px;
-    animation: wave 1.2s infinite ease-in-out;
-  }
-
-  @keyframes wave {
-    0%, 100% { height: 15px; opacity: 0.5; }
-    50% { height: 70px; opacity: 1; }
-  }
-
-  .reader-timestamp {
-    font-size: 20px;
-    color: #334155;
-    font-weight: 600;
-    margin-bottom: 10px;
-  }
-
-  .reader-status {
-    font-size: 14px;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    font-weight: 600;
-    margin-bottom: 40px;
-  }
+  .activate-btn:hover { border-color: #ba9305; color: #ba9305; }
+  .activate-btn.active { border-color: #22c55e; color: #22c55e; background: rgba(34, 197, 94, 0.1); cursor: default; }
+  .activate-btn.active:hover { transform: none; }
 
   .manual-announce-btn {
-    background: #ba9305;
-    color: #ffffff;
-    border: none;
-    padding: 14px 36px;
-    font-size: 16px;
-    font-weight: 700;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.2s ease;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    box-shadow: 0 4px 15px rgba(186, 147, 5, 0.3);
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
+    background: #ba9305; color: #ffffff; border: none; padding: 14px 36px;
+    font-size: 16px; font-weight: 700; border-radius: 12px; cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease; letter-spacing: 1px;
+    text-transform: uppercase; box-shadow: 0 4px 15px rgba(186, 147, 5, 0.3);
+    display: inline-flex; align-items: center; gap: 10px;
   }
-  .manual-announce-btn:hover {
-    background: #d4a807;
-    transform: translateY(-2px);
-  }
-  .manual-announce-btn:active {
-    transform: translateY(0);
-  }
-  .manual-announce-btn.speaking {
-    background: #334155;
-    color: #22c55e;
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-    animation: pulse 1.5s infinite;
-  }
-
+  .manual-announce-btn:hover { background: #d4a807; transform: translateY(-2px); }
+  .manual-announce-btn:active { transform: translateY(0); }
+  .manual-announce-btn.speaking { background: #334155; color: #22c55e; animation: pulse 1.5s infinite; }
   @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
     70% { box-shadow: 0 0 0 12px rgba(34, 197, 94, 0); }
     100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
   }
-
-  /* Hidden Data Elements Styling (Required for JS logic) */
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 20px; }
-  thead th { position: sticky; top: 0; background: #1e293b; color: #94a3b8; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-weight: 700; z-index: 2; padding: 20px 20px; border-bottom: 2px solid #334155; text-align: left; user-select: none; white-space: nowrap; }
-  td { padding: 13px 20px; border-bottom: 1px solid #1e293b; vertical-align: middle; color: #cbd5e1; }
   .toast {
     position: fixed; bottom: 30px; right: 30px; background: #1e293b; border: 1px solid #334155;
     border-left: 4px solid #ef4444; color: #f1f5f9; padding: 16px 24px; border-radius: 12px;
@@ -131,10 +61,8 @@
   .toast.toast-retry { border-left-color: #38bdf8; }
 </style>
 </head>
-
 <body>
 
-<!-- ═══════════════ VISIBLE WAVE UI ═══════════════ -->
 <div class="reader-card">
   <div class="reader-title">Salesperson Performance</div>
   <div class="audio-wave-container">
@@ -145,180 +73,14 @@
     <div class="wave-bar" style="animation-delay: 0.8s;"></div>
   </div>
   <div class="reader-timestamp" id="lastUpdated">Awaiting Data...</div>
-  <div class="reader-status">Reading performance from backend...</div>
+  <div class="reader-timestamp" id="lastSpoken" style="font-size: 16px; color: #64748b; margin-bottom: 20px; font-weight: 500;">Last Announcement: Never</div>
+  <div class="reader-status">Automated Performance Reader</div>
   
+  <button id="activateAudioBtn" class="activate-btn" onclick="enableAudio()">🔇 Activate TTS</button>
+  <br>
   <button id="manualAnnounceBtn" class="manual-announce-btn" onclick="speakBranchPerformance()">
     🔊 Announce Now
   </button>
-</div>
-
-<!-- ═══════════════ HIDDEN DASHBOARD FOR BACKEND LOGIC ═══════════════ -->
-<div class="hidden-ui">
-  <header>
-    <div class="header-left">
-      <div class="header-logo">TS</div>
-      <div>
-        <div class="header-title" id="headerTitle">Telesales Performance Dashboard</div>
-        <div class="header-subtitle" id="headerSubtitle">Management Overview — Real-time Sales Tracking</div>
-      </div>
-    </div>
-    <div class="header-right" id="headerRight">
-      <div class="header-loading-overlay" id="headerLoading">
-        <div class="mini-spinner"></div>
-      </div>
-      <div class="filter-select date-selector">
-        <select id="dateSelect">
-          <option value="today" selected>Today</option>
-          <option value="yesterday">Yesterday</option>
-          <option value="7days">Last 7 Days</option>
-          <option value="30days">Last 30 Days</option>
-          <option value="90days">Last 90 Days</option>
-          <option value="custom">Custom Range</option>
-        </select>
-      </div>
-      <div class="custom-date-range" id="customDateRange">
-        <div class="date-range-group">
-          <span class="date-range-label">From</span>
-          <div class="date-range-input-wrap">
-            <input type="date" id="dateFrom">
-          </div>
-        </div>
-        <div class="date-range-group">
-          <span class="date-range-label">To</span>
-          <div class="date-range-input-wrap">
-            <input type="date" id="dateTo">
-          </div>
-        </div>
-      </div>
-      <div class="view-toggle">
-        <button id="btnTelesales" class="active" onclick="switchView('telesales')">Telesales</button>
-        <button id="btnBranches" onclick="switchView('branches')">Branches</button>
-      </div>
-      <div class="filter-select branch-selector" id="branchSelectorWrap">
-        <select id="branchSelect">
-          <option value="">All Branches</option>
-        </select>
-      </div>
-    </div>
-  </header>
-
-  <div id="telesalesView">
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Total Customer Orders</div>
-        <div class="stat-value" id="statOrders">—</div>
-        <div class="stat-sub" id="statOrdersSub">across all telesales</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Active Telesales</div>
-        <div class="stat-value" id="statActive">—</div>
-        <div class="stat-sub" id="statActiveSub">with recorded sales</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label" id="deficitLabel">Sales Deficit</div>
-        <div class="stat-value" id="statDeficit">—</div>
-        <div class="stat-sub" id="statDeficitSub">vs branch target</div>
-      </div>
-    </div>
-
-    <div class="branch-perf-section">
-      <div class="branch-perf-card">
-        <div class="branch-perf-info">
-          <div class="label">Branch Performance on Special Target</div>
-          <div class="value" id="branchPerfValue">—</div>
-          <div class="detail" id="branchPerfDetail">loading...</div>
-        </div>
-        <div class="perf-bar-wrap">
-          <div class="perf-bar-track">
-            <div class="perf-bar-fill" id="branchPerfBar" style="width:0%;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="table-section">
-      <div class="table-header">
-        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-          <span class="table-title">Telesales Ranking</span>
-          <span class="table-count" id="tableCount">0 people</span>
-          <span class="sort-hint" id="sortHint">Click column headers to sort</span>
-        </div>
-        <input type="text" class="search-box" id="searchBox" placeholder="Search by name or branch...">
-      </div>
-      <div class="table-wrap" id="tableWrap">
-        <table>
-          <thead>
-            <tr>
-            <th>#</th>
-            <th class="sortable" data-sort="name">Telesale Name <span class="sort-icon">▲</span></th>
-            <th class="sortable" data-sort="branch">Branch <span class="sort-icon">▲</span></th>
-            <th class="sortable active-sort sort-desc" data-sort="score" style="text-align:center;">Sales % <span class="sort-icon">▲</span></th>
-            <th class="sortable" data-sort="orders" style="text-align:center;">Orders <span class="sort-icon">▲</span></th>
-            <th class="sortable" data-sort="value" style="text-align:right;">Order Value <span class="sort-icon">▲</span></th>
-            <th class="sortable" data-sort="deficit" style="text-align:right;">Sales Deficit <span class="sort-icon">▲</span></th>
-            <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <tr class="loading-row">
-              <td colspan="8">
-                <span class="loading-spinner"></span>
-                Loading sales data...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div id="branchView">
-    <div class="branch-summary-row">
-      <div class="stat-card">
-        <div class="stat-label">Special Targets Performance</div>
-        <div class="stat-value" id="bsOverallPct">—</div>
-        <div class="stat-sub" id="bsOverallPctSub">aggregated all branches</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Net Sales</div>
-        <div class="stat-value" id="bsTotalSales">—</div>
-        <div class="stat-sub" id="bsTotalSalesSub">across all branches</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Branches Achieved</div>
-        <div class="stat-value perf-high" id="bsOnTrack">—</div>
-        <div class="stat-sub" id="bsOnTrackSub">at 80% or above</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Actual Score (Raw)</div>
-        <div class="stat-value" id="bsRawPerf">—</div>
-        <div class="stat-sub" id="bsRawPerfSub">against original targets</div>
-      </div>
-    </div>
-
-    <div class="branch-grid-wrap">
-      <div class="branch-grid-header">
-        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-          <span class="table-title" id="branchGridTitle">All Branches</span>
-          <span class="table-count" id="branchCount">0 branches</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <div class="group-toggle" id="branchGroupToggle">
-            <button id="btnWholesale" class="active" onclick="switchBranchGroup('wholesale')">Wholesales</button>
-            <button id="btnSemiWholesale" onclick="switchBranchGroup('semi')">Semi Wholesales</button>
-            <button id="btnRetail" onclick="switchBranchGroup('retail')">Retails</button>
-          </div>
-          <button id="btnTTS" onclick="speakBranchPerformance()" class="tts-btn" title="Announce Branch Performance">
-            🔊 Announce
-          </button>
-          <input type="text" class="search-box" id="branchSearchBox" placeholder="Search branch...">
-        </div>
-      </div>
-      <div class="branch-grid" id="branchGrid">
-        <div class="no-branch-data">Loading branch data...</div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -331,24 +93,16 @@
 </script>
 
 <script>
-  /* ============================================================
-     DATA ENGINE
-     ============================================================ */
-
   const AUTO_REFRESH_MS = 600000; // 10 minutes
   const DATA_LOOKBACK_DAYS = 365;
-
-  let currentSort = { key: "score", dir: "desc" };
-  let currentView = "branches"; // Default to branches for TTS
   let isLoading = false;
   let currentAbortCtrl = null;
-
   let allRawData = [];
   let branchPerfData = [];
-  let filteredData = [];
-  let displayedData = [];
   let lastDataFetchAt = null;
-  let currentDaysInRange = 0;
+
+  // Audio Unlock State
+  let audioEnabled = false;
 
   // Preload TTS Voices
   let availableVoices = [];
@@ -375,14 +129,7 @@
   }
 
   function getRecordDate(record) {
-    return parseDateKey(
-      record.reportingDate ||
-      record.reportDate ||
-      record.salesDate ||
-      record.date ||
-      record.createdAt ||
-      record.updatedAt
-    );
+    return parseDateKey(record.reportingDate || record.reportDate || record.salesDate || record.date || record.createdAt || record.updatedAt);
   }
 
   function getToday() { return new Date(); }
@@ -394,92 +141,17 @@
     return { startDate: formatDate(start), endDate: formatDate(end) };
   }
 
+  // Hardcoded to Today for TTS
   function getDateRange() {
-    const preset = document.getElementById("dateSelect").value;
-    const today = getToday();
-    const endDate = formatDate(today);
-
-    if (preset === "custom") {
-      let startDate = document.getElementById("dateFrom").value || endDate;
-      let customEnd = document.getElementById("dateTo").value || endDate;
-      if (startDate > customEnd) { [startDate, customEnd] = [customEnd, startDate]; }
-      return { startDate, endDate: customEnd };
-    }
-
-    if (preset === "yesterday") {
-      const d = new Date(today);
-      d.setDate(d.getDate() - 1);
-      const day = formatDate(d);
-      return { startDate: day, endDate: day };
-    }
-
-    const daysMap = { today: 1, "7days": 7, "30days": 30, "90days": 90 };
-    const days = daysMap[preset] || 1;
-    const start = new Date(today);
-    start.setDate(start.getDate() - days + 1);
-    return { startDate: formatDate(start), endDate };
-  }
-
-  function syncDateInputsFromPreset(preset) {
-    const today = getToday();
-    const todayStr = formatDate(today);
-    let fromStr = todayStr;
-    let toStr = todayStr;
-
-    switch (preset) {
-      case "today": break;
-      case "yesterday": {
-        const y = new Date(today);
-        y.setDate(y.getDate() - 1);
-        fromStr = toStr = formatDate(y);
-        break;
-      }
-      case "7days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 6);
-        fromStr = formatDate(d);
-        break;
-      }
-      case "30days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 29);
-        fromStr = formatDate(d);
-        break;
-      }
-      case "90days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 89);
-        fromStr = formatDate(d);
-        break;
-      }
-      case "custom": return;
-    }
-
-    document.getElementById("dateFrom").value = fromStr;
-    document.getElementById("dateTo").value = toStr;
-  }
-
-  function toggleCustomDateRange(show) {
-    document.getElementById("customDateRange").classList.toggle("visible", show);
+    const todayStr = formatDate(getToday());
+    return { startDate: todayStr, endDate: todayStr };
   }
 
   function isDateInRange(dateKey, startDate, endDate) {
     return !!dateKey && dateKey >= startDate && dateKey <= endDate;
   }
 
-  function getDaysInRange(startDate, endDate) {
-    if (!startDate || !endDate) return 0;
-    let count = 0;
-    let currentDate = new Date(startDate + "T00:00:00");
-    const end = new Date(endDate + "T00:00:00");
-    while (currentDate <= end) {
-      if (currentDate.getDay() !== 6) count++;
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    return count;
-  }
-
-  /* ── Branch names & IDs (Pharma + Bei Bora) ─────────────────── */
+  /* ── Branch names & IDs ──────────────────────────────────── */
   const branchNames = {
     "orgbranch-683976e3994a072a600cbd7a": "Head Office",
     "orgbranch-684558f576bd774c32f00d8e": "Naivasha",
@@ -530,7 +202,6 @@
     "orgbranch-6a588cbdcd53be440ed40590": "Nolimit Healthcare",
     "orgbranch-6908bd8a4397ba1eb009baf2": "Rongai Retail",
     "orgbranch-6a588c18cd53be440ec8a011": "Kawangware Retail 2",
-    // Bei Bora Branches
     "orgbranch-6a74b425a74cd8c01f57e287": "Bei Bora Head Office",
     "orgbranch-6a74b353a74cd8c01f57e046": "Bei Bora Githurai",
     "orgbranch-6a74b35fa74cd8c01f57e0c7": "Bei Bora Kitengela",
@@ -539,69 +210,27 @@
     "orgbranch-6aa000f3374af26d46f95a9a": "Bei Bora Shoppers"
   };
 
-  const HIGH_VALUE_RETAIL_IDS = new Set([
-    "orgbranch-6a588cbdcd53be440ed40590",
-    "orgbranch-6908be314397ba1eb00cbd10"
-  ]);
-
+  const HIGH_VALUE_RETAIL_IDS = new Set(["orgbranch-6a588cbdcd53be440ed40590", "orgbranch-6908be314397ba1eb00cbd10"]);
   const RETAIL_BRANCH_IDS = new Set([
     "orgbranch-6a5891b4cd53be440e4edbcb", "orgbranch-6a58930bcd53be440e78342f", "orgbranch-6aab99c53cab8a51560407fb",
     "orgbranch-6908bd9a4397ba1eb00a1783", "orgbranch-69d903089ca75f00087a0446", "orgbranch-6aab9a513cab8a51560d379c",
     "orgbranch-6a684b171ba6be0c08f8f715", "orgbranch-6a5894cdcd53be440ec28678", "orgbranch-6aab9ac13cab8a5156147c48",
-    "orgbranch-6aab9a173cab8a51560a996e", "orgbranch-6a588cbdcd53be440ed40590", "orgbranch-6908be314397ba1eb00cbd10",
-    // Treat Shoppers as Retail internally if not wholesale target logic applies, or just let it be wholesale by default. We'll leave it out of retail so it shows in Wholesale group.
+    "orgbranch-6aab9a173cab8a51560a996e", "orgbranch-6a588cbdcd53be440ed40590", "orgbranch-6908be314397ba1eb00cbd10"
   ]);
-
   const SEMI_WHOLESALE_BRANCH_IDS = new Set([
     "orgbranch-6a588d82cd53be440ee3078b", "orgbranch-6a589046cd53be440e2444b8", "orgbranch-6a588df2cd53be440eec1dca",
     "orgbranch-6909a662c9bd2cf7596be81d", "orgbranch-6908bd8a4397ba1eb009baf2", "orgbranch-6a588d19cd53be440eda95d1",
     "orgbranch-6a588c18cd53be440ec8a011"
   ]);
-
-  // Beibora Branches explicit set so they DO NOT use the Pharma special target multiplier logic
   const BEIBORA_BRANCH_IDS = new Set([
-    "orgbranch-6a74b425a74cd8c01f57e287",
-    "orgbranch-6a74b353a74cd8c01f57e046",
-    "orgbranch-6a74b35fa74cd8c01f57e0c7",
-    "orgbranch-6a74b34da74cd8c01f57e006",
-    "orgbranch-6a74b358a74cd8c01f57e086",
-    "orgbranch-6aa000f3374af26d46f95a9a"
+    "orgbranch-6a74b425a74cd8c01f57e287", "orgbranch-6a74b353a74cd8c01f57e046", "orgbranch-6a74b35fa74cd8c01f57e0c7",
+    "orgbranch-6a74b34da74cd8c01f57e006", "orgbranch-6a74b358a74cd8c01f57e086", "orgbranch-6aa000f3374af26d46f95a9a"
   ]);
-
   const WHOLESALE_BRANCH_IDS = new Set(
     Object.keys(branchNames).filter(id => !RETAIL_BRANCH_IDS.has(id) && !SEMI_WHOLESALE_BRANCH_IDS.has(id))
   );
 
-  let currentBranchGroup = "wholesale"; // Default to wholesale for TTS
-
-  const branchSelect = document.getElementById("branchSelect");
-  Object.entries(branchNames)
-  .sort((a, b) => a[1].localeCompare(b[1]))
-  .forEach(([id, name]) => {
-    if (RETAIL_BRANCH_IDS.has(id) || SEMI_WHOLESALE_BRANCH_IDS.has(id)) return;
-    const opt = document.createElement("option");
-    opt.value = id;
-    opt.textContent = name;
-    branchSelect.appendChild(opt);
-  });
-
   /* ── Formatting & Helpers ──────────────────────────────────── */
-  function formatValue(num) {
-    const n = Number(num) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(2) + "M";
-    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
-    return Math.round(n).toLocaleString();
-  }
-
-  function formatCurrency(num) {
-    const n = Number(num) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(2) + "M";
-    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
-    return Math.round(n).toLocaleString();
-  }
-
-  function formatFullCurrency(num) { return "KES " + Math.round(Number(num) || 0).toLocaleString(); }
-
   function toNumber(value) {
     if (value === null || value === undefined || value === "") return 0;
     if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -612,8 +241,6 @@
 
   function getSalesTarget(row) { return toNumber(row.dailySalesTarget ?? row.salesTarget ?? row.target ?? row.dailyTarget ?? row.targetSales); }
   function getNetSales(row) { return toNumber(row.netDailySales ?? row.netSales ?? row.dailyNetSales ?? row.branchNetSales); }
-  function getCustomerOrders(row) { return toNumber(row.totalDaysCustomers ?? row.dailyCustomers ?? row.customerOrders ?? row.totalCustomers); }
-  function getSalesDeficit(row) { return toNumber(row.dailySalesDeficit ?? row.salesDeficit ?? row.deficit); }
   function getBranchNameFromSalesRow(row) { return String(row.branchName || row.orgBranchName || branchNames[row.orgBranchId] || "").trim(); }
   function getBranchIdFromRow(row) { return row.orgBranchId || row.branchId || ""; }
   function getBranchIdByName(name) {
@@ -630,9 +257,8 @@
   const ID_KITUI = "orgbranch-6850015d7d3c6f75c8c1d680";
 
   function getTargetMultiplier(dateStr, branchId) {
-    const dateSelectVal = document.getElementById("dateSelect").value;
     const todayStr = formatDate(getToday());
-    if (dateSelectVal !== "today" || dateStr !== todayStr) return 1;
+    if (dateStr !== todayStr) return 1;
 
     const dateObj = new Date(dateStr + "T00:00:00");
     const dayOfWeek = dateObj.getDay();
@@ -706,120 +332,35 @@
     }
   }
 
-  /* ── MERGED API REQUESTS (Pharma + Beibora) ──────────────── */
+  /* ── MERGED API REQUESTS ──────────────── */
   async function fetchSalesData(signal) {
     const { startDate, endDate } = getFetchRange();
-    
     const pharmaUrl = `${window.API_CONFIG.API_URL}sales-person-performance?pageSize=10000&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
     const beiboraUrl = `${window.API_CONFIG.BEIBORA_API_URL}sales-person/performance-reports?pageSize=10000&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-    
     const [pharmaRes, beiboraRes] = await Promise.allSettled([
       fetchWithRetry(pharmaUrl, { signal, headers: { "Content-Type": "application/json" } }),
       fetchWithRetry(beiboraUrl, { signal, headers: { "Content-Type": "application/json" } })
     ]);
-
     let pharmaData = pharmaRes.status === 'fulfilled' ? pharmaRes.value : [];
     let beiboraData = beiboraRes.status === 'fulfilled' ? beiboraRes.value : [];
-
     if (!Array.isArray(pharmaData)) pharmaData = pharmaData.data || [];
     if (!Array.isArray(beiboraData)) beiboraData = beiboraData.data || [];
-
     return [...pharmaData, ...beiboraData];
   }
 
   async function fetchBranchPerformanceData(signal) {
     const { startDate, endDate } = getFetchRange();
-    
     const pharmaUrl = `${window.API_CONFIG.API_URL}branch-sales-performance-reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=10000`;
     const beiboraUrl = `${window.API_CONFIG.BEIBORA_API_URL}branch-performance/reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=10000`;
-    
     const [pharmaRes, beiboraRes] = await Promise.allSettled([
       fetchWithRetry(pharmaUrl, { signal, headers: { "Content-Type": "application/json" } }),
       fetchWithRetry(beiboraUrl, { signal, headers: { "Content-Type": "application/json" } })
     ]);
-
     let pharmaData = pharmaRes.status === 'fulfilled' ? pharmaRes.value : [];
     let beiboraData = beiboraRes.status === 'fulfilled' ? beiboraRes.value : [];
-
     if (!Array.isArray(pharmaData)) pharmaData = pharmaData.data || [];
     if (!Array.isArray(beiboraData)) beiboraData = beiboraData.data || [];
-
     return [...pharmaData, ...beiboraData];
-  }
-
-  function setLoadingState(loading) {
-    isLoading = loading;
-    const overlay = document.getElementById("headerLoading");
-    const dateSelect = document.getElementById("dateSelect");
-    const dateFrom = document.getElementById("dateFrom");
-    const dateTo = document.getElementById("dateTo");
-    const branchSel = document.getElementById("branchSelect");
-
-    if (loading) {
-      if (overlay) overlay.classList.add("active");
-      if (dateSelect) dateSelect.disabled = true;
-      if (dateFrom) dateFrom.disabled = true;
-      if (dateTo) dateTo.disabled = true;
-      if (branchSel) branchSel.disabled = true;
-    } else {
-      if (overlay) overlay.classList.remove("active");
-      if (dateSelect) dateSelect.disabled = false;
-      if (dateFrom) dateFrom.disabled = false;
-      if (dateTo) dateTo.disabled = false;
-      if (branchSel) branchSel.disabled = false;
-    }
-  }
-
-  function aggregateSalesPeople(startDate, endDate, selectedBranchId) {
-    const dailyMap = new Map();
-    for (const row of allRawData) {
-      const rowDate = getRecordDate(row);
-      if (!isDateInRange(rowDate, startDate, endDate)) continue;
-      const branchId = getBranchIdFromRow(row);
-      const branchName = getBranchNameFromSalesRow(row);
-      if (selectedBranchId) {
-        const selectedName = branchNames[selectedBranchId] || "";
-        if (branchId && branchId !== selectedBranchId && branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
-        if (!branchId && branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
-      }
-      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
-      if (!name) continue;
-      const rowNetSales = getNetSales(row);
-      if (rowNetSales <= 0) continue;
-      const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
-      if (!dailyMap.has(dailyKey)) {
-        dailyMap.set(dailyKey, { salesPersonName: name, branchName, orgBranchId: branchId || getBranchIdByName(branchName), date: rowDate, netValue: 0, target: 0, orders: 0, deficit: 0 });
-      }
-      const d = dailyMap.get(dailyKey);
-      d.netValue += rowNetSales;
-      d.target   += getSalesTarget(row);
-      d.orders   += getCustomerOrders(row);
-      d.deficit  += getSalesDeficit(row);
-    }
-
-    const personMap = new Map();
-    for (const d of dailyMap.values()) {
-      if (d.netValue <= 0) continue;
-      const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
-      if (!personMap.has(personKey)) {
-        personMap.set(personKey, { salesPersonName: d.salesPersonName, branchName: d.branchName, orgBranchId: d.orgBranchId, netValue: 0, target: 0, orders: 0, deficit: 0, daysWorked: 0 });
-      }
-      const p = personMap.get(personKey);
-      p.netValue += d.netValue;
-      p.orders += d.orders;
-      p.target += d.target;
-      p.deficit += d.deficit;
-      p.daysWorked += 1;
-    }
-
-    return [...personMap.values()]
-      .map(g => ({
-        salesPersonName: g.salesPersonName, branchName: g.branchName, orgBranchId: g.orgBranchId,
-        netValue: g.netValue, target: g.target, orders: g.orders, deficit: g.deficit, days: g.daysWorked,
-        score: g.target > 0 ? (g.netValue / g.target) * 100 : 0,
-        totalDaysCustomers: g.orders
-      }))
-      .filter(g => g.score > 0);
   }
 
   function aggregateBranches(startDate, endDate) {
@@ -830,19 +371,11 @@
       if (!daily.has(key)) daily.set(key, { name, date, target: 0, netSales: 0, rawTarget: 0 });
       const d = daily.get(key);
       let finalTarget = Number(target) || 0;
-      
-      if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId)) {
-        finalTarget = 150000;
-      } else if (HIGH_VALUE_RETAIL_IDS.has(branchId)) {
-        finalTarget = 80000;
-      } else if (RETAIL_BRANCH_IDS.has(branchId)) {
-        finalTarget = 50000;
-      } else if (BEIBORA_BRANCH_IDS.has(branchId)) {
-        // Beibora units: NO special target multiplier logic, use exactly what comes from the backend
-        finalTarget = Number(target) || 0;
-      } else {
-        finalTarget = Number(target) * getTargetMultiplier(date, branchId);
-      }
+      if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId)) finalTarget = 150000;
+      else if (HIGH_VALUE_RETAIL_IDS.has(branchId)) finalTarget = 80000;
+      else if (RETAIL_BRANCH_IDS.has(branchId)) finalTarget = 50000;
+      else if (BEIBORA_BRANCH_IDS.has(branchId)) finalTarget = Number(target) || 0;
+      else finalTarget = Number(target) * getTargetMultiplier(date, branchId);
       
       d.target += finalTarget;
       d.rawTarget += Number(target) || 0;
@@ -895,7 +428,7 @@
   async function loadAllData() {
     if (isLoading) return;
     const signal = abortPreviousRequests();
-    setLoadingState(true);
+    isLoading = true;
 
     try {
       const [salesData, branchData] = await Promise.all([fetchSalesData(signal), fetchBranchPerformanceData(signal)]);
@@ -903,8 +436,7 @@
       allRawData = salesData;
       branchPerfData = branchData;
       lastDataFetchAt = new Date();
-      processAndRender();
-      if (currentView === "branches") renderBranchView();
+      renderBranchView();
       
       const tsEl = document.getElementById("lastUpdated");
       if (tsEl) tsEl.textContent = "Last Updated: " + lastDataFetchAt.toLocaleTimeString();
@@ -914,20 +446,8 @@
       console.error(err);
       showToast("Failed to load data: " + err.message, "warn");
     } finally {
-      if (!signal.aborted) setLoadingState(false);
+      if (!signal.aborted) isLoading = false;
     }
-  }
-
-  function switchView(view) {
-    currentView = view;
-    if (view === "branches") renderBranchView();
-    else processAndRender();
-  }
-
-  function switchBranchGroup(group) {
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-    currentBranchGroup = group;
-    renderBranchView();
   }
 
   function renderBranchView() {
@@ -936,11 +456,9 @@
     const aggregated = aggregateBranches(startDate, endDate);
     const byName = new Map(aggregated.map(b => [b.name.toLowerCase().trim(), b]));
 
-    const branchIdsToShow = currentBranchGroup === "retail" ? RETAIL_BRANCH_IDS : currentBranchGroup === "semi" ? SEMI_WHOLESALE_BRANCH_IDS : WHOLESALE_BRANCH_IDS;
     const branches = [];
-
     for (const id in branchNames) {
-      if (!branchIdsToShow.has(id)) continue;
+      if (!WHOLESALE_BRANCH_IDS.has(id)) continue; // Only fetch wholesale for TTS
       const name = branchNames[id];
       const entry = byName.get(name.toLowerCase().trim());
       if (entry) {
@@ -960,9 +478,35 @@
     window.currentRenderedBranches = branches;
   }
 
-  /* ── Text-to-Speech Logic ───────────────────────────────── */
+  /* ── Audio Unlock Logic ──────────────────────────────────── */
+  function enableAudio() {
+    if (audioEnabled) return;
+    audioEnabled = true;
+    
+    const btn = document.getElementById("activateAudioBtn");
+    if (btn) {
+      btn.innerHTML = "🔊 TTS Active";
+      btn.classList.add("active");
+    }
+    
+    // Unlock speech synthesis and confirm to the user
+    if ('speechSynthesis' in window) {
+      const unlockUtt = new SpeechSynthesisUtterance("Audio activated.");
+      unlockUtt.volume = 1;
+      window.speechSynthesis.speak(unlockUtt);
+    }
+    
+    // Unlock AudioContext for the bell sound
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+    } catch(e) {}
+    
+    console.log("Audio unlocked. Automated scheduler is now active.");
+  }
 
- const phoneticNames = {
+  /* ── Text-to-Speech Logic ───────────────────────────────── */
+  const phoneticNames = {
     "Head Office": "Head Office",
     "Naivasha": "Nai-vasha",
     "Kitengela": "Kitengela",
@@ -1012,7 +556,6 @@
     "Nolimit Healthcare": "Nolimit Healthcare",
     "Rongai Retail": "Rong-ai Retail",
     "Kawangware Retail 2": "Ka-wang-ware Retail Two",
-    // Beibora Phonetics
     "Bei Bora Head Office": "Bay Bora Head Office", 
     "Bei Bora Githurai": "Bay Bora Githu-rai",
     "Bei Bora Kitengela": "Bay Bora Kitengela", 
@@ -1020,13 +563,14 @@
     "Bei Bora Rongai": "Bay Bora Rongai",
     "Bei Bora Shoppers": "Bay Bora Shoppers"
   };
+
   function formatPctForSpeech(pct) {
     const num = Number(pct) || 0;
     const parts = num.toFixed(1).split('.');
     const intPart = parts[0];
     const decPart = parts[1];
-    const intWord = intPart === '0' ? 'zero' : intPart; // Force "zero" instead of "o"
-    const decWord = decPart === '0' ? 'zero' : decPart; // Force "zero" instead of "o"
+    const intWord = intPart === '0' ? 'zero' : intPart;
+    const decWord = decPart === '0' ? 'zero' : decPart;
     return `${intWord} point ${decWord}`;
   }
 
@@ -1034,7 +578,7 @@
     const n = Number(num) || 0;
     if (n >= 1000000) return (n / 1000000).toFixed(2) + " million shillings";
     if (n >= 1000) return (n / 1000).toFixed(1) + " thousand shillings";
-    if (n === 0) return "zero shillings"; // Explicit spelling for zero
+    if (n === 0) return "zero shillings";
     return Math.round(n) + " shillings";
   }
 
@@ -1073,94 +617,74 @@
     });
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // DEEP FEMALE VOICE PICKER (No "tweng")
-  // Selects high-quality female voices (Google UK, Samantha, etc.)
-  // Sets pitch to 0.85 — deep enough to be authoritative, but
-  // NOT so low that it causes the metallic "tweng" distortion.
-  // ═══════════════════════════════════════════════════════════
   function pickDeepFemaleVoice() {
-    if (!availableVoices.length) {
-      availableVoices = window.speechSynthesis.getVoices();
-    }
+    if (!availableVoices.length) availableVoices = window.speechSynthesis.getVoices();
+    const FEMALE_NAMES = ['female','zira','susan','hazel','catherine','linda','heather','samantha','victoria','karen','moira','tessa','fiona','serena','kate','amelie','veena','ava','anna','joanna','salli','kendra','ivy','kimberly','monica','amy','emma','google us english'];
+    function isFemale(v) { const n = (v.name || '').toLowerCase(); return FEMALE_NAMES.some(t => n.includes(t)); }
 
-    const FEMALE_NAMES = ['female','zira','susan','hazel','catherine','linda',
-      'heather','samantha','victoria','karen','moira','tessa','fiona','serena',
-      'kate','amelie','veena','ava','anna','joanna','salli','kendra','ivy',
-      'kimberly','monica','amy','emma','google us english'];
+    let v = availableVoices.find(vv => /google.*uk.*female/i.test(vv.name)); if (v) return v;
+    v = availableVoices.find(vv => /google.*us.*female/i.test(vv.name)); if (v) return v;
+    v = availableVoices.find(vv => /samantha/i.test(vv.name)); if (v) return v;
+    v = availableVoices.find(vv => /karen/i.test(vv.name)); if (v) return v;
+    v = availableVoices.find(vv => /catherine/i.test(vv.name)); if (v) return v;
+    v = availableVoices.find(vv => /fiona/i.test(vv.name)); if (v) return v;
 
-    function isFemale(v) {
-      const n = (v.name || '').toLowerCase();
-      return FEMALE_NAMES.some(t => n.includes(t));
-    }
-
-    // Priority 1: Google UK English Female (neural, extremely smooth)
-    let v = availableVoices.find(vv => /google.*uk.*female/i.test(vv.name));
-    if (v) return v;
-
-    // Priority 2: Google US English Female
-    v = availableVoices.find(vv => /google.*us.*female/i.test(vv.name));
-    if (v) return v;
-
-    // Priority 3: Samantha (Apple macOS — naturally smooth and deep enough)
-    v = availableVoices.find(vv => /samantha/i.test(vv.name));
-    if (v) return v;
-
-    // Priority 4: Karen (Apple en-AU — naturally deeper female voice)
-    v = availableVoices.find(vv => /karen/i.test(vv.name));
-    if (v) return v;
-
-    // Priority 5: Catherine (Apple en-GB)
-    v = availableVoices.find(vv => /catherine/i.test(vv.name));
-    if (v) return v;
-
-    // Priority 6: Fiona (Apple en-IE)
-    v = availableVoices.find(vv => /fiona/i.test(vv.name));
-    if (v) return v;
-
-    // Priority 7: Any female voice in alternate locale order
     const altLocales = ['en-IE','en-AU','en-IN','en-GB','en-ZA','en-NG','en-KE','en-US'];
     for (const loc of altLocales) {
       v = availableVoices.find(vv => vv.lang === loc && isFemale(vv));
       if (v) return v;
     }
-
-    // Priority 8: ANY female voice at all
-    v = availableVoices.find(vv => isFemale(vv));
-    if (v) return v;
-
+    v = availableVoices.find(vv => isFemale(vv)); if (v) return v;
     return null;
   }
 
-  let lastScheduledHour = null;
-  function checkScheduledAnnouncement() {
-    const now = new Date();
-    const hour = now.getHours();
-    const minutes = now.getMinutes();
-    const ANNOUNCE_HOURS = [9, 11, 13, 15, 17, 19];
+  let lastAnnouncedHour = null;
 
-    if (minutes <= 2 && ANNOUNCE_HOURS.includes(hour)) {
-      if (lastScheduledHour !== hour) {
-        lastScheduledHour = hour;
-        if (currentView !== 'branches') switchView('branches');
-        if (currentBranchGroup !== 'wholesale') switchBranchGroup('wholesale');
+  // Robust scheduler using memory + localStorage to survive reloads and background tab throttling
+  function checkScheduledAnnouncement() {
+    try {
+      const now = new Date();
+      const hour = now.getHours();
+      const ANNOUNCE_HOURS = [9, 11, 13, 15, 17, 19];
+      
+      // Reset schedule outside of business hours
+      if (hour < 8 || hour > 20) {
+        lastAnnouncedHour = null;
+        try { localStorage.removeItem('lastAnnouncedHour'); } catch(e) {}
+        return;
+      }
+
+      // Sync memory from storage if memory is lost (e.g. after a page refresh)
+      if (lastAnnouncedHour === null) {
+        try { lastAnnouncedHour = localStorage.getItem('lastAnnouncedHour'); } catch(e) {}
+      }
+      
+      // If it's time to announce, and we haven't announced for this specific hour yet
+      if (ANNOUNCE_HOURS.includes(hour) && String(hour) !== String(lastAnnouncedHour)) {
+        
+        // Only announce if audio is enabled AND data is actually loaded
+        if (!audioEnabled || !branchPerfData.length || !window.currentRenderedBranches || !window.currentRenderedBranches.length) return;
+        
+        // IMMEDIATELY lock this hour so the 15-second interval doesn't trigger it again
+        lastAnnouncedHour = String(hour);
+        try { localStorage.setItem('lastAnnouncedHour', String(hour)); } catch(e) {}
+        
+        // Trigger speech
         setTimeout(() => speakBranchPerformance(), 1500);
       }
+    } catch (e) {
+      console.error("Scheduler error:", e);
     }
-    if (hour === 0 && minutes === 0) lastScheduledHour = null;
   }
 
   async function speakBranchPerformance() {
     if (!('speechSynthesis' in window)) return;
     if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
-    if (currentBranchGroup !== "wholesale") return;
 
     const branches = window.currentRenderedBranches || [];
     const withData = branches.filter(b => b.hasData);
     if (!withData.length) return;
 
-    // ── UPDATED SEQUENCE ──
-    // Incorporates Bei Bora branches immediately after Githurai
     const customAnnouncementOrder = [
       "Kawangware Wholesale", "Naivasha", "Kitengela", "Makindu",
       "Kitui Wholesale", "Wote", "Kisumu", "Head Office",
@@ -1172,7 +696,6 @@
     let text = `Branch Sales Alert. `;
     let announcedAny = false;
 
-    // Strictly announce in sequence, no cap logic
     for (const branchName of customAnnouncementOrder) {
       const b = withData.find(x => x.name === branchName);
       if (b) {
@@ -1189,7 +712,6 @@
           else if (specialDeficit < 0) text += `Surplus on special target: ${speakCurrency(Math.abs(specialDeficit))}. `;
           else text += `Deficit on special target: zero shillings. `;
         } else {
-          // This block executes for Beibora branches (since target === rawTarget)
           if (specialDeficit > 0) text += `Deficit: ${speakCurrency(specialDeficit)}. `;
           else if (specialDeficit < 0) text += `Surplus: ${speakCurrency(Math.abs(specialDeficit))}. `;
           else text += `Deficit: zero shillings. `;
@@ -1213,13 +735,28 @@
       utterance.lang = 'en-KE';
     }
     
-    // Pitch 0.85 — deep enough for a female voice but completely avoids the "tweng"
     utterance.pitch = 0.85;
     utterance.rate = 0.9;
     
     const btn = document.getElementById("manualAnnounceBtn");
     if (btn) {
-      utterance.onstart = () => btn.classList.add("speaking");
+      utterance.onstart = () => {
+        btn.classList.add("speaking");
+        
+        // Record the exact time TTS starts speaking
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString();
+        const today = new Date();
+        const isToday = now.toDateString() === today.toDateString();
+        
+        const lastSpokenEl = document.getElementById("lastSpoken");
+        if (lastSpokenEl) {
+          lastSpokenEl.textContent = "Last Announcement: " + timeStr + (isToday ? " (Today)" : "");
+        }
+        
+        // Save to localStorage so it survives page reloads
+        try { localStorage.setItem('lastTTS', now.toISOString()); } catch(e) {}
+      };
       utterance.onend = () => btn.classList.remove("speaking");
       utterance.onerror = () => btn.classList.remove("speaking");
     }
@@ -1227,124 +764,28 @@
     window.speechSynthesis.speak(utterance);
   }
 
-  function processAndRender() {
-    const { startDate, endDate } = getDateRange();
-    currentDaysInRange = getDaysInRange(startDate, endDate);
-    const selectedBranch = branchSelect.value;
-    const selectedBranchName = selectedBranch ? (branchNames[selectedBranch] || "") : "";
-    const processed = aggregateSalesPeople(startDate, endDate, selectedBranch);
-    processed.sort((a, b) => b.score - a.score);
-    filteredData = processed;
-    applySearchAndSort();
-  }
-
-  function getSortValue(item, key) {
-    switch (key) {
-      case "name": return (item.salesPersonName || "").toLowerCase();
-      case "branch": return (item.branchName || "").toLowerCase();
-      case "score": return item.score;
-      case "orders": return Number(item.totalDaysCustomers || 0);
-      case "value": return item.netValue;
-      case "deficit": return Number(item.deficit || 0);
-      default: return 0;
-    }
-  }
-
-  function sortData(data) {
-    const { key, dir } = currentSort;
-    const sorted = [...data];
-    sorted.sort((a, b) => {
-      const va = getSortValue(a, key);
-      const vb = getSortValue(b, key);
-      if (typeof va === "string") return dir === "asc" ? va.localeCompare(vb) : -va.localeCompare(vb);
-      return dir === "asc" ? va - vb : vb - va;
-    });
-    return sorted;
-  }
-
-  function applySearchAndSort() {
-    let data = filteredData;
-    displayedData = sortData(data);
-  }
-
-  document.getElementById("dateSelect").addEventListener("change", () => {
-    const val = document.getElementById("dateSelect").value;
-    if (val === "custom") {
-      toggleCustomDateRange(true);
-      if (!document.getElementById("dateFrom").value && !document.getElementById("dateTo").value) {
-        const todayStr = formatDate(getToday());
-        document.getElementById("dateFrom").value = todayStr;
-        document.getElementById("dateTo").value = todayStr;
+  // Restore last spoken time from localStorage on page load
+  try {
+    const lastTTS = localStorage.getItem('lastTTS');
+    if (lastTTS) {
+      const dateObj = new Date(lastTTS);
+      const today = new Date();
+      const isToday = dateObj.toDateString() === today.toDateString();
+      const lastSpokenEl = document.getElementById("lastSpoken");
+      if (lastSpokenEl) {
+        lastSpokenEl.textContent = "Last Announcement: " + dateObj.toLocaleTimeString() + (isToday ? " (Today)" : " (" + dateObj.toLocaleDateString() + ")");
       }
-      return;
     }
-    toggleCustomDateRange(false);
-    syncDateInputsFromPreset(val);
-    if (!allRawData.length && !branchPerfData.length) return;
-    processAndRender();
-    if (currentView === "branches") renderBranchView();
-  });
+  } catch(e) {}
 
-  function onCustomDateChange() {
-    if (document.getElementById("dateSelect").value !== "custom") {
-      document.getElementById("dateSelect").value = "custom";
-      toggleCustomDateRange(true);
-    }
-    const from = document.getElementById("dateFrom").value;
-    const to = document.getElementById("dateTo").value;
-    if (from && to && from > to) document.getElementById("dateTo").value = from;
-    if (!allRawData.length && !branchPerfData.length) return;
-    processAndRender();
-    if (currentView === "branches") renderBranchView();
-  }
-
-  document.getElementById("dateFrom").addEventListener("change", onCustomDateChange);
-  document.getElementById("dateTo").addEventListener("change", onCustomDateChange);
-  branchSelect.addEventListener("change", () => {
-    currentSort = { key: "score", dir: "desc" };
-    if (!allRawData.length && !branchPerfData.length) return;
-    processAndRender();
-  });
-
-  syncDateInputsFromPreset("today");
-  toggleCustomDateRange(false);
+  /* ── INIT ────────────────────────────────────────────────── */
   loadAllData();
 
   setInterval(() => { if (!isLoading) loadAllData(); }, AUTO_REFRESH_MS);
-  setInterval(checkScheduledAnnouncement, 30000);
-  setTimeout(checkScheduledAnnouncement, 5000);
-
-  // AUTO-ANNOUNCE ON PAGE OPEN IF WITHIN SCHEDULED HOURS
-  (function() {
-    var ANNOUNCE_HOURS = [9, 11, 13, 15, 17, 19];
-    var autoFired = false;
-
-    function tryAutoAnnounce() {
-      if (autoFired) return;
-      var now = new Date();
-      var hour = now.getHours();
-      if (ANNOUNCE_HOURS.indexOf(hour) === -1) return;
-
-      if (typeof allRawData === 'undefined' || !allRawData.length) return;
-      if (typeof branchPerfData === 'undefined' || !branchPerfData.length) return;
-
-      if (typeof renderBranchView === 'function') renderBranchView();
-      if (!window.currentRenderedBranches || !window.currentRenderedBranches.length) return;
-
-      var withData = window.currentRenderedBranches.filter(function(b) { return b.hasData; });
-      if (!withData.length) return;
-
-      autoFired = true;
-      if (typeof lastScheduledHour !== 'undefined') lastScheduledHour = hour;
-
-      setTimeout(function() {
-        if (typeof speakBranchPerformance === 'function') speakBranchPerformance();
-      }, 3000);
-    }
-
-    setInterval(tryAutoAnnounce, 10000);
-    setTimeout(tryAutoAnnounce, 15000);
-  })();
+  
+  // Check every 15 seconds for schedule
+  setInterval(checkScheduledAnnouncement, 15000);
+  setTimeout(checkScheduledAnnouncement, 5000); // Check 5s after load
 </script>
 </body>
 </html>
