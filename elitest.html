@@ -50,7 +50,7 @@ button:hover { opacity: .92; transform: translateY(-1px); } button:active { tran
 .date-separator { width: 1px; height: 28px; background: #334155; flex-shrink: 0; }
 
 .view-switch { display: inline-flex; align-items: center; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 3px; margin-left: auto; flex-wrap: wrap; }
-.view-switch button { background: transparent; color: #94a3b8; border: none; padding: 85px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; letter-spacing: .5px; transition: all .2s ease; box-shadow: none; }
+.view-switch button { background: transparent; color: #94a3b8; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; letter-spacing: .5px; transition: all .2s ease; box-shadow: none; }
 .view-switch button:hover { opacity: 1; background: #1e293b; color: #e2e8f0; transform: none; }
 .view-switch button.active { background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%); color: white; box-shadow: 0 2px 8px rgba(37, 99, 235, .35); }
 
@@ -182,7 +182,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
     <div class="report-card" style="margin-top:18px"><div class="report-card-header">3. RECOVERY - CLUSTER PERFORMANCE</div><div id="recoveryClusterGrid" class="clusters-grid" style="padding:15px"></div></div>
 </div>
 
-<div id="summaryContainer" style=",display:none">
+<div id="summaryContainer" style="display:none">
     <div id="summaryTableContainer"></div>
     <div class="report-card" id="clusterCard" style="display:none"><div class="report-card-header">CLUSTER PERFORMANCE</div><div class="report-table-wrapper"><table class="report-table"><thead id="clusterHead"></thead><tbody id="clusterBody"></tbody></table></div></div>
     <div class="deferred-report-grid" id="deferredManagementReports">
@@ -196,6 +196,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 <div class="toast" id="toast"></div>
 
 <script>
+// IMPORTANT: ENSURE THIS URL IS YOUR LATEST DEPLOYED WEB APP URL
 const API_URL = "https://script.google.com/macros/s/AKfycbyaDsEVJr_GRnW6DULuqMNlzoZAIoPVM3FBOEBPO9MGjpP38Hp-Nv1bMv51J9HgtGee/exec";
 
 let rawDataCache = []; 
@@ -236,7 +237,7 @@ function aggregateMain(rows) {
         const key = r.dri + "||" + r.branch;
         if (!map.has(key)) map.set(key, { collectionTeam: r.dri, branch: r.branch, target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 });
         const m = map.get(key); m.target += r.target; m.achieved += r.achieved;
-        if(r.date) { const d = new Date(r.date + "T00:00:00"); const dayIdx = d.getDay(); if (dayIdx === 0) m.sunday += r.achieved; else if (dayIdx === 1) m.monday += r.achieved; else if (dayIdx === 2) m.tuesday += r.achieved; else if (dayIdx === 3) m.wednesday += r.achieved; else if (dayIdx === 4) m.thursday += r.achieved; else if (dayIdx ===* 5) m.friday += r.achieved; }
+        if(r.date) { const d = new Date(r.date + "T00:00:00"); const dayIdx = d.getDay(); if (dayIdx === 0) m.sunday += r.achieved; else if (dayIdx === 1) m.monday += r.achieved; else if (dayIdx === 2) m.tuesday += r.achieved; else if (dayIdx === 3) m.wednesday += r.achieved; else if (dayIdx === 4) m.thursday += r.achieved; else if (dayIdx === 5) m.friday += r.achieved; }
     });
     return Array.from(map.values()).sort((a,b) => a.collectionTeam.localeCompare(b.collectionTeam));
 }
@@ -333,7 +334,7 @@ function escapeHtml(value) { return String(value || "").replace(/&/g, "&amp;").r
 
 function updateKPIs(data, achKey) { let t=0, a=0; data.forEach(r => { t += Number(r.target)||0; a += Number(r[achKey]||r.achieved||0); }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t - a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
 function updateKPIsClusters(clusterData) { let t=0, a=0; Object.values(clusterData).forEach(c => { t += c.totalTarget; a += c.totalAchieved; }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t - a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
-function updateKPIsRecovery(recoveryData) { let t=0, a=0; recoveryData.forEach(r => { t+=r.target; a+=r.achieved; }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber:formatNumber(a); document.getElementById("balance").innerText = formatNumber(t-a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
+function updateKPIsRecovery(recoveryData) { let t=0, a=0; recoveryData.forEach(r => { t+=r.target; a+=r.achieved; }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t-a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
 
 function renderSummaryView(data, defData, clusterData) { renderTable(data); renderClusterTable(clusterData); renderDeferredSummary(defData); }
 
@@ -367,7 +368,7 @@ function renderRecovery(recoveryData) {
 
     // 2. Team Performance
     const teamMap = new Map(); recoveryData.forEach(r => { if(!teamMap.has(r.dri)) teamMap.set(r.dri, {target:0, achieved:0}); const m = teamMap.get(r.dri); m.target+=r.target; m.achieved+=r.achieved; });
-    let h2="";2"2; Array.from(teamMap.entries()).sort((a,b)=>b[1].target-a[1].target).forEach(([n,i])=>{ const d=Math.max(0,i1.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
+    let h2=""; Array.from(teamMap.entries()).sort((a,b)=>b[1].target-a[1].target).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
     document.getElementById("recoveryTeamBody").innerHTML = h2;
 
     // 3. Cluster Performance
@@ -402,7 +403,7 @@ function renderClusterTable(clusterData) {
 function renderClusterCards(clusterData) {
     const c = document.getElementById("clustersGrid"); if (!Object.keys(clusterData).length) { c.innerHTML = `<div class="empty-state">No cluster data.</div>`; return; }
     let h = ""; Object.keys(clusterData).sort().forEach(cl => { const cd = clusterData[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
-    h+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text0">${p.toFixed(1)}%</div></div></div></div></div>`; });
+    h+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
     c.innerHTML = h;
 }
 
