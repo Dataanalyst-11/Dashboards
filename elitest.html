@@ -264,7 +264,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <div class="report-card"><div class="report-card-header">DEFERMENTS BY COLLECTION TEAM</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>TEAM</th><th>TARGET</th><th>ACHIEVED</th><th>1ST DEFERRED</th><th>1ST %</th><th>RE-DEFERRED (2ND)</th><th>2ND %</th><th>RISK</th></tr></thead><tbody id="deferTeamBody"></tbody></table></div></div>
         <div class="report-card"><div class="report-card-header">DEFERMENTS BY BRANCH</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>1ST DEFERRED</th><th>1ST %</th><th>RE-DEFERRED (2ND)</th><th>2ND %</th><th>RISK</th></tr></thead><tbody id="deferBranchBody"></tbody></table></div></div>
     </div>
-    <div class="report-card" style="margin-top:18px"><div class="report-card-header">DEFERMENT TIMELINE (BY DEFERMENT DATE)</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>DATE</th><th>1ST DEF ITEMS</th><th>1ST DEF VALUE</th><th>RE-DEF ITEMS</th><th>RE-DEF VALUE</th><th>TOTAL DEF VALUE</th></tr></thead><tbody id="deferTimelineBody"></tbody></table></div></div>
+    <div class="report-card" style="margin-top:18px"><div class="report-card-header">DEFERMENT TIMELINE (BY DEFERMENT DATE)</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>DATE</th><th>1ST DEF ACCOUNTS</th><th>1ST DEF VALUE</th><th>RE-DEF ACCOUNTS</th><th>RE-DEF VALUE</th><th>TOTAL DEF VALUE</th></tr></thead><tbody id="deferTimelineBody"></tbody></table></div></div>
     <div class="report-card" id="deferTopCard" style="margin-top:18px"><div class="report-card-header">TOP 15 DEFERRED EXPOSURES</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>TEAM</th><th>BRANCH</th><th>CLUSTER</th><th>TARGET</th><th>STATUS</th><th>1ST DEF DATE</th><th>2ND DEF DATE</th></tr></thead><tbody id="deferTopBody"></tbody></table></div></div>
 </div>
 </div>
@@ -398,9 +398,9 @@ function renderDefermentOverview(stats) {
     const rate2 = stats.totalTarget > 0 ? (stats.d2Value / stats.totalTarget * 100) : 0;
     const pct = stats.totalTarget > 0 ? (stats.totalAchieved / stats.totalTarget * 100) : 0;
     document.getElementById("deferOverviewGrid").innerHTML = `
-        <div class="defer-box"><div class="stat-label">Portfolio Target</div><div class="defer-value">${formatNumber(stats.totalTarget)}</div><div class="defer-sub">${stats.itemCount} line items monitored</div></div>
-        <div class="defer-box"><div class="stat-label">1st Deferments (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} items • ${rate1.toFixed(1)}% of target</div></div>
-        <div class="defer-box"><div class="stat-label">Re-Deferments (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} items • ${rate2.toFixed(1)}% of target</div></div>
+        <div class="defer-box"><div class="stat-label">Portfolio Target</div><div class="defer-value">${formatNumber(stats.totalTarget)}</div><div class="defer-sub">${stats.itemCount} line accounts monitored</div></div>
+        <div class="defer-box"><div class="stat-label">1st Deferments (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} accounts • ${rate1.toFixed(1)}% of target</div></div>
+        <div class="defer-box"><div class="stat-label">Re-Deferments (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} accounts • ${rate2.toFixed(1)}% of target</div></div>
         <div class="defer-box"><div class="stat-label">Still Uncollected</div><div class="defer-value">${formatNumber(Math.max(0, stats.totalTarget - stats.totalAchieved))}</div><div class="defer-sub">${pct.toFixed(1)}% achieved overall</div></div>`;
 }
 
