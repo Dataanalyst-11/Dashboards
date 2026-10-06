@@ -197,32 +197,24 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 <div class="toast" id="toast"></div>
 
 <script>
+// IMPORTANT: ENSURE THIS URL IS YOUR LATEST DEPLOYED WEB APP URL
 const API_URL = "https://script.google.com/macros/s/AKfycbyOJlSVCGuSIszCfqOBd1IRTwyd1h_ci_3zovi42lvbdzy35UnlVkL6Bev6JCIBIDYN/exec";
 
-let rawDataCache = []; // The Holy Grail: Stores all data locally
+let rawDataCache = []; 
 let currentView = "branches", refreshInProgress = false;
 let dateFilter = { startDate: null, endDate: null, preset: "today" };
 
-// --- CORE LOGIC: LOCAL PROCESSING ---
 function processAndRender() {
     if (rawDataCache.length === 0) return;
-    
-    // 1. Filter by Date Locally
     const filtered = rawDataCache.filter(r => {
         if (dateFilter.startDate && r.date < dateFilter.startDate) return false;
         if (dateFilter.endDate && r.date > dateFilter.endDate) return false;
         return true;
     });
-
-    // 2. Aggregate Locally
     const allData = aggregateMain(filtered);
     const deferredData = aggregateMarshal(filtered);
     const clusterData = buildClusterData(filtered);
-
-    // 3. Populate Dropdowns Locally
     populateFilters(allData, deferredData);
-
-    // 4. Apply UI Filters & Render
     applyFilters(allData, deferredData, clusterData);
 }
 
@@ -231,16 +223,9 @@ function aggregateMain(rows) {
     rows.forEach(r => {
         const key = r.dri + "||" + r.branch;
         if (!map.has(key)) map.set(key, { collectionTeam: r.dri, branch: r.branch, target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 });
-        const m = map.get(key);
-        m.target += r.target; m.achieved += r.achieved;
-        const d = new Date(r.date + "T00:00:00");
-        const dayIdx = d.getDay();
-        if (dayIdx === 0) m.sunday += r.achieved;
-        else if (dayIdx === 1) m.monday += r.achieved;
-        else if (dayIdx === 2) m.tuesday += r.achieved;
-        else if (dayIdx === 3) m.wednesday += r.achieved;
-        else if (dayIdx === 4) m.thursday += r.achieved;
-        else if (dayIdx === 5) m.friday += r.achieved;
+        const m = map.get(key); m.target += r.target; m.achieved += r.achieved;
+        const d = new Date(r.date + "T00:00:00"); const dayIdx = d.getDay();
+        if (dayIdx === 0) m.sunday += r.achieved; else if (dayIdx === 1) m.monday += r.achieved; else if (dayIdx === 2) m.tuesday += r.achieved; else if (dayIdx === 3) m.wednesday += r.achieved; else if (dayIdx === 4) m.thursday += r.achieved; else if (dayIdx === 5) m.friday += r.achieved;
     });
     return Array.from(map.values()).sort((a,b) => a.collectionTeam.localeCompare(b.collectionTeam));
 }
@@ -250,51 +235,22 @@ function aggregateMarshal(rows) {
     rows.forEach(r => {
         const key = r.dri + "||" + r.branch;
         if (!map.has(key)) map.set(key, { dri: r.dri, branch: r.branch, target:0, deferredTarget:0, partialTarget:0, week4Collection:0, collectionMarshal: r.dri, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 });
-        const m = map.get(key);
-        m.target += r.target; m.week4Collection += r.achieved;
-        if (r.status === "DEFERRED") m.deferredTarget += r.target;
-        if (r.status === "PARTIAL") m.partialTarget += r.target;
-        const d = new Date(r.date + "T00:00:00");
-        const dayIdx = d.getDay();
-        if (dayIdx === 1) m.monday += r.achieved;
-        else if (dayIdx === 2) m.tuesday += r.achieved;
-        else if (dayIdx === 3) m.wednesday += r.achieved;
-        else if (dayIdx === 4) m.thursday += r.achieved;
-        else if (dayIdx === 5) m.friday += r.achieved;
+        const m = map.get(key); m.target += r.target; m.week4Collection += r.achieved;
+        if (r.status === "DEFERRED") m.deferredTarget += r.target; if (r.status === "PARTIAL") m.partialTarget += r.target;
+        const d = new Date(r.date + "T00:00:00"); const dayIdx = d.getDay();
+        if (dayIdx === 1) m.monday += r.achieved; else if (dayIdx === 2) m.tuesday += r.achieved; else if (dayIdx === 3) m.wednesday += r.achieved; else if (dayIdx === 4) m.thursday += r.achieved; else if (dayIdx === 5) m.friday += r.achieved;
     });
     return Array.from(map.values()).sort((a,b) => a.dri.localeCompare(b.dri));
 }
 
 function buildClusterData(rows) {
-    const clusterTotals = {};
-    const daysPresent = new Set();
-    rows.forEach(r => { if(r.date) daysPresent.add(r.date); });
-    
-    rows.forEach(r => {
-        const cl = r.cluster || "UNKNOWN";
-        if (!clusterTotals[cl]) clusterTotals[cl] = { totalTarget: 0, totalAchieved: 0, days: {} };
-        clusterTotals[cl].totalTarget += r.target;
-        clusterTotals[cl].totalAchieved += r.achieved;
-        
-        const dayKey = r.date;
-        if (!clusterTotals[cl].days[dayKey]) clusterTotals[cl].days[dayKey] = { target: 0, achieved: 0 };
-        clusterTotals[cl].days[dayKey].target += r.target;
-        clusterTotals[cl].days[dayKey].achieved += r.achieved;
-    });
+    const clusterTotals = {}; rows.forEach(r => { const cl = r.cluster || "UNKNOWN"; if (!clusterTotals[cl]) clusterTotals[cl] = { totalTarget: 0, totalAchieved: 0, days: {} }; clusterTotals[cl].totalTarget += r.target; clusterTotals[cl].totalAchieved += r.achieved; const dayKey = r.date; if (!clusterTotals[cl].days[dayKey]) clusterTotals[cl].days[dayKey] = { target: 0, achieved: 0 }; clusterTotals[cl].days[dayKey].target += r.target; clusterTotals[cl].days[dayKey].achieved += r.achieved; });
     return clusterTotals;
 }
 
-// --- UI & RENDERING ---
 function getPresetRange(preset) {
     const now = new Date(); const y = now.getFullYear(), m = now.getMonth(), d = now.getDate(); const dayOfWeek = now.getDay(); let start, end;
-    switch (preset) {
-        case "today": start = new Date(y, m, d); end = new Date(y, m, d); break;
-        case "thisWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; }
-        case "thisMonth": start = new Date(y, m, 1); end = new Date(y, m + 1, 0); break;
-        case "lastWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o - 7); end = new Date(y, m, d - o - 1); break; }
-        case "lastMonth": start = new Date(y, m - 1, 1); end = new Date(y, m, 0); break;
-        default: start = new Date(y, m, d); end = new Date(y, m, d);
-    }
+    switch (preset) { case "today": start = new Date(y, m, d); end = new Date(y, m, d); break; case "thisWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; } case "thisMonth": start = new Date(y, m, 1); end = new Date(y, m + 1, 0); break; case "lastWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o - 7); end = new Date(y, m, d - o - 1); break; } case "lastMonth": start = new Date(y, m - 1, 1); end = new Date(y, m, 0); break; default: start = new Date(y, m, d); end = new Date(y, m, d); }
     return { start, end };
 }
 
@@ -302,26 +258,20 @@ function toISO(date) { return `${date.getFullYear()}-${String(date.getMonth() + 
 function formatDisplayDate(iso) { if (!iso) return ""; const p = iso.split("-"); const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return `${parseInt(p[2])} ${months[parseInt(p[1]) - 1]} ${p[0]}`; }
 
 function setDatePreset(preset) {
-    dateFilter.preset = preset;
-    const range = getPresetRange(preset);
-    dateFilter.startDate = toISO(range.start); dateFilter.endDate = toISO(range.end);
+    dateFilter.preset = preset; const range = getPresetRange(preset); dateFilter.startDate = toISO(range.start); dateFilter.endDate = toISO(range.end);
     document.getElementById("startDate").value = dateFilter.startDate; document.getElementById("endDate").value = dateFilter.endDate;
-    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.toggle("active", btn.dataset.preset === preset));
-    updateDateRangeBadge();
-    processAndRender(); // Instant local filter
+    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.toggle("active", btn.dataset.preset === preset)); updateDateRangeBadge(); processAndRender();
 }
 
 function onDateInputChange() {
     const s = document.getElementById("startDate").value, e = document.getElementById("endDate").value;
     if (s && e && s > e) { showToast("Start date cannot be after end date", "error"); return; }
     dateFilter.preset = null; dateFilter.startDate = s; dateFilter.endDate = e;
-    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.remove("active"));
-    updateDateRangeBadge();
-    processAndRender(); // Instant local filter
+    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.remove("active")); updateDateRangeBadge(); processAndRender();
 }
 
 function updateDateRangeBadge() { document.getElementById("dateRangeBadge").textContent = `Viewing: ${formatDisplayDate(dateFilter.startDate)} — ${formatDisplayDate(dateFilter.endDate)}`; }
-function showToast(msg, type) { const t = document.getElementById("toast"); t.innerHTML = `<span>${type === "error" ? "⚠" : "✔"}</span> ${msg}`; t.style.borderColor = type === "error" ? "#991b1b" : "#2563eb"; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3000); }
+function showToast(msg, type) { const t = document.getElementById("toast"); t.innerHTML = `<span>${type === "error" ? "⚠" : "✔"}</span> ${msg}`; t.style.borderColor = type === "error" ? "#991b1b" : "#2563eb"; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
 
 async function loadData(manualRefresh = false) {
     if (refreshInProgress) return;
@@ -331,17 +281,29 @@ async function loadData(manualRefresh = false) {
     
     try {
         const response = await fetch(API_URL + "?t=" + Date.now(), { cache: "no-store" });
+        
+        // ENHANCED ERROR HANDLING: Catch HTML pages or server errors before parsing JSON
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server error ${response.status}: ${errText.substring(0, 150)}`);
+        }
+
         const result = await response.json();
-        if (result.status !== "success") throw new Error(result.message);
+        if (result.status !== "success") throw new Error(result.message || "Unknown API Error");
         
         rawDataCache = result.data || [];
         document.getElementById("lastUpdate").innerText = new Date().toLocaleString("en-KE");
-        if (manualRefresh) showToast("Sheet data refreshed");
+        if (manualRefresh) showToast("Sheet data refreshed successfully");
         processAndRender();
     } catch (err) {
-        document.getElementById("error").style.display = "block"; document.getElementById("error").innerText = err.message;
+        console.error("Load Data Error:", err);
+        document.getElementById("error").style.display = "block"; 
+        document.getElementById("error").innerText = "Data fetch failed: " + err.message;
+        showToast(err.message, "error");
     } finally {
-        btn.disabled = false; btn.classList.remove("spinning"); document.getElementById("loading").style.display = "none"; refreshInProgress = false;
+        btn.disabled = false; btn.classList.remove("spinning"); 
+        document.getElementById("loading").style.display = "none"; 
+        refreshInProgress = false;
     }
 }
 
@@ -350,7 +312,6 @@ function populateFilters(allData, deferredData) {
     const isDeferred = currentView === "deferred", dataSource = isDeferred ? deferredData : allData, teamKey = isDeferred ? "dri" : "collectionTeam";
     const branches = [...new Set(dataSource.map(r => r.branch).filter(Boolean))].sort();
     const teams = [...new Set(dataSource.map(r => r[teamKey]).filter(Boolean))].sort();
-    
     const prevBranch = branchSelect.value, prevTeam = teamSelect.value;
     branchSelect.innerHTML = `<option value="ALL">All Branches</option>`; branches.forEach(b => branchSelect.innerHTML += `<option value="${b}">${b}</option>`);
     teamSelect.innerHTML = `<option value="ALL">All Teams</option>`; teams.forEach(t => teamSelect.innerHTML += `<option value="${t}">${t}</option>`);
@@ -358,29 +319,19 @@ function populateFilters(allData, deferredData) {
 }
 
 function applyFilters(allData, deferredData, clusterData) {
-    if (!allData) return; // Wait for initial load
+    if (!allData) return;
     const branch = document.getElementById("branchFilter").value, team = document.getElementById("teamFilter").value, search = document.getElementById("searchBox").value.toLowerCase().trim();
     const filter = (row, key) => (branch === "ALL" || row.branch === branch) && (team === "ALL" || row[key] === team) && (!search || row[key].toLowerCase().includes(search));
-    
-    const fAll = allData.filter(r => filter(r, "collectionTeam"));
-    const fDef = deferredData.filter(r => filter(r, "dri"));
-
-    if (currentView === "deferred") updateKPIs(fDef, "week4Collection");
-    else if (currentView === "clusters") updateKPIsClusters(clusterData);
-    else updateKPIs(fAll, "achieved");
-
-    if (currentView === "summary") renderSummaryView(fAll, fDef, clusterData);
-    else if (currentView === "deferred") renderDeferred(fDef);
-    else if (currentView === "clusters") renderClusterCards(clusterData);
-    else renderBranches(fAll);
+    const fAll = allData.filter(r => filter(r, "collectionTeam")); const fDef = deferredData.filter(r => filter(r, "dri"));
+    if (currentView === "deferred") updateKPIs(fDef, "week4Collection"); else if (currentView === "clusters") updateKPIsClusters(clusterData); else updateKPIs(fAll, "achieved");
+    if (currentView === "summary") renderSummaryView(fAll, fDef, clusterData); else if (currentView === "deferred") renderDeferred(fDef); else if (currentView === "clusters") renderClusterCards(clusterData); else renderBranches(fAll);
 }
 
 function switchView(view) {
     currentView = view;
     ["summary", "branches", "deferred", "clusters"].forEach(v => { document.getElementById(v + "Button").classList.toggle("active", v === view); document.getElementById(v + "Container").style.display = v === view ? "block" : "none"; });
     const desc = { summary: "Summary and portfolio breakdown", branches: "Detailed daily collection performance", deferred: "Marshal Portfolio — Total target and collection", clusters: "Cluster cards — Aggregated targets and achieved" };
-    document.getElementById("viewDescription").innerText = desc[view];
-    processAndRender(); // Instant re-render
+    document.getElementById("viewDescription").innerText = desc[view]; processAndRender();
 }
 
 function calcPct(item) { return item.target > 0 ? (item.achieved / item.target) * 100 : 0; }
@@ -389,15 +340,8 @@ function getStatusClass(v) { return v >= 90 ? "high" : v >= 70 ? "medium" : "low
 function formatNumber(value) { return Number(value || 0).toLocaleString("en-KE", { maximumFractionDigits: 2 }); }
 function escapeHtml(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
-function updateKPIs(data, achKey) {
-    let t=0, a=0; data.forEach(r => { t += Number(r.target)||0; a += Number(r[achKey]||r.achieved||0); });
-    document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t - a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%";
-}
-
-function updateKPIsClusters(clusterData) {
-    let t=0, a=0; Object.values(clusterData).forEach(c => { t += c.totalTarget; a += c.totalAchieved; });
-    document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t - a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%";
-}
+function updateKPIs(data, achKey) { let t=0, a=0; data.forEach(r => { t += Number(r.target)||0; a += Number(r[achKey]||r.achieved||0); }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t - a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
+function updateKPIsClusters(clusterData) { let t=0, a=0; Object.values(clusterData).forEach(c => { t += c.totalTarget; a += c.totalAchieved; }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t - a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
 
 function renderSummaryView(data, defData, clusterData) { renderTable(data); renderClusterTable(clusterData); renderDeferredSummary(defData); }
 
@@ -428,7 +372,6 @@ function renderDeferredSummary(data) {
     const driMap = new Map(); data.forEach(r => { if(!driMap.has(r.dri)) driMap.set(r.dri, {target:0, collected:0}); const m=driMap.get(r.dri); m.target+=r.target; m.collected+=r.week4Collection; });
     let h1=""; Array.from(driMap.entries()).sort((a,b)=>(b[1].collected/b[1].target||0)-(a[1].collected/a[1].target||0)).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.collected), p=i.target>0?(i.collected/i.target*100):0; h1+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.collected)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
     document.getElementById("deferredSummaryBody").innerHTML = h1; document.getElementById("deferredSummaryCard").style.display="block";
-    
     const marMap = new Map(); data.forEach(r => { if(!marMap.has(r.collectionMarshal)) marMap.set(r.collectionMarshal, {target:0, collected:0}); const m=marMap.get(r.collectionMarshal); m.target+=r.target; m.collected+=r.week4Collection; });
     let h2=""; Array.from(marMap.entries()).sort((a,b)=>(b[1].collected/b[1].target||0)-(a[1].collected/a[1].target||0)).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.collected), p=i.target>0?(i.collected/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.collected)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
     document.getElementById("marshalSummaryBody").innerHTML = h2; document.getElementById("marshalSummaryCard").style.display="block";
@@ -436,31 +379,13 @@ function renderDeferredSummary(data) {
 
 function renderClusterTable(clusterData) {
     const card = document.getElementById("clusterCard"), thead = document.getElementById("clusterHead"), tbody = document.getElementById("clusterBody");
-    if (!Object.keys(clusterData).length) { card.style.display="none"; return; }
-    card.style.display="block";
-    
-    // Determine all unique dates present for columns
-    const allDates = new Set();
-    Object.values(clusterData).forEach(c => Object.keys(c.days).forEach(d => allDates.add(d)));
-    const sortedDates = Array.from(allDates).sort();
-    
-    let headHtml = "<tr><th>CLUSTER</th><th>TOTAL TARGET</th><th>TOTAL ACHIEVED</th><th>%</th>";
-    sortedDates.forEach(d => { headHtml += `<th>${formatDisplayDate(d)} TGT</th><th>${formatDisplayDate(d)} ACH</th>`; });
-    headHtml += "</tr>"; thead.innerHTML = headHtml;
-    
+    if (!Object.keys(clusterData).length) { card.style.display="none"; return; } card.style.display="block";
+    const allDates = new Set(); Object.values(clusterData).forEach(c => Object.keys(c.days).forEach(d => allDates.add(d))); const sortedDates = Array.from(allDates).sort();
+    let headHtml = "<tr><th>CLUSTER</th><th>TOTAL TARGET</th><th>TOTAL ACHIEVED</th><th>%</th>"; sortedDates.forEach(d => { headHtml += `<th>${formatDisplayDate(d)} TGT</th><th>${formatDisplayDate(d)} ACH</th>`; }); headHtml += "</tr>"; thead.innerHTML = headHtml;
     let bodyHtml = ""; const gT = {target:0, achieved:0, days:{}};
-    Object.keys(clusterData).sort().forEach(cl => {
-        const c = clusterData[cl]; const p = c.totalTarget>0?(c.totalAchieved/c.totalTarget*100):0;
-        bodyHtml += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`;
-        sortedDates.forEach(d => { const dayData = c.days[d] || {target:0, achieved:0}; bodyHtml += `<td>${formatNumber(dayData.target)}</td><td>${formatNumber(dayData.achieved)}</td>`; });
-        bodyHtml += `</tr>`;
-        gT.target+=c.totalTarget; gT.achieved+=c.totalAchieved;
-    });
-    
-    const gP = gT.target>0?(gT.achieved/gT.target*100):0;
-    let totalHtml = `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(gT.target)}</td><td>${formatNumber(gT.achieved)}</td><td>${gP.toFixed(1)}%</td>`;
-    sortedDates.forEach(d => { let t=0,a=0; Object.values(clusterData).forEach(c => { if(c.days[d]){t+=c.days[d].target; a+=c.days[d].achieved;} }); totalHtml += `<td>${formatNumber(t)}</td><td>${formatNumber(a)}</td>`; });
-    totalHtml += "</tr>"; tbody.innerHTML = bodyHtml + totalHtml;
+    Object.keys(clusterData).sort().forEach(cl => { const c = clusterData[cl]; const p = c.totalTarget>0?(c.totalAchieved/c.totalTarget*100):0; bodyHtml += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`; sortedDates.forEach(d => { const dayData = c.days[d] || {target:0, achieved:0}; bodyHtml += `<td>${formatNumber(dayData.target)}</td><td>${formatNumber(dayData.achieved)}</td>`; }); bodyHtml += `</tr>`; gT.target+=c.totalTarget; gT.achieved+=c.totalAchieved; });
+    const gP = gT.target>0?(gT.achieved/gT.target*100):0; let totalHtml = `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(gT.target)}</td><td>${formatNumber(gT.achieved)}</td><td>${gP.toFixed(1)}%</td>`;
+    sortedDates.forEach(d => { let t=0,a=0; Object.values(clusterData).forEach(c => { if(c.days[d]){t+=c.days[d].target; a+=c.days[d].achieved;} }); totalHtml += `<td>${formatNumber(t)}</td><td>${formatNumber(a)}</td>`; }); totalHtml += "</tr>"; tbody.innerHTML = bodyHtml + totalHtml;
 }
 
 function renderClusterCards(clusterData) {
