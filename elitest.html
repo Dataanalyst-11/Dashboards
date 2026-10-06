@@ -267,14 +267,14 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <div class="report-card"><div class="report-card-header">DEFERMENTS BY BRANCH</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>1ST DEFERRED</th><th>1ST %</th><th>RE-DEFERRED (2ND)</th><th>2ND %</th><th>RISK</th></tr></thead><tbody id="deferBranchBody"></tbody></table></div></div>
     </div>
     <div class="report-card" style="margin-top:18px"><div class="report-card-header">DEFERMENT TIMELINE (BY DEFERMENT DATE)</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>DATE</th><th>1ST DEF ACCOUNTS</th><th>1ST DEF VALUE</th><th>RE-DEF ACCOUNTS</th><th>RE-DEF VALUE</th><th>TOTAL DEF VALUE</th></tr></thead><tbody id="deferTimelineBody"></tbody></table></div></div>
-    <div class="report-card" id="deferTopCard" style="margin-top:18px"><div class="report-card-header">TOP 15 DEFERRED EXPOSURES</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>TEAM</th><th>BRANCH</th><th>CLUSTER</th><th>TARGET</th><th>STATUS</th><th>1ST DEF DATE</th><th>2ND DEF DATE</th></tr></thead><tbody id="deferTopBody"></tbody></table></div></div>
+    <div class="report-card" id="deferTopCard" style="margin-top:18px"><div class="report-card-header">TOP 15 DEFERRED ACCOUNTS</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>TEAM</th><th>BRANCH</th><th>CLUSTER</th><th>ACCOUNT TARGET</th><th>STATUS</th><th>1ST DEF DATE</th><th>2ND DEF DATE</th></tr></thead><tbody id="deferTopBody"></tbody></table></div></div>
 </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzq-W4-xr0manbmL7C8wgApuorAGVr4ZvQHplQrI4eaqrE0xDSdWzwM3IBI2I1X8mWh/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzEN4qU68rZ19it-jps8DUhqULqkpOxTg14WHD0-gGUgQYEWAmRsbe-MTBonpC2oD40/exec";
 
 let rawDataCache = []; 
 let currentView = "branches", refreshInProgress = false;
@@ -290,22 +290,6 @@ const isMainFlow = (r) => {
     if (r.dri === "DIANA AKHENDA" && r.branch === "PSALMS & COVIGEN") return false;
     return true;
 };
-
-/* ===== DATA-AWARE MONTH: "This Month" = month of the latest date in the SHEET (not the device clock) ===== */
-function getDataMonthRange() {
-    let latest = null;
-    rawDataCache.forEach(r => { if (r.date && (!latest || r.date > latest)) latest = r.date; });
-    if (!latest) return null;
-    const p = latest.split("-");
-    const y = Number(p[0]), m = Number(p[1]);
-    const lastDay = new Date(y, m, 0).getDate();
-    return { start: `${y}-${String(m).padStart(2, "0")}-01`, end: `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}` };
-}
-/* Device-clock fallback (only used when the sheet has no dates at all) */
-function getDeviceMonthRange() {
-    const now = new Date();
-    return { start: toISO(new Date(now.getFullYear(), now.getMonth(), 1)), end: toISO(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
-}
 
 function processAndRender() {
     if (rawDataCache.length === 0) return;
@@ -335,22 +319,6 @@ function processAndRender() {
     currentClusterData = clusterData;
     currentRecoveryData = recoveryData;
     currentAllMainRaw = rawDataCache.filter(isMainFlow);   /* full month, ignores date filter */
-
-    /* Re-sync "This Month" ranges to the SHEET's month whenever fresh data arrives */
-    const dm = getDataMonthRange();
-    if (dm) {
-        if (dailyDateFilter.mode === "month") {
-            dailyDateFilter.startDate = dm.start; dailyDateFilter.endDate = dm.end;
-            document.getElementById("dailyFrom").value = dm.start;
-            document.getElementById("dailyTo").value = dm.end;
-        }
-        if (dateFilter.preset === "thisMonth") {
-            dateFilter.startDate = dm.start; dateFilter.endDate = dm.end;
-            document.getElementById("startDate").value = dm.start;
-            document.getElementById("endDate").value = dm.end;
-            updateDateRangeBadge();
-        }
-    }
 
     populateFilters(allData, deferredData);
     applyFilters(allData, deferredData, clusterData, recoveryData);
@@ -384,12 +352,12 @@ function buildClusterData(rows) {
     return clusterTotals;
 }
 
-/* ================= DEFERMENTS ENGINE (columns V & X) ================= */
+/* ================= DEFERMENTS ENGINE (columns V & X) — ACCOUNTS, not items ================= */
 function mkDeferEntry() { return { target:0, achieved:0, d1Count:0, d1Value:0, d2Count:0, d2Value:0 }; }
 
 function buildDefermentStats(rows) {
     const s = {
-        totalTarget: 0, totalAchieved: 0, itemCount: rows.length,
+        totalTarget: 0, totalAchieved: 0, accountCount: rows.length,
         d1Count: 0, d1Value: 0, d2Count: 0, d2Value: 0,
         byTeam: new Map(), byBranch: new Map(),
         timeline1: new Map(), timeline2: new Map(), top: []
@@ -432,9 +400,9 @@ function renderDefermentOverview(stats) {
     const rate2 = stats.totalTarget > 0 ? (stats.d2Value / stats.totalTarget * 100) : 0;
     const pct = stats.totalTarget > 0 ? (stats.totalAchieved / stats.totalTarget * 100) : 0;
     document.getElementById("deferOverviewGrid").innerHTML = `
-        <div class="defer-box"><div class="stat-label">Portfolio Target</div><div class="defer-value">${formatNumber(stats.totalTarget)}</div><div class="defer-sub">${stats.itemCount} line items monitored</div></div>
-        <div class="defer-box"><div class="stat-label">1st Deferments (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} items • ${rate1.toFixed(1)}% of target</div></div>
-        <div class="defer-box"><div class="stat-label">Re-Deferments (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} items • ${rate2.toFixed(1)}% of target</div></div>
+        <div class="defer-box"><div class="stat-label">Portfolio Target</div><div class="defer-value">${formatNumber(stats.totalTarget)}</div><div class="defer-sub">${stats.accountCount} accounts monitored</div></div>
+        <div class="defer-box"><div class="stat-label">1st Deferments (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} accounts • ${rate1.toFixed(1)}% of target</div></div>
+        <div class="defer-box"><div class="stat-label">Re-Deferments (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} accounts • ${rate2.toFixed(1)}% of target</div></div>
         <div class="defer-box"><div class="stat-label">Still Uncollected</div><div class="defer-value">${formatNumber(Math.max(0, stats.totalTarget - stats.totalAchieved))}</div><div class="defer-sub">${pct.toFixed(1)}% achieved overall</div></div>`;
 }
 
@@ -448,11 +416,11 @@ function renderDefermentByDimension(map, tbodyId) {
         const r1 = e.target > 0 ? (e.d1Value / e.target * 100) : 0;
         const r2 = e.target > 0 ? (e.d2Value / e.target * 100) : 0;
         const risk = e.d2Count > 0 ? "high" : (r1 >= 30 ? "medium" : "low");
-        h += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(e.target)}</td><td>${formatNumber(e.achieved)}</td><td class="deficit-cell">${formatNumber(e.d1Value)} <span class="mini">(${e.d1Count})</span></td><td>${r1.toFixed(1)}%</td><td class="deficit-cell">${formatNumber(e.d2Value)} <span class="mini">(${e.d2Count})</span></td><td>${r2.toFixed(1)}%</td><td>${riskChip(risk)}</td></tr>`;
+        h += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(e.target)}</td><td>${formatNumber(e.achieved)}</td><td class="deficit-cell">${formatNumber(e.d1Value)} <span class="mini">(${e.d1Count} acc)</span></td><td>${r1.toFixed(1)}%</td><td class="deficit-cell">${formatNumber(e.d2Value)} <span class="mini">(${e.d2Count} acc)</span></td><td>${r2.toFixed(1)}%</td><td>${riskChip(risk)}</td></tr>`;
     });
     const tr1 = T.target > 0 ? (T.d1Value / T.target * 100) : 0;
     const tr2 = T.target > 0 ? (T.d2Value / T.target * 100) : 0;
-    h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td>${formatNumber(T.d1Value)} <span class="mini">(${T.d1Count})</span></td><td>${tr1.toFixed(1)}%</td><td>${formatNumber(T.d2Value)} <span class="mini">(${T.d2Count})</span></td><td>${tr2.toFixed(1)}%</td><td>—</td></tr>`;
+    h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td>${formatNumber(T.d1Value)} <span class="mini">(${T.d1Count} acc)</span></td><td>${tr1.toFixed(1)}%</td><td>${formatNumber(T.d2Value)} <span class="mini">(${T.d2Count} acc)</span></td><td>${tr2.toFixed(1)}%</td><td>—</td></tr>`;
     document.getElementById(tbodyId).innerHTML = h;
 }
 
@@ -484,10 +452,15 @@ function renderTopDeferred(rows) {
     tbody.innerHTML = h;
 }
 
-/* ================= DAILY SUMMARY LOCAL DATE FILTER ================= */
+/* ================= DAILY SUMMARY LOCAL DATE FILTER (calendar month — original logic) ================= */
+function getMonthRange() {
+    const now = new Date();
+    return { start: toISO(new Date(now.getFullYear(), now.getMonth(), 1)), end: toISO(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
+}
+
 function setDailyRange(mode) {
     if (mode === "month") {
-        const r = getDataMonthRange() || getDeviceMonthRange();
+        const r = getMonthRange();
         dailyDateFilter = { mode: "month", startDate: r.start, endDate: r.end };
         document.getElementById("dailyFrom").value = r.start;
         document.getElementById("dailyTo").value = r.end;
@@ -509,13 +482,7 @@ function renderDailySummaryOnly() { renderDailySummary(currentDailySourceRows); 
 /* ================= CORE ================= */
 function getPresetRange(preset) {
     const now = new Date(); const y = now.getFullYear(), m = now.getMonth(), d = now.getDate(); const dayOfWeek = now.getDay(); let start, end;
-    switch (preset) {
-        case "today": start = new Date(y, m, d); end = new Date(y, m, d); break;
-        case "thisWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; }
-        case "thisMonth": { const dm = getDataMonthRange(); if (dm) { start = new Date(dm.start + "T00:00:00"); end = new Date(dm.end + "T00:00:00"); } else { start = new Date(y, m, 1); end = new Date(y, m + 1, 0); } break; }
-        case "last7": start = new Date(y, m, d - 6); end = new Date(y, m, d); break;
-        default: start = new Date(y, m, d); end = new Date(y, m, d);
-    }
+    switch (preset) { case "today": start = new Date(y, m, d); end = new Date(y, m, d); break; case "thisWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; } case "thisMonth": start = new Date(y, m, 1); end = new Date(y, m + 1, 0); break; case "last7": start = new Date(y, m, d - 6); end = new Date(y, m, d); break; default: start = new Date(y, m, d); end = new Date(y, m, d); }
     return { start, end };
 }
 
@@ -642,7 +609,7 @@ function applyFilters(allData, deferredData, clusterData, recoveryData) {
 function switchView(view) {
     currentView = view;
     ["summary", "branches", "deferred", "recovery", "clusters", "deferments"].forEach(v => { document.getElementById(v + "Button").classList.toggle("active", v === view); document.getElementById(v + "Container").style.display = v === view ? "block" : "none"; });
-    const desc = { summary: "Summary and portfolio breakdown", branches: "Detailed daily collection performance (25 Branches)", deferred: "Marshal Portfolio — Total target and collection", recovery: "Recovery Accounts — Branch, Team & Cluster", clusters: "Cluster cards — Aggregated targets and achieved", deferments: "Deferment analysis — 1st & 2nd deferments by team, branch and date (full portfolio)" };
+    const desc = { summary: "Summary and portfolio breakdown", branches: "Detailed daily collection performance (25 Branches)", deferred: "Marshal Portfolio — Total target and collection", recovery: "Recovery Accounts — Branch, Team & Cluster", clusters: "Cluster cards — Aggregated targets and achieved", deferments: "Deferment analysis — 1st & 2nd deferred accounts by team, branch and date (full portfolio)" };
     document.getElementById("viewDescription").innerText = desc[view]; processAndRender();
 }
 
