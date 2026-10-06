@@ -96,6 +96,20 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .unscheduled-hint { padding: 12px 20px 16px; font-size: 12px; color: #94a3b8; font-style: italic; border-top: 1px dashed #2a3a55; }
 .unscheduled-hint strong { color: #f59e0b; font-style: normal; }
 
+/* ============ CLUSTER PERFORMANCE — grouped date headers ============ */
+#clusterCard .report-table thead tr.date-row th { text-align: center; background: rgba(37, 99, 235, .14); border-left: 1px solid #334155; border-bottom: 1px solid #2563eb; color: #bfdbfe; letter-spacing: .8px; padding: 10px 8px; }
+#clusterCard .report-table thead tr.date-row th[rowspan] { background: transparent; border-left: none; border-bottom: 1px solid #2a3a55; color: #94a3b8; vertical-align: middle; }
+#clusterCard .report-table thead tr.sub-row th { text-align: center; font-size: 10px; padding: 7px 8px; color: #64748b; background: rgba(15, 23, 42, .6); border-bottom: 1px solid #2a3a55; }
+#clusterCard .report-table thead tr.sub-row th.galt { background: rgba(15, 23, 42, .85); }
+#clusterCard .report-table th.gs, #clusterCard .report-table td.gs { border-left: 1px solid #2a3a55; }
+#clusterCard .report-table td.galt { background: rgba(15, 23, 42, .45); }
+#clusterCard .report-table tbody tr:nth-child(even) td.galt { background: rgba(10, 16, 30, .55); }
+#clusterCard .report-table td { padding: 9px 8px; font-size: 12px; }
+#clusterCard .report-table th:first-child, #clusterCard .report-table td:first-child { position: sticky; left: 0; z-index: 2; background: #172033; min-width: 130px; box-shadow: 2px 0 6px rgba(0, 0, 0, .35); }
+#clusterCard .report-table tbody tr:nth-child(even) td:first-child { background: #141d31; }
+#clusterCard .report-table tbody tr:hover td:first-child { background: #1e2a44; }
+#clusterCard .report-table tbody tr.total-row td:first-child { background: #1c2a47; z-index: 3; }
+
 .clusters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; margin-top: 10px; }
 .cluster-card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; overflow: hidden; display: flex; flex-direction: column; }
 .cluster-card-header { background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%); color: #93c5fd; padding: 14px 18px; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-bottom: 2px solid #2563eb; }
@@ -221,7 +235,7 @@ let rawDataCache = [];
 let currentView = "branches", refreshInProgress = false;
 let dateFilter = { startDate: null, endDate: null, preset: "today" };
 let unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
-let currentMainRawData = [];
+let currentAllMainRaw = [];   /* full main-flow rows, NOT affected by the date filter (for Daily Collections Summary) */
 
 const isMainFlow = (r) => {
     if (r.category === "RECOVERY") return false;
@@ -253,12 +267,11 @@ function processAndRender() {
     const deferredData = aggregateMarshal(mainData);
     const clusterData = buildClusterData(mainData);
 
-    // Keep the already-processed datasets in memory.
     currentAllData = allData;
     currentDeferredData = deferredData;
     currentClusterData = clusterData;
     currentRecoveryData = recoveryData;
-    currentMainRawData = mainData;
+    currentAllMainRaw = rawDataCache.filter(isMainFlow);   /* full month, ignores date filter */
 
     populateFilters(allData, deferredData);
     applyFilters(allData, deferredData, clusterData, recoveryData);
@@ -373,7 +386,9 @@ function applyFilters(allData, deferredData, clusterData, recoveryData) {
 
     const fAll = allData.filter(r => filter(r, "collectionTeam"));
     const fDef = deferredData.filter(r => filter(r, "dri"));
-    const fMainRaw = (currentMainRawData || []).filter(r =>
+
+    /* Daily Collections Summary source: FULL month — only Branch/Team/Search apply, NEVER the date filter */
+    const fDailyRaw = (currentAllMainRaw || []).filter(r =>
         (branch === "ALL" || r.branch === branch) &&
         (team === "ALL" || r.dri === team) &&
         (!search || String(r.dri || "").toLowerCase().includes(search))
@@ -390,7 +405,7 @@ function applyFilters(allData, deferredData, clusterData, recoveryData) {
     }
 
     if (currentView === "summary") {
-        renderSummaryView(fAll, fMainRaw, clusterData);
+        renderSummaryView(fAll, fDailyRaw, clusterData);
     } else if (currentView === "deferred") {
         renderDeferred(fDef);
     } else if (currentView === "clusters") {
@@ -440,7 +455,7 @@ function renderDailySummary(rawRows) {
 
     const dailyMap = new Map();
     (rawRows || []).forEach(r => {
-        if (!r.date) return; /* omit unscheduled (no date) */
+        if (!r.date) return; /* unscheduled (no date) omitted — shown in the hint below instead */
         if (!dailyMap.has(r.date)) dailyMap.set(r.date, { target: 0, achieved: 0 });
         const m = dailyMap.get(r.date);
         m.target += Number(r.target) || 0;
@@ -454,7 +469,7 @@ function renderDailySummary(rawRows) {
 
     let h = "";
     if (!days.length) {
-        h = `<tr><td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">No scheduled collections in the selected period.</td></tr>`;
+        h = `<tr><td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">No scheduled collections found.</td></tr>`;
     } else {
         const T = { target: 0, achieved: 0 };
         days.forEach(([d, v]) => {
@@ -521,13 +536,49 @@ function renderClusterCards(clusterData) {
 
 function renderClusterTable(clusterData) {
     const card = document.getElementById("clusterCard"), thead = document.getElementById("clusterHead"), tbody = document.getElementById("clusterBody");
-    if (!Object.keys(clusterData).length) { card.style.display="none"; return; } card.style.display="block";
-    const allDates = new Set(); Object.values(clusterData).forEach(c => Object.keys(c.days).forEach(d => allDates.add(d))); const sortedDates = Array.from(allDates).sort();
-    let headHtml = "<tr><th>CLUSTER</th><th>TOTAL TARGET</th><th>TOTAL ACHIEVED</th><th>%</th>"; sortedDates.forEach(d => { headHtml += `<th>${formatDisplayDate(d)} TGT</th><th>${formatDisplayDate(d)} ACH</th>`; }); headHtml += "</tr>"; thead.innerHTML = headHtml;
-    let bodyHtml = ""; const gT = {target:0, achieved:0, days:{}};
-    Object.keys(clusterData).sort().forEach(cl => { const c = clusterData[cl]; const p = c.totalTarget>0?(c.totalAchieved/c.totalTarget*100):0; bodyHtml += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`; sortedDates.forEach(d => { const dayData = c.days[d] || {target:0, achieved:0}; bodyHtml += `<td>${formatNumber(dayData.target)}</td><td>${formatNumber(dayData.achieved)}</td>`; }); bodyHtml += `</tr>`; gT.target+=c.totalTarget; gT.achieved+=c.totalAchieved; });
-    const gP = gT.target>0?(gT.achieved/gT.target*100):0; let totalHtml = `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(gT.target)}</td><td>${formatNumber(gT.achieved)}</td><td>${gP.toFixed(1)}%</td>`;
-    sortedDates.forEach(d => { let t=0,a=0; Object.values(clusterData).forEach(c => { if(c.days[d]){t+=c.days[d].target; a+=c.days[d].achieved;} }); totalHtml += `<td>${formatNumber(t)}</td><td>${formatNumber(a)}</td>`; }); totalHtml += "</tr>"; tbody.innerHTML = bodyHtml + totalHtml;
+    if (!Object.keys(clusterData).length) { card.style.display = "none"; return; }
+    card.style.display = "block";
+
+    const allDates = new Set();
+    Object.values(clusterData).forEach(c => Object.keys(c.days).forEach(d => allDates.add(d)));
+    const sortedDates = Array.from(allDates).sort();
+
+    /* Row 1: merged date headers spanning 2 columns | Row 2: TARGET / ACHIEVED sub-headers */
+    let head1 = `<tr class="date-row"><th rowspan="2">CLUSTER</th><th rowspan="2">TOTAL TARGET</th><th rowspan="2">TOTAL ACHIEVED</th><th rowspan="2">%</th>`;
+    let head2 = `<tr class="sub-row">`;
+    sortedDates.forEach((d, gi) => {
+        const cls = gi % 2 === 1 ? ` class="gs galt"` : ` class="gs"`;
+        head1 += `<th${cls} colspan="2">${formatDisplayDate(d)}</th>`;
+        head2 += `<th${cls}>TARGET</th><th${cls}>ACHIEVED</th>`;
+    });
+    head1 += `</tr>`; head2 += `</tr>`;
+    thead.innerHTML = head1 + head2;
+
+    let bodyHtml = "";
+    const gT = { target: 0, achieved: 0 };
+    Object.keys(clusterData).sort().forEach(cl => {
+        const c = clusterData[cl];
+        const p = c.totalTarget > 0 ? (c.totalAchieved / c.totalTarget * 100) : 0;
+        bodyHtml += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`;
+        sortedDates.forEach((d, gi) => {
+            const dayData = c.days[d] || { target: 0, achieved: 0 };
+            const cls = gi % 2 === 1 ? ` class="gs galt"` : ` class="gs"`;
+            bodyHtml += `<td${cls}>${formatNumber(dayData.target)}</td><td${cls}>${formatNumber(dayData.achieved)}</td>`;
+        });
+        bodyHtml += `</tr>`;
+        gT.target += c.totalTarget; gT.achieved += c.totalAchieved;
+    });
+
+    const gP = gT.target > 0 ? (gT.achieved / gT.target * 100) : 0;
+    let totalHtml = `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(gT.target)}</td><td>${formatNumber(gT.achieved)}</td><td>${gP.toFixed(1)}%</td>`;
+    sortedDates.forEach((d, gi) => {
+        let t = 0, a = 0;
+        Object.values(clusterData).forEach(c => { if (c.days[d]) { t += c.days[d].target; a += c.days[d].achieved; } });
+        const cls = gi % 2 === 1 ? ` class="gs galt"` : ` class="gs"`;
+        totalHtml += `<td${cls}>${formatNumber(t)}</td><td${cls}>${formatNumber(a)}</td>`;
+    });
+    totalHtml += `</tr>`;
+    tbody.innerHTML = bodyHtml + totalHtml;
 }
 
 document.addEventListener("DOMContentLoaded", () => { setDatePreset("today"); loadData(); setInterval(() => loadData(), 300000); });
