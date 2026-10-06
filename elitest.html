@@ -96,10 +96,12 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .unscheduled-hint { padding: 12px 20px 16px; font-size: 12px; color: #94a3b8; font-style: italic; border-top: 1px dashed #2a3a55; }
 .unscheduled-hint strong { color: #f59e0b; font-style: normal; }
 
-/* ---- Daily Collections Summary local controls ---- */
+/* ---- Daily Collections Summary local controls (independent of .date-preset) ---- */
 .daily-controls { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.daily-controls .date-preset { padding: 5px 12px; font-size: 11px; }
-.daily-controls input[type="date"] { padding: 5px 8px; font-size: 12px; min-width: 135px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; flex: initial; }
+.dc-btn { padding: 5px 12px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: .3px; white-space: nowrap; box-shadow: none; }
+.dc-btn:hover { border-color: #3b82f6; color: #e2e8f0; background: #1e293b; }
+.dc-btn.active { border-color: #2563eb; background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%); color: white; box-shadow: 0 2px 8px rgba(37, 99, 235, .35); }
+.daily-controls input[type="date"] { padding: 5px 8px; font-size: 12px; min-width: 135px; max-width: 150px; flex: initial; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; }
 .daily-controls input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
 .dc-sep { color: #64748b; font-size: 11px; }
 
@@ -229,7 +231,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <div class="report-card-header" style="flex-wrap:wrap; row-gap:8px;">
             <span>DAILY COLLECTIONS SUMMARY</span>
             <span class="daily-controls">
-                <button id="dailyMonthBtn" class="date-preset active" type="button" onclick="setDailyRange('month')">This Month</button>
+                <button id="dailyMonthBtn" class="dc-btn active" type="button" onclick="setDailyRange('month')">This Month</button>
                 <input type="date" id="dailyFrom" title="Daily summary — from" onchange="onDailyCustom()">
                 <span class="dc-sep">to</span>
                 <input type="date" id="dailyTo" title="Daily summary — to" onchange="onDailyCustom()">
@@ -289,6 +291,22 @@ const isMainFlow = (r) => {
     return true;
 };
 
+/* ===== DATA-AWARE MONTH: "This Month" = month of the latest date in the SHEET (not the device clock) ===== */
+function getDataMonthRange() {
+    let latest = null;
+    rawDataCache.forEach(r => { if (r.date && (!latest || r.date > latest)) latest = r.date; });
+    if (!latest) return null;
+    const p = latest.split("-");
+    const y = Number(p[0]), m = Number(p[1]);
+    const lastDay = new Date(y, m, 0).getDate();
+    return { start: `${y}-${String(m).padStart(2, "0")}-01`, end: `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}` };
+}
+/* Device-clock fallback (only used when the sheet has no dates at all) */
+function getDeviceMonthRange() {
+    const now = new Date();
+    return { start: toISO(new Date(now.getFullYear(), now.getMonth(), 1)), end: toISO(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
+}
+
 function processAndRender() {
     if (rawDataCache.length === 0) return;
     
@@ -317,6 +335,22 @@ function processAndRender() {
     currentClusterData = clusterData;
     currentRecoveryData = recoveryData;
     currentAllMainRaw = rawDataCache.filter(isMainFlow);   /* full month, ignores date filter */
+
+    /* Re-sync "This Month" ranges to the SHEET's month whenever fresh data arrives */
+    const dm = getDataMonthRange();
+    if (dm) {
+        if (dailyDateFilter.mode === "month") {
+            dailyDateFilter.startDate = dm.start; dailyDateFilter.endDate = dm.end;
+            document.getElementById("dailyFrom").value = dm.start;
+            document.getElementById("dailyTo").value = dm.end;
+        }
+        if (dateFilter.preset === "thisMonth") {
+            dateFilter.startDate = dm.start; dateFilter.endDate = dm.end;
+            document.getElementById("startDate").value = dm.start;
+            document.getElementById("endDate").value = dm.end;
+            updateDateRangeBadge();
+        }
+    }
 
     populateFilters(allData, deferredData);
     applyFilters(allData, deferredData, clusterData, recoveryData);
@@ -398,9 +432,9 @@ function renderDefermentOverview(stats) {
     const rate2 = stats.totalTarget > 0 ? (stats.d2Value / stats.totalTarget * 100) : 0;
     const pct = stats.totalTarget > 0 ? (stats.totalAchieved / stats.totalTarget * 100) : 0;
     document.getElementById("deferOverviewGrid").innerHTML = `
-        <div class="defer-box"><div class="stat-label">Portfolio Target</div><div class="defer-value">${formatNumber(stats.totalTarget)}</div><div class="defer-sub">${stats.itemCount} line accounts monitored</div></div>
-        <div class="defer-box"><div class="stat-label">1st Deferments (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} accounts • ${rate1.toFixed(1)}% of target</div></div>
-        <div class="defer-box"><div class="stat-label">Re-Deferments (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} accounts • ${rate2.toFixed(1)}% of target</div></div>
+        <div class="defer-box"><div class="stat-label">Portfolio Target</div><div class="defer-value">${formatNumber(stats.totalTarget)}</div><div class="defer-sub">${stats.itemCount} line items monitored</div></div>
+        <div class="defer-box"><div class="stat-label">1st Deferments (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} items • ${rate1.toFixed(1)}% of target</div></div>
+        <div class="defer-box"><div class="stat-label">Re-Deferments (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} items • ${rate2.toFixed(1)}% of target</div></div>
         <div class="defer-box"><div class="stat-label">Still Uncollected</div><div class="defer-value">${formatNumber(Math.max(0, stats.totalTarget - stats.totalAchieved))}</div><div class="defer-sub">${pct.toFixed(1)}% achieved overall</div></div>`;
 }
 
@@ -451,14 +485,9 @@ function renderTopDeferred(rows) {
 }
 
 /* ================= DAILY SUMMARY LOCAL DATE FILTER ================= */
-function getMonthRange() {
-    const now = new Date();
-    return { start: toISO(new Date(now.getFullYear(), now.getMonth(), 1)), end: toISO(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
-}
-
 function setDailyRange(mode) {
     if (mode === "month") {
-        const r = getMonthRange();
+        const r = getDataMonthRange() || getDeviceMonthRange();
         dailyDateFilter = { mode: "month", startDate: r.start, endDate: r.end };
         document.getElementById("dailyFrom").value = r.start;
         document.getElementById("dailyTo").value = r.end;
@@ -480,7 +509,13 @@ function renderDailySummaryOnly() { renderDailySummary(currentDailySourceRows); 
 /* ================= CORE ================= */
 function getPresetRange(preset) {
     const now = new Date(); const y = now.getFullYear(), m = now.getMonth(), d = now.getDate(); const dayOfWeek = now.getDay(); let start, end;
-    switch (preset) { case "today": start = new Date(y, m, d); end = new Date(y, m, d); break; case "thisWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; } case "thisMonth": start = new Date(y, m, 1); end = new Date(y, m + 1, 0); break; case "last7": start = new Date(y, m, d - 6); end = new Date(y, m, d); break; default: start = new Date(y, m, d); end = new Date(y, m, d); }
+    switch (preset) {
+        case "today": start = new Date(y, m, d); end = new Date(y, m, d); break;
+        case "thisWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; }
+        case "thisMonth": { const dm = getDataMonthRange(); if (dm) { start = new Date(dm.start + "T00:00:00"); end = new Date(dm.end + "T00:00:00"); } else { start = new Date(y, m, 1); end = new Date(y, m + 1, 0); } break; }
+        case "last7": start = new Date(y, m, d - 6); end = new Date(y, m, d); break;
+        default: start = new Date(y, m, d); end = new Date(y, m, d);
+    }
     return { start, end };
 }
 
