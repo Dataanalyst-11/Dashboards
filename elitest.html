@@ -127,7 +127,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
     <div class="last-update">
         Last Updated<br>
         <span id="lastUpdate">Loading...</span>
-        <div id="refreshStatus" class="refresh-status">Local processing enabled</div>
+        <div id="refreshStatus" class="refresh-status">Local caching active</div>
     </div>
 </div>
 
@@ -190,20 +190,30 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         <div class="report-card" id="marshalSummaryCard" style="display:none"><div class="report-card-header">PORTFOLIO BY MARSHAL</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>MARSHAL</th><th>TOTAL TARGET</th><th>COLLECTED</th><th>DEFICIT</th><th>%</th></tr></thead><tbody id="marshalSummaryBody"></tbody></table></div></div>
     </div>
 </div>
-<div id="clustersContainer" style="display:none"><div class="clusters-grid" id="clustersGrid"></div></div>
+<div id="clustersContainer" style="display:none">
+    <div class="report-card" id="unscheduledCard" style="display:none; margin-bottom:20px;">
+        <div class="report-card-header" style="color:#f59e0b">⚠️ UNSCHEDULED COLLECTIONS (No Date Assigned)</div>
+        <div class="report-table-wrapper">
+            <table class="report-table">
+                <thead><tr><th>TOTAL TARGET</th><th>TOTAL ACHIEVED</th><th>DEFICIT</th></tr></thead>
+                <tbody id="unscheduledBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="clusters-grid" id="clustersGrid"></div>
+</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// IMPORTANT: ENSURE THIS URL IS YOUR LATEST DEPLOYED WEB APP URL
 const API_URL = "https://script.google.com/macros/s/AKfycbyaDsEVJr_GRnW6DULuqMNlzoZAIoPVM3FBOEBPO9MGjpP38Hp-Nv1bMv51J9HgtGee/exec";
 
 let rawDataCache = []; 
 let currentView = "branches", refreshInProgress = false;
 let dateFilter = { startDate: null, endDate: null, preset: "today" };
+let unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
 
-// --- DATA SEPARATION LOGIC ---
 const isMainFlow = (r) => {
     if (r.category === "RECOVERY") return false;
     if (r.dri === "ANDERSON WATHOME" && r.branch === "LEGAL & AUCTIONEERS") return false;
@@ -213,15 +223,22 @@ const isMainFlow = (r) => {
 
 function processAndRender() {
     if (rawDataCache.length === 0) return;
-    const filtered = rawDataCache.filter(r => {
-        if (!r.date) return true; 
+    
+    const scheduledFiltered = rawDataCache.filter(r => {
+        if (!r.date) return false;
         if (dateFilter.startDate && r.date < dateFilter.startDate) return false;
         if (dateFilter.endDate && r.date > dateFilter.endDate) return false;
         return true;
     });
-    
-    const mainData = filtered.filter(isMainFlow);
-    const recoveryData = filtered.filter(r => r.category === "RECOVERY");
+
+    const unscheduledFiltered = rawDataCache.filter(r => !r.date);
+
+    const mainData = scheduledFiltered.filter(isMainFlow);
+    const recoveryData = scheduledFiltered.filter(r => r.category === "RECOVERY");
+
+    unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
+    unscheduledFiltered.filter(isMainFlow).forEach(r => { unscheduledAggregated.target += r.target; unscheduledAggregated.achieved += r.achieved; });
+    unscheduledAggregated.deficit = Math.max(0, unscheduledAggregated.target - unscheduledAggregated.achieved);
 
     const allData = aggregateMain(mainData);
     const deferredData = aggregateMarshal(mainData);
@@ -292,9 +309,21 @@ async function loadData(manualRefresh = false) {
         if (!response.ok) { const errText = await response.text(); throw new Error(`Server error ${response.status}: ${errText.substring(0, 150)}`); }
         const result = await response.json();
         if (result.status !== "success") throw new Error(result.message || "Unknown API Error");
-        rawDataCache = result.data || []; document.getElementById("lastUpdate").innerText = new Date().toLocaleString("en-KE");
+        rawDataCache = result.data || []; 
+        localStorage.setItem('dashboardCache', JSON.stringify(rawDataCache));
+        document.getElementById("lastUpdate").innerText = new Date().toLocaleString("en-KE");
         if (manualRefresh) showToast("Sheet data refreshed"); processAndRender();
-    } catch (err) { document.getElementById("error").style.display = "block"; document.getElementById("error").innerText = "Data fetch failed: " + err.message; } 
+    } catch (err) { 
+        const cachedData = localStorage.getItem('dashboardCache');
+        if (cachedData) {
+            rawDataCache = JSON.parse(cachedData);
+            showToast("API failed. Loaded from local cache.", "error");
+            processAndRender();
+        } else {
+            document.getElementById("error").style.display = "block"; 
+            document.getElementById("error").innerText = "Data fetch failed & no cache available: " + err.message;
+        }
+    } 
     finally { btn.disabled = false; btn.classList.remove("spinning"); document.getElementById("loading").style.display = "none"; refreshInProgress = false; }
 }
 
@@ -316,7 +345,7 @@ function applyFilters(allData, deferredData, clusterData, recoveryData) {
     
     if (currentView === "deferred") updateKPIs(fDef, "week4Collection"); else if (currentView === "clusters") updateKPIsClusters(clusterData); else if (currentView === "recovery") updateKPIsRecovery(recoveryData); else updateKPIs(fAll, "achieved");
     
-    if (currentView === "summary") renderSummaryView(fAll, fDef, clusterData); else if (currentView === "deferred") renderDeferred(fDef); else if (currentView === "clusters") renderClusterCards(clusterData); else if (currentView === "recovery") renderRecovery(recoveryData); else renderBranches(fAll);
+    if (currentView === "summary") renderSummaryView(fAll, fDef, clusterData); else if (currentView === "deferred") renderDeferred(fDef); else if (currentView === "clusters") renderClusterView(clusterData); else if (currentView === "recovery") renderRecovery(recoveryData); else renderBranches(fAll);
 }
 
 function switchView(view) {
@@ -361,22 +390,35 @@ function renderDeferred(data) {
 }
 
 function renderRecovery(recoveryData) {
-    // 1. Branchwise
     const branchMap = new Map(); recoveryData.forEach(r => { if(!branchMap.has(r.branch)) branchMap.set(r.branch, {target:0, achieved:0}); const m = branchMap.get(r.branch); m.target+=r.target; m.achieved+=r.achieved; });
     let h1=""; Array.from(branchMap.entries()).sort((a,b)=>b[1].target-a[1].target).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h1+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
     document.getElementById("recoveryBranchBody").innerHTML = h1;
 
-    // 2. Team Performance
     const teamMap = new Map(); recoveryData.forEach(r => { if(!teamMap.has(r.dri)) teamMap.set(r.dri, {target:0, achieved:0}); const m = teamMap.get(r.dri); m.target+=r.target; m.achieved+=r.achieved; });
     let h2=""; Array.from(teamMap.entries()).sort((a,b)=>b[1].target-a[1].target).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
     document.getElementById("recoveryTeamBody").innerHTML = h2;
 
-    // 3. Cluster Performance
     const clusterMap = buildClusterData(recoveryData); const c = document.getElementById("recoveryClusterGrid"); 
     if (!Object.keys(clusterMap).length) { c.innerHTML = `<div class="empty-state">No cluster data.</div>`; return; }
     let h3 = ""; Object.keys(clusterMap).sort().forEach(cl => { const cd = clusterMap[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
     h3+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
     c.innerHTML = h3;
+}
+
+function renderClusterView(clusterData) {
+    const uCard = document.getElementById("unscheduledCard"); const uBody = document.getElementById("unscheduledBody");
+    if (unscheduledAggregated.target > 0) {
+        uCard.style.display = "block";
+        uBody.innerHTML = `<tr><td>${formatNumber(unscheduledAggregated.target)}</td><td>${formatNumber(unscheduledAggregated.achieved)}</td><td class="deficit-cell">${formatNumber(unscheduledAggregated.deficit)}</td></tr>`;
+    } else { uCard.style.display = "none"; }
+    renderClusterCards(clusterData);
+}
+
+function renderClusterCards(clusterData) {
+    const c = document.getElementById("clustersGrid"); if (!Object.keys(clusterData).length) { c.innerHTML = `<div class="empty-state">No scheduled cluster data.</div>`; return; }
+    let h = ""; Object.keys(clusterData).sort().forEach(cl => { const cd = clusterData[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
+    h+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
+    c.innerHTML = h;
 }
 
 function renderDeferredSummary(data) {
@@ -398,13 +440,6 @@ function renderClusterTable(clusterData) {
     Object.keys(clusterData).sort().forEach(cl => { const c = clusterData[cl]; const p = c.totalTarget>0?(c.totalAchieved/c.totalTarget*100):0; bodyHtml += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`; sortedDates.forEach(d => { const dayData = c.days[d] || {target:0, achieved:0}; bodyHtml += `<td>${formatNumber(dayData.target)}</td><td>${formatNumber(dayData.achieved)}</td>`; }); bodyHtml += `</tr>`; gT.target+=c.totalTarget; gT.achieved+=c.totalAchieved; });
     const gP = gT.target>0?(gT.achieved/gT.target*100):0; let totalHtml = `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(gT.target)}</td><td>${formatNumber(gT.achieved)}</td><td>${gP.toFixed(1)}%</td>`;
     sortedDates.forEach(d => { let t=0,a=0; Object.values(clusterData).forEach(c => { if(c.days[d]){t+=c.days[d].target; a+=c.days[d].achieved;} }); totalHtml += `<td>${formatNumber(t)}</td><td>${formatNumber(a)}</td>`; }); totalHtml += "</tr>"; tbody.innerHTML = bodyHtml + totalHtml;
-}
-
-function renderClusterCards(clusterData) {
-    const c = document.getElementById("clustersGrid"); if (!Object.keys(clusterData).length) { c.innerHTML = `<div class="empty-state">No cluster data.</div>`; return; }
-    let h = ""; Object.keys(clusterData).sort().forEach(cl => { const cd = clusterData[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
-    h+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
-    c.innerHTML = h;
 }
 
 document.addEventListener("DOMContentLoaded", () => { setDatePreset("today"); loadData(); setInterval(() => loadData(), 300000); });
