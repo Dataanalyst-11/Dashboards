@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Collection Team Dashboard</title>
-
 <style>
-
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; width: 100%; max-width: 100%; overflow-x: hidden; }
 body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; background: linear-gradient(180deg, #0a1228 0%, #0f172a 50%, #131c31 100%); color: #e2e8f0; min-height: 100vh; }
@@ -17,6 +15,7 @@ body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; background: linear
 .header-subtitle { font-size: 13px; margin-top: 5px; opacity: .8; font-weight: 500; position: relative; color: #93c5fd; }
 .last-update { font-size: 13px; text-align: right; position: relative; color: #cbd5e1; }
 .last-update #lastUpdate { font-weight: 600; color: #60a5fa; }
+.date-range-badge { display: inline-block; background: linear-gradient(135deg, #1e3a5f 0%, #1e4480 100%); color: #93c5fd; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: .5px; margin-top: 6px; border: 1px solid #2563eb; }
 
 .dashboard { width: 100%; max-width: 100%; padding: 22px 30px; }
 
@@ -28,7 +27,7 @@ body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; background: linear
 .card-label { color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
 .card-value { font-size: 28px; font-weight: 800; color: #f1f5f9; margin-top: 8px; font-feature-settings: "tnum"; }
 
-.controls { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); padding: 16px; border-radius: 10px; margin-bottom: 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; box-shadow: 0 4px 12px rgba(0, 0, 0, .35); border: 1px solid #2a3a55; }
+.controls { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); padding: 16px; border-radius: 10px; margin-bottom: 8px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; box-shadow: 0 4px 12px rgba(0, 0, 0, .35); border: 1px solid #2a3a55; }
 select, input { border: 1px solid #334155; border-radius: 7px; padding: 9px 12px; font-size: 14px; background: #0f172a; color: #e2e8f0; max-width: 100%; transition: border-color .2s ease, box-shadow .2s ease; }
 select:focus, input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .2); }
 select { min-width: 180px; cursor: pointer; } input { min-width: 230px; flex: 1; } input::placeholder { color: #64748b; }
@@ -40,50 +39,37 @@ button:hover { opacity: .92; transform: translateY(-1px); } button:active { tran
 #refreshButton.spinning { background: linear-gradient(135deg, #475569 0%, #64748b 100%); }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-.view-switch { display: inline-flex; align-items: center; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 3px; margin-left: auto; }
-.view-switch button { background: transparent; color: #94a3b8; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 12px; letter-spacing: .5px; transition: all .2s ease; box-shadow: none; }
+.date-filter-bar { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); padding: 12px 16px; border-radius: 10px; margin-bottom: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; box-shadow: 0 4px 12px rgba(0, 0, 0, .35); border: 1px solid #2a3a55; }
+.date-filter-bar .date-label { color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+.date-filter-bar input[type="date"] { min-width: 150px; flex: 0 1 170px; padding: 8px 10px; font-size: 13px; }
+.date-filter-bar input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+.date-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.date-preset { padding: 7px 14px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #94a3b8; cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .3px; transition: all .2s ease; white-space: nowrap; }
+.date-preset:hover { border-color: #3b82f6; color: #e2e8f0; background: #1e293b; }
+.date-preset.active { border-color: #2563eb; background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%); color: white; box-shadow: 0 2px 8px rgba(37, 99, 235, .35); }
+.date-separator { width: 1px; height: 28px; background: #334155; flex-shrink: 0; }
+
+.view-switch { display: inline-flex; align-items: center; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 3px; margin-left: auto; flex-wrap: wrap; }
+.view-switch button { background: transparent; color: #94a3b8; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; letter-spacing: .5px; transition: all .2s ease; box-shadow: none; }
 .view-switch button:hover { opacity: 1; background: #1e293b; color: #e2e8f0; transform: none; }
 .view-switch button.active { background: linear-gradient(135deg, #1e4480 0%, #2563eb 100%); color: white; box-shadow: 0 2px 8px rgba(37, 99, 235, .35); }
 
 .view-label { width: 100%; margin-top: -8px; margin-bottom: 10px; font-size: 12px; color: #64748b; font-weight: 500; font-style: italic; }
 
-.table-container { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 10px; overflow: hidden; width: 100%; max-width: 100%; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; }
-table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; }
+.table-container { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 10px; overflow: hidden; width: 100%; max-width: 100%; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; margin-bottom: 22px; }
+table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; }
 th { background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%); color: #e2e8f0; padding: 14px 8px; font-size: 11px; font-weight: 700; text-align: center; white-space: normal; word-break: break-word; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid #2563eb; }
-th:nth-child(1), th:nth-child(2) { text-align: left; }
+th:nth-child(1) { text-align: left; }
 td { padding: 12px 8px; border-bottom: 1px solid #1e293b; font-size: 13px; text-align: right; word-break: break-word; color: #cbd5e1; }
-td:nth-child(1), td:nth-child(2) { text-align: left; }
+td:nth-child(1) { text-align: left; }
 tbody tr { transition: background .15s ease; }
 tbody tr:hover { background: rgba(59, 130, 246, .08); }
 tbody tr:nth-child(even) { background: rgba(15, 23, 42, .5); }
 tbody tr:nth-child(even):hover { background: rgba(59, 130, 246, .12); }
 tbody tr td strong { color: #f1f5f9; font-weight: 700; }
-
-/* TOTAL ROW styling for all tables */
 tbody tr.total-row { background: rgba(37, 99, 235, .12) !important; }
 tbody tr.total-row:hover { background: rgba(37, 99, 235, .18) !important; }
 tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid #2563eb; border-bottom: 2px solid #2563eb; }
-
-.ten-col-view th:nth-child(1), .ten-col-view td:nth-child(1) { width: 18%; }
-.ten-col-view th:nth-child(2), .ten-col-view td:nth-child(2), .ten-col-view th:nth-child(3), .ten-col-view td:nth-child(3) { width: 10%; }
-.ten-col-view th:nth-child(4), .ten-col-view td:nth-child(4), .ten-col-view th:nth-child(5), .ten-col-view td:nth-child(5), .ten-col-view th:nth-child(6), .ten-col-view td:nth-child(6), .ten-col-view th:nth-child(7), .ten-col-view td:nth-child(7), .ten-col-view th:nth-child(8), .ten-col-view td:nth-child(8), .ten-col-view th:nth-child(9), .ten-col-view td:nth-child(9) { width: 8%; }
-.ten-col-view th:nth-child(10), .ten-col-view td:nth-child(10) { width: 14%; }
-
-.eleven-col-view th:nth-child(1), .eleven-col-view td:nth-child(1) { width: 15%; }
-.eleven-col-view th:nth-child(2), .eleven-col-view td:nth-child(2) { width: 10%; }
-.eleven-col-view th:nth-child(3), .eleven-col-view td:nth-child(3) { width: 9%; }
-.eleven-col-view th:nth-child(4), .eleven-col-view td:nth-child(4) { width: 10%; }
-.eleven-col-view th:nth-child(5), .eleven-col-view td:nth-child(5), .eleven-col-view th:nth-child(6), .eleven-col-view td:nth-child(6), .eleven-col-view th:nth-child(7), .eleven-col-view td:nth-child(7), .eleven-col-view th:nth-child(8), .eleven-col-view td:nth-child(8), .eleven-col-view th:nth-child(9), .eleven-col-view td:nth-child(9), .eleven-col-view th:nth-child(10), .eleven-col-view td:nth-child(10) { width: 6.5%; }
-.eleven-col-view th:nth-child(11), .eleven-col-view td:nth-child(11) { width: 12%; }
-
-.fourteen-col-view th:nth-child(1), .fourteen-col-view td:nth-child(1) { width: 9%; }
-.fourteen-col-view th:nth-child(2), .fourteen-col-view td:nth-child(2) { width: 7%; }
-.fourteen-col-view th:nth-child(3), .fourteen-col-view td:nth-child(3), .fourteen-col-view th:nth-child(4), .fourteen-col-view td:nth-child(4), .fourteen-col-view th:nth-child(5), .fourteen-col-view td:nth-child(5) { width: 7%; }
-.fourteen-col-view th:nth-child(6), .fourteen-col-view td:nth-child(6), .fourteen-col-view th:nth-child(7), .fourteen-col-view td:nth-child(7), .fourteen-col-view th:nth-child(8), .fourteen-col-view td:nth-child(8), .fourteen-col-view th:nth-child(9), .fourteen-col-view td:nth-child(9), .fourteen-col-view th:nth-child(10), .fourteen-col-view td:nth-child(10) { width: 5%; }
-.fourteen-col-view th:nth-child(11), .fourteen-col-view td:nth-child(11) { width: 9%; }
-.fourteen-col-view th:nth-child(12), .fourteen-col-view td:nth-child(12) { width: 9%; }
-.fourteen-col-view th:nth-child(13), .fourteen-col-view td:nth-child(13) { width: 10%; }
-.fourteen-col-view th:nth-child(14), .fourteen-col-view td:nth-child(14) { width: 7%; text-align: left; }
 
 .percentage-cell { min-width: 0; }
 .percentage-wrapper { display: flex; align-items: center; gap: 8px; width: 100%; }
@@ -93,7 +79,6 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .medium { background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%); }
 .low { background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%); }
 .percentage-text { width: 52px; min-width: 52px; font-weight: 700; text-align: right; color: #f1f5f9; font-size: 12px; }
-
 .deficit-cell { color: #fca5a5 !important; font-weight: 600; }
 
 .report-card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; margin-top: 22px; }
@@ -105,39 +90,12 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .report-table td { padding: 11px 10px; border-bottom: 1px solid #1e293b; font-size: 13px; text-align: right; color: #cbd5e1; white-space: nowrap; font-feature-settings: "tnum"; }
 .report-table td:first-child { text-align: left; font-weight: 600; color: #e2e8f0; }
 .report-table tbody tr:hover { background: rgba(59, 130, 246, .08); }
-.report-table tbody tr:nth-child(even) { background: rgba(15, 23, 42, .4); }
-.report-table tbody tr:nth-child(even):hover { background: rgba(59, 130, 246, .12); }
 .report-table tbody tr.total-row { background: rgba(37, 99, 235, .1); }
 .report-table tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid #2563eb; border-bottom: 2px solid #2563eb; }
-.report-table tbody tr.total-row:hover { background: rgba(37, 99, 235, .15); }
 .report-table-wrapper { overflow-x: auto; }
 
-.deferred-summary-table { table-layout: fixed; }
-.deferred-summary-table th:nth-child(1), .deferred-summary-table td:nth-child(1) { width: 25%; }
-.deferred-summary-table th:nth-child(2), .deferred-summary-table td:nth-child(2), .deferred-summary-table th:nth-child(3), .deferred-summary-table td:nth-child(3), .deferred-summary-table th:nth-child(4), .deferred-summary-table td:nth-child(4) { width: 15%; }
-.deferred-summary-table th:nth-child(5), .deferred-summary-table td:nth-child(5) { width: 30%; }
-
-/* ===== CLUSTER TABLE ===== */
-.cluster-table { table-layout: auto; min-width: 100%; }
-.cluster-table th { white-space: nowrap; font-size: 10px; padding: 10px 6px; text-align: center; }
-.cluster-table td { white-space: nowrap; font-size: 12px; padding: 10px 8px; text-align: right; }
-.cluster-table td:first-child, .cluster-table th:first-child { text-align: left; }
-.cluster-table .date-row th {
-    font-size: 9px;
-    color: #60a5fa;
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0;
-    border-bottom: 1px solid #2a3a55;
-    padding: 6px 6px;
-}
-.cluster-table tbody td:nth-child(even) { color: #93c5fd; }
-.cluster-table tbody tr.total-row td:nth-child(even) { color: #93c5fd; }
-
-/* ===== CLUSTER CARDS VIEW ===== */
 .clusters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; margin-top: 10px; }
-.cluster-card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; display: flex; flex-direction: column; }
-.cluster-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0, 0, 0, .5); border-color: #3b555f; }
+.cluster-card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, .4); border: 1px solid #2a3a55; overflow: hidden; display: flex; flex-direction: column; }
 .cluster-card-header { background: linear-gradient(135deg, #0a1228 0%, #0a1f3d 100%); color: #93c5fd; padding: 14px 18px; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-bottom: 2px solid #2563eb; }
 .cluster-card-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
 .cluster-stat { display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 1px solid rgba(42, 58, 85, 0.5); padding-bottom: 6px; }
@@ -146,40 +104,35 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .stat-value { font-weight: 700; color: #f1f5f9; font-feature-settings: "tnum"; font-size: 14px; }
 .stat-value.achieved { color: #10b981; }
 .stat-value.deficit { color: #fca5a5; }
-.cluster-progress { margin-top: auto; }
 
 .empty-state { text-align: center; padding: 50px 20px; color: #64748b; font-size: 14px; font-style: italic; }
 #loading { padding: 60px; text-align: center; color: #94a3b8; font-size: 14px; font-style: italic; }
 #error { display: none; background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%); color: #fecaca; padding: 15px 18px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #991b1b; font-size: 13px; font-weight: 500; }
 .refresh-status { font-size: 12px; color: #94a3b8; margin-left: 3px; margin-top: 2px; font-weight: 500; }
-.refresh-status.updating { color: #60a5fa; font-weight: 600; }
-
-@media(max-width:1100px) { .dashboard { padding: 18px; } .header { padding: 16px 18px; } .ten-col-view th, .ten-col-view td, .eleven-col-view th, .eleven-col-view td, .fourteen-col-view th, .fourteen-col-view td { font-size: 11px; padding: 9px 5px; } .progress { min-width: 20px; } .percentage-text { width: 45px; min-width: 45px; font-size: 11px; } .report-table th, .report-table td { font-size: 11px; padding: 9px 6px; } }
-@media(max-width:900px) { .kpis { grid-template-columns: repeat(2,1fr); } .controls { align-items: stretch; } .controls select, .controls input, .controls button { width: 100%; } .view-switch { margin-left: 0; width: 100%; } .view-switch button { flex: 1; } }
-@media(max-width:600px) { .header { flex-direction: column; align-items: flex-start; gap: 10px; } .last-update { text-align: left; } .dashboard { padding: 12px; } .kpis { grid-template-columns: 1fr 1fr; gap: 10px; } .card { padding: 13px; } .card-value { font-size: 20px; } .card-label { font-size: 10px; } .header-title { font-size: 19px; } .header-subtitle { font-size: 11px; } th, td { font-size: 10px; padding: 8px 4px; } .percentage-wrapper { gap: 4px; } .percentage-text { width: 40px; min-width: 40px; font-size: 10px; } }
-@media(max-width:420px) { .kpis { grid-template-columns: 1fr; } .card-value { font-size: 22px; } }
-
+.toast { position: fixed; bottom: 24px; right: 24px; background: linear-gradient(135deg, #1e293b 0%, #172033 100%); color: #e2e8f0; padding: 14px 22px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: 0 8px 28px rgba(0, 0, 0, .5); border: 1px solid #2a3a55; z-index: 1000; transform: translateY(100px); opacity: 0; transition: transform .35s ease, opacity .35s ease; pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.deferred-report-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-top:22px; }
+.deferred-report-grid .report-card { margin-top:0; }
+@media(max-width:900px){ .deferred-report-grid { grid-template-columns:1fr; } }
 </style>
 </head>
-
 <body>
 
 <div class="header">
     <div>
         <div class="header-title">COLLECTION TEAM PERFORMANCE</div>
         <div class="header-subtitle">Target vs Achieved | Daily Collection Monitoring</div>
+        <div class="date-range-badge" id="dateRangeBadge">Loading...</div>
     </div>
     <div class="last-update">
         Last Updated<br>
         <span id="lastUpdate">Loading...</span>
-        <div id="refreshStatus" class="refresh-status">Auto-refresh: 5 min</div>
+        <div id="refreshStatus" class="refresh-status">Local caching active</div>
     </div>
 </div>
 
 <div class="dashboard">
-
 <div id="error"></div>
-
 <div class="kpis">
     <div class="card"><div class="card-label">Total Target</div><div class="card-value" id="totalTarget">0</div></div>
     <div class="card"><div class="card-label">Total Achieved</div><div class="card-value" id="totalAchieved">0</div></div>
@@ -187,818 +140,309 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
     <div class="card"><div class="card-label">Overall Achievement</div><div class="card-value" id="overallPercentage">0%</div></div>
 </div>
 
+<div class="date-filter-bar">
+    <span class="date-label">Period</span>
+    <input type="date" id="startDate" title="Start date" onchange="onDateInputChange()">
+    <span style="color:#64748b;font-size:12px;">to</span>
+    <input type="date" id="endDate" title="End date" onchange="onDateInputChange()">
+    <div class="date-separator"></div>
+    <div class="date-presets">
+        <button class="date-preset active" data-preset="today" onclick="setDatePreset('today')">Today</button>
+        <button class="date-preset" data-preset="thisWeek" onclick="setDatePreset('thisWeek')">This Week</button>
+        <button class="date-preset" data-preset="last7" onclick="setDatePreset('last7')">Last 7 Days</button>
+    </div>
+</div>
+
 <div class="controls">
     <select id="branchFilter" onchange="applyFilters()"><option value="ALL">All Branches</option></select>
-    <select id="teamFilter" onchange="applyFilters()"><option value="ALL">All Collection Teams</option></select>
-    <input type="text" id="searchBox" placeholder="Search collection team..." oninput="applyFilters()">
-    <button id="refreshButton" onclick="manualRefresh()" type="button">
+    <select id="teamFilter" onchange="applyFilters()"><option value="ALL">All Teams</option></select>
+    <input type="text" id="searchBox" placeholder="Search team..." oninput="applyFilters()">
+    <button id="refreshButton" onclick="loadData(true)" type="button">
         <span class="refresh-icon">↻</span><span class="refresh-text">Refresh</span>
     </button>
     <div class="view-switch">
-        <button id="summaryButton" onclick="switchView('summary')" type="button">SUMMARY</button>
-        <button id="branchesButton" class="active" onclick="switchView('branches')" type="button">BRANCHES</button>
-        <button id="deferredButton" onclick="switchView('deferred')" type="button">DEFERRED/PARTIAL</button>
-        <button id="clustersButton" onclick="switchView('clusters')" type="button">CLUSTER CARDS</button>
+        <button id="summaryButton" onclick="switchView('summary')">SUMMARY</button>
+        <button id="branchesButton" class="active" onclick="switchView('branches')">BRANCHES</button>
+        <button id="deferredButton" onclick="switchView('deferred')">MARSHAL</button>
+        <button id="recoveryButton" onclick="switchView('recovery')">RECOVERY</button>
+        <button id="clustersButton" onclick="switchView('clusters')">CLUSTERS</button>
     </div>
 </div>
 
-<div class="view-label"><span id="viewDescription">Detailed daily collection performance</span></div>
+<div class="view-label"><span id="viewDescription">Detailed daily collection performance (25 Branches)</span></div>
+<div id="loading">Fetching initial data from sheet...</div>
 
-<div id="loading">Loading collection data...</div>
-
-<!-- BRANCHES VIEW -->
-<div id="branchesContainer" style="display:none">
-    <div class="table-container">
-        <table id="branchesTable" class="eleven-col-view">
-        <thead><tr>
-        <th>COLLECTION TEAM</th><th>BRANCH</th><th>TOTAL - TARGET</th><th>TOTAL - ACHIEVED</th>
-        <th>SUNDAY</th><th>MONDAY</th><th>TUESDAY</th><th>WEDNESDAY</th><th>THURSDAY</th><th>FRIDAY</th>
-        <th>% ACHIEVED</th>
-        </tr></thead>
-        <tbody id="branchesBody"></tbody>
-        </table>
+<div id="branchesContainer" style="display:none"></div>
+<div id="deferredContainer" style="display:none"></div>
+<div id="recoveryContainer" style="display:none">
+    <div class="deferred-report-grid">
+        <div class="report-card"><div class="report-card-header">1. RECOVERY - BRANCHWISE PERFORMANCE</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>DEFICIT</th><th>%</th></tr></thead><tbody id="recoveryBranchBody"></tbody></table></div></div>
+        <div class="report-card"><div class="report-card-header">2. RECOVERY - TEAM PERFORMANCE</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>COLLECTION TEAM</th><th>TARGET</th><th>ACHIEVED</th><th>DEFICIT</th><th>%</th></tr></thead><tbody id="recoveryTeamBody"></tbody></table></div></div>
     </div>
+    <div class="report-card" style="margin-top:18px"><div class="report-card-header">3. RECOVERY - CLUSTER PERFORMANCE</div><div id="recoveryClusterGrid" class="clusters-grid" style="padding:15px"></div></div>
 </div>
 
-<!-- DEFERRED/PARTIAL VIEW (14 columns) -->
-<div id="deferredContainer" style="display:none">
-    <div class="table-container">
-        <table id="deferredTable" class="fourteen-col-view">
-        <thead><tr>
-        <th>DRI</th><th>BRANCH</th><th>DEFFERED TARGET</th><th>PARTIAL A/CS TARGET</th><th>TOTAL TARGET</th>
-        <th>MONDAY</th><th>TUESDAY</th><th>WEDNESDAY</th><th>THURSDAY</th><th>FRIDAY</th>
-        <th>WEEK 4 COLLECTION</th><th>DEFICIT</th><th>% PERFORMANCE</th><th>COLLECTION MARSHAL</th>
-        </tr></thead>
-        <tbody id="deferredBody"></tbody>
-        </table>
-    </div>
-</div>
-
-<!-- SUMMARY VIEW (4 sections) -->
 <div id="summaryContainer" style="display:none">
-
-    <div class="table-container">
-        <table id="summaryTable" class="ten-col-view">
-        <thead><tr>
-        <th>COLLECTION TEAM</th><th>TOTAL TARGET</th><th>TOTAL ACHIEVED</th>
-        <th>SUNDAY</th><th>MONDAY</th><th>TUESDAY</th><th>WEDNESDAY</th><th>THURSDAY</th><th>FRIDAY</th>
-        <th>% ACHIEVED</th>
-        </tr></thead>
-        <tbody id="summaryBody"></tbody>
-        </table>
+    <div id="summaryTableContainer"></div>
+    <div class="report-card" id="clusterCard" style="display:none"><div class="report-card-header">CLUSTER PERFORMANCE</div><div class="report-table-wrapper"><table class="report-table"><thead id="clusterHead"></thead><tbody id="clusterBody"></tbody></table></div></div>
+    <div class="deferred-report-grid" id="deferredManagementReports">
+        <div class="report-card" id="deferredSummaryCard" style="display:none"><div class="report-card-header">PORTFOLIO BY DRI</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>DRI</th><th>TOTAL TARGET</th><th>COLLECTED</th><th>DEFICIT</th><th>%</th></tr></thead><tbody id="deferredSummaryBody"></tbody></table></div></div>
+        <div class="report-card" id="marshalSummaryCard" style="display:none"><div class="report-card-header">PORTFOLIO BY MARSHAL</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>MARSHAL</th><th>TOTAL TARGET</th><th>COLLECTED</th><th>DEFICIT</th><th>%</th></tr></thead><tbody id="marshalSummaryBody"></tbody></table></div></div>
     </div>
-    
-    <!-- CLUSTER PERFORMANCE CARD -->
-    <div class="report-card" id="clusterCard" style="display:none">
-        <div class="report-card-header">CLUSTER PERFORMANCE</div>
-        <div class="report-table-wrapper">
-            <table class="report-table cluster-table">
-                <thead id="clusterHead"></thead>
-                <tbody id="clusterBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="report-card" id="deferredSummaryCard" style="display:none">
-        <div class="report-card-header">DEFERRED / PARTIAL SUMMARY</div>
-        <div class="report-table-wrapper">
-            <table class="report-table deferred-summary-table">
-                <thead><tr>
-                <th>DRI</th><th>TOTAL TARGET</th><th>WEEK 4 COLLECTION</th><th>DEFICIT</th><th>% PERFORMANCE</th>
-                </tr></thead>
-                <tbody id="deferredSummaryBody"></tbody>
-            </table>
-        </div>
-    </div>
-    <div class="report-card" id="weeklyTotalsCard" style="display:none">
-        <div class="report-card-header">WEEKLY TOTALS</div>
-        <div class="report-table-wrapper"><table class="report-table"><thead id="weeklyTotalsHead"></thead><tbody id="weeklyTotalsBody"></tbody></table></div>
-    </div>
-
-    <div class="report-card" id="monthlyTotalsCard" style="display:none">
-        <div class="report-card-header">MONTHLY TOTALS</div>
-        <div class="report-table-wrapper"><table class="report-table"><thead id="monthlyTotalsHead"></thead><tbody id="monthlyTotalsBody"></tbody></table></div>
-    </div>
-
 </div>
-
-<!-- CLUSTER CARDS VIEW -->
 <div id="clustersContainer" style="display:none">
+    <div class="report-card" id="unscheduledCard" style="display:none; margin-bottom:20px;">
+        <div class="report-card-header" style="color:#f59e0b">⚠️ UNSCHEDULED COLLECTIONS (No Date Assigned)</div>
+        <div class="report-table-wrapper">
+            <table class="report-table">
+                <thead><tr><th>TOTAL TARGET</th><th>TOTAL ACHIEVED</th><th>DEFICIT</th></tr></thead>
+                <tbody id="unscheduledBody"></tbody>
+            </table>
+        </div>
+    </div>
     <div class="clusters-grid" id="clustersGrid"></div>
 </div>
-
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzEN4qU68rZ19it-jps8DUhqULqkpOxTg14WHD0-gGUgQYEWAmRsbe-MTBonpC2oD40/exec";
 
-const API_URL =
-"https://script.google.com/macros/s/AKfycbxCp06CZ2bEXP557vi1nna5MTKoC7pe4m8uy3P8PNZ3B2jiwoQ1Oj-1RKhe9jWi6Y77pA/exec";
+let rawDataCache = []; 
+let currentView = "branches", refreshInProgress = false;
+let dateFilter = { startDate: null, endDate: null, preset: "today" };
+let unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
 
-let allData = [];
-let deferredData = [];
-let weeklyTotals = null;
-let monthlyTotals = null;
-let clusterData = null;
-let currentView = "branches";
-let refreshInProgress = false;
+const isMainFlow = (r) => {
+    if (r.category === "RECOVERY") return false;
+    if (r.dri === "ANDERSON WATHOME" && r.branch === "LEGAL & AUCTIONEERS") return false;
+    if (r.dri === "DIANA AKHENDA" && r.branch === "PSALMS & COVIGEN") return false;
+    return true;
+};
 
-/* ========== LOAD DATA ========== */
+function processAndRender() {
+    if (rawDataCache.length === 0) return;
+    
+    const scheduledFiltered = rawDataCache.filter(r => {
+        if (!r.date) return false;
+        if (dateFilter.startDate && r.date < dateFilter.startDate) return false;
+        if (dateFilter.endDate && r.date > dateFilter.endDate) return false;
+        return true;
+    });
 
-async function loadData(manual = false) {
-    if (refreshInProgress) return;
-    refreshInProgress = true;
+    const unscheduledFiltered = rawDataCache.filter(r => !r.date);
 
-    const loading = document.getElementById("loading");
-    const error = document.getElementById("error");
-    const refreshStatus = document.getElementById("refreshStatus");
-    const refreshButton = document.getElementById("refreshButton");
-    const refreshText = refreshButton.querySelector(".refresh-text");
+    const mainData = scheduledFiltered.filter(isMainFlow);
+    const recoveryData = scheduledFiltered.filter(r => r.category === "RECOVERY");
 
-    refreshButton.disabled = true;
-    refreshButton.classList.add("spinning");
-    if (manual) refreshText.innerText = "Refreshing...";
+    unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
+    unscheduledFiltered.filter(isMainFlow).forEach(r => { unscheduledAggregated.target += r.target; unscheduledAggregated.achieved += r.achieved; });
+    unscheduledAggregated.deficit = Math.max(0, unscheduledAggregated.target - unscheduledAggregated.achieved);
 
-    const selectedBranch = document.getElementById("branchFilter").value;
-    const selectedTeam = document.getElementById("teamFilter").value;
-    const searchText = document.getElementById("searchBox").value;
+    const allData = aggregateMain(mainData);
+    const deferredData = aggregateMarshal(mainData);
+    const clusterData = buildClusterData(mainData);
 
-    if (allData.length === 0) loading.style.display = "block";
+    populateFilters(allData, deferredData);
+    applyFilters(allData, deferredData, clusterData, recoveryData);
+}
 
-    error.style.display = "none";
-    refreshStatus.innerText = "Updating data...";
-    refreshStatus.classList.add("updating");
+function aggregateMain(rows) {
+    const map = new Map();
+    rows.forEach(r => {
+        const key = r.dri + "||" + r.branch;
+        if (!map.has(key)) map.set(key, { collectionTeam: r.dri, branch: r.branch, target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 });
+        const m = map.get(key); m.target += r.target; m.achieved += r.achieved;
+        if(r.date) { const d = new Date(r.date + "T00:00:00"); const dayIdx = d.getDay(); if (dayIdx === 0) m.sunday += r.achieved; else if (dayIdx === 1) m.monday += r.achieved; else if (dayIdx === 2) m.tuesday += r.achieved; else if (dayIdx === 3) m.wednesday += r.achieved; else if (dayIdx === 4) m.thursday += r.achieved; else if (dayIdx === 5) m.friday += r.achieved; }
+    });
+    return Array.from(map.values()).sort((a,b) => a.collectionTeam.localeCompare(b.collectionTeam));
+}
 
+function aggregateMarshal(rows) {
+    const map = new Map();
+    rows.forEach(r => {
+        const key = r.dri + "||" + r.branch;
+        if (!map.has(key)) map.set(key, { dri: r.dri, branch: r.branch, target:0, deferredTarget:0, partialTarget:0, week4Collection:0, collectionMarshal: r.dri, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 });
+        const m = map.get(key); m.target += r.target; m.week4Collection += r.achieved;
+        if (r.status === "DEFERRED") m.deferredTarget += r.target; if (r.status === "PARTIAL") m.partialTarget += r.target;
+        if(r.date) { const d = new Date(r.date + "T00:00:00"); const dayIdx = d.getDay(); if (dayIdx === 1) m.monday += r.achieved; else if (dayIdx === 2) m.tuesday += r.achieved; else if (dayIdx === 3) m.wednesday += r.achieved; else if (dayIdx === 4) m.thursday += r.achieved; else if (dayIdx === 5) m.friday += r.achieved; }
+    });
+    return Array.from(map.values()).sort((a,b) => a.dri.localeCompare(b.dri));
+}
+
+function buildClusterData(rows) {
+    const clusterTotals = {}; rows.forEach(r => { const cl = r.cluster || "UNKNOWN"; if (!clusterTotals[cl]) clusterTotals[cl] = { totalTarget: 0, totalAchieved: 0, days: {} }; clusterTotals[cl].totalTarget += r.target; clusterTotals[cl].totalAchieved += r.achieved; if(r.date) { const dayKey = r.date; if (!clusterTotals[cl].days[dayKey]) clusterTotals[cl].days[dayKey] = { target: 0, achieved: 0 }; clusterTotals[cl].days[dayKey].target += r.target; clusterTotals[cl].days[dayKey].achieved += r.achieved; }});
+    return clusterTotals;
+}
+
+function getPresetRange(preset) {
+    const now = new Date(); const y = now.getFullYear(), m = now.getMonth(), d = now.getDate(); const dayOfWeek = now.getDay(); let start, end;
+    switch (preset) { case "today": start = new Date(y, m, d); end = new Date(y, m, d); break; case "thisWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; } case "last7": start = new Date(y, m, d - 6); end = new Date(y, m, d); break; default: start = new Date(y, m, d); end = new Date(y, m, d); }
+    return { start, end };
+}
+
+function toISO(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
+function formatDisplayDate(iso) { if (!iso) return ""; const p = iso.split("-"); const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return `${parseInt(p[2])} ${months[parseInt(p[1]) - 1]} ${p[0]}`; }
+
+function setDatePreset(preset) {
+    dateFilter.preset = preset; const range = getPresetRange(preset); dateFilter.startDate = toISO(range.start); dateFilter.endDate = toISO(range.end);
+    document.getElementById("startDate").value = dateFilter.startDate; document.getElementById("endDate").value = dateFilter.endDate;
+    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.toggle("active", btn.dataset.preset === preset)); updateDateRangeBadge(); processAndRender();
+}
+
+function onDateInputChange() {
+    const s = document.getElementById("startDate").value, e = document.getElementById("endDate").value;
+    if (s && e && s > e) { showToast("Start date cannot be after end date", "error"); return; }
+    dateFilter.preset = null; dateFilter.startDate = s; dateFilter.endDate = e;
+    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.remove("active")); updateDateRangeBadge(); processAndRender();
+}
+
+function updateDateRangeBadge() { document.getElementById("dateRangeBadge").textContent = `Viewing: ${formatDisplayDate(dateFilter.startDate)} — ${formatDisplayDate(dateFilter.endDate)}`; }
+function showToast(msg, type) { const t = document.getElementById("toast"); t.innerHTML = `<span>${type === "error" ? "⚠" : "✔"}</span> ${msg}`; t.style.borderColor = type === "error" ? "#991b1b" : "#2563eb"; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
+
+async function loadData(manualRefresh = false) {
+    if (refreshInProgress) return; refreshInProgress = true;
+    const btn = document.getElementById("refreshButton"); btn.disabled = true; btn.classList.add("spinning"); document.getElementById("loading").style.display = "block";
     try {
         const response = await fetch(API_URL + "?t=" + Date.now(), { cache: "no-store" });
-        if (!response.ok) throw new Error("HTTP error: " + response.status);
+        if (!response.ok) { const errText = await response.text(); throw new Error(`Server error ${response.status}: ${errText.substring(0, 150)}`); }
         const result = await response.json();
-        if (result.status !== "success") throw new Error(result.message || "API returned an error.");
-
-        allData = result.data || [];
-        deferredData = result.deferredData || [];
-        weeklyTotals = result.weeklyTotals || null;
-        monthlyTotals = result.monthlyTotals || null;
-        clusterData = result.clusterData || null;
-
-        populateFilters(selectedBranch, selectedTeam);
-        document.getElementById("searchBox").value = searchText;
-        applyFilters();
-
+        if (result.status !== "success") throw new Error(result.message || "Unknown API Error");
+        rawDataCache = result.data || []; 
+        localStorage.setItem('dashboardCache', JSON.stringify(rawDataCache));
         document.getElementById("lastUpdate").innerText = new Date().toLocaleString("en-KE");
-        refreshStatus.innerText = manual ? "Manual refresh complete — Auto-refresh: 5 min" : "Auto-refresh: 5 min";
-        refreshStatus.classList.remove("updating");
-
-    } catch (err) {
-        if (allData.length === 0) loading.style.display = "none";
-        error.style.display = "block";
-        error.innerText = "Unable to refresh collection data: " + err.message;
-        refreshStatus.innerText = "Refresh failed — existing data retained";
-        refreshStatus.classList.remove("updating");
-    } finally {
-        refreshButton.disabled = false;
-        refreshButton.classList.remove("spinning");
-        refreshText.innerText = "Refresh";
-        refreshInProgress = false;
-        if (manual) {
-            setTimeout(() => { if (!refreshInProgress) refreshStatus.innerText = "Auto-refresh: 5 min"; }, 4000);
+        if (manualRefresh) showToast("Sheet data refreshed"); processAndRender();
+    } catch (err) { 
+        const cachedData = localStorage.getItem('dashboardCache');
+        if (cachedData) {
+            rawDataCache = JSON.parse(cachedData);
+            showToast("API failed. Loaded from local cache.", "error");
+            processAndRender();
+        } else {
+            document.getElementById("error").style.display = "block"; 
+            document.getElementById("error").innerText = "Data fetch failed & no cache available: " + err.message;
         }
-    }
+    } 
+    finally { btn.disabled = false; btn.classList.remove("spinning"); document.getElementById("loading").style.display = "none"; refreshInProgress = false; }
 }
 
-function manualRefresh() { loadData(true); }
-
-/* ========== POPULATE FILTERS ========== */
-
-function populateFilters(selectedBranch, selectedTeam) {
-
-    const branchSelect = document.getElementById("branchFilter");
-    const teamSelect   = document.getElementById("teamFilter");
-
-    const isDeferred = currentView === "deferred";
-    const dataSource = isDeferred ? deferredData : allData;
-    const teamKey    = isDeferred ? "dri" : "collectionTeam";
-    const teamLabel  = isDeferred ? "All DRIs" : "All Collection Teams";
-
-    const branches = [...new Set(dataSource.map(r => r.branch).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
-    branchSelect.innerHTML = `<option value="ALL">All Branches</option>`;
-    branches.forEach(b => { const o = document.createElement("option"); o.value = b; o.textContent = b; branchSelect.appendChild(o); });
-    branchSelect.value = branches.includes(selectedBranch) ? selectedBranch : "ALL";
-
-    const teams = [...new Set(dataSource.map(r => r[teamKey] || r.collectionTeam || "").filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
-    teamSelect.innerHTML = `<option value="ALL">${teamLabel}</option>`;
-    teams.forEach(t => { const o = document.createElement("option"); o.value = t; o.textContent = t; teamSelect.appendChild(o); });
-    teamSelect.value = teams.includes(selectedTeam) ? selectedTeam : "ALL";
+function populateFilters(allData, deferredData) {
+    const branchSelect = document.getElementById("branchFilter"), teamSelect = document.getElementById("teamFilter");
+    const isDeferred = currentView === "deferred", dataSource = isDeferred ? deferredData : allData, teamKey = isDeferred ? "dri" : "collectionTeam";
+    const branches = [...new Set(dataSource.map(r => r.branch).filter(Boolean))].sort(); const teams = [...new Set(dataSource.map(r => r[teamKey]).filter(Boolean))].sort();
+    const prevBranch = branchSelect.value, prevTeam = teamSelect.value;
+    branchSelect.innerHTML = `<option value="ALL">All Branches</option>`; branches.forEach(b => branchSelect.innerHTML += `<option value="${b}">${b}</option>`);
+    teamSelect.innerHTML = `<option value="ALL">All Teams</option>`; teams.forEach(t => teamSelect.innerHTML += `<option value="${t}">${t}</option>`);
+    branchSelect.value = branches.includes(prevBranch) ? prevBranch : "ALL"; teamSelect.value = teams.includes(prevTeam) ? prevTeam : "ALL";
 }
 
-/* ========== APPLY FILTERS ========== */
-
-function applyFilters() {
-    const branch = document.getElementById("branchFilter").value;
-    const team = document.getElementById("teamFilter").value;
-    const search = document.getElementById("searchBox").value.toLowerCase().trim();
-
-    const filterCollection = row => {
-        const bm = branch === "ALL" || String(row.branch || "") === branch;
-        const tm = team === "ALL" || String(row.collectionTeam || "") === team;
-        const sm = !search || String(row.collectionTeam || "").toLowerCase().includes(search);
-        return bm && tm && sm;
-    };
-
-    const filterDeferred = row => {
-        const driName = String(row.dri || row.collectionTeam || "");
-        const bm = branch === "ALL" || String(row.branch || "") === branch;
-        const tm = team === "ALL" || driName === team;
-        const sm = !search || driName.toLowerCase().includes(search);
-        return bm && tm && sm;
-    };
-
-    const filtered = allData.filter(filterCollection);
-    const filteredDeferred = deferredData.filter(filterDeferred);
-
-    if (currentView === "deferred") {
-        updateKPIsDeferred(filteredDeferred);
-    } else if (currentView === "clusters") {
-        updateKPIsClusters();
-    } else {
-        updateKPIs(filtered);
-    }
-
-    if (currentView === "summary") {
-        renderSummaryView(filtered);
-    } else if (currentView === "deferred") {
-        renderDeferred(filteredDeferred);
-    } else if (currentView === "clusters") {
-        renderClusterCards();
-    } else {
-        renderBranches(filtered);
-    }
+function applyFilters(allData, deferredData, clusterData, recoveryData) {
+    if (!allData) return;
+    const branch = document.getElementById("branchFilter").value, team = document.getElementById("teamFilter").value, search = document.getElementById("searchBox").value.toLowerCase().trim();
+    const filter = (row, key) => (branch === "ALL" || row.branch === branch) && (team === "ALL" || row[key] === team) && (!search || row[key].toLowerCase().includes(search));
+    const fAll = allData.filter(r => filter(r, "collectionTeam")); const fDef = deferredData.filter(r => filter(r, "dri"));
+    
+    if (currentView === "deferred") updateKPIs(fDef, "week4Collection"); else if (currentView === "clusters") updateKPIsClusters(clusterData); else if (currentView === "recovery") updateKPIsRecovery(recoveryData); else updateKPIs(fAll, "achieved");
+    
+    if (currentView === "summary") renderSummaryView(fAll, fDef, clusterData); else if (currentView === "deferred") renderDeferred(fDef); else if (currentView === "clusters") renderClusterView(clusterData); else if (currentView === "recovery") renderRecovery(recoveryData); else renderBranches(fAll);
 }
-
-/* ========== SWITCH VIEW ========== */
 
 function switchView(view) {
     currentView = view;
-
-    const summaryButton  = document.getElementById("summaryButton");
-    const branchesButton = document.getElementById("branchesButton");
-    const deferredButton = document.getElementById("deferredButton");
-    const clustersButton = document.getElementById("clustersButton");
-    const description    = document.getElementById("viewDescription");
-    const loading        = document.getElementById("loading");
-    const branchesCont   = document.getElementById("branchesContainer");
-    const summaryCont    = document.getElementById("summaryContainer");
-    const deferredCont   = document.getElementById("deferredContainer");
-    const clustersCont   = document.getElementById("clustersContainer");
-
-    branchesCont.style.display = "none";
-    summaryCont.style.display  = "none";
-    deferredCont.style.display = "none";
-    clustersCont.style.display = "none";
-    summaryButton.classList.remove("active");
-    branchesButton.classList.remove("active");
-    deferredButton.classList.remove("active");
-    clustersButton.classList.remove("active");
-
-    if (view === "summary") {
-        summaryButton.classList.add("active");
-        description.innerText = "Collection team summary, weekly totals, monthly totals and deferred/partial summary";
-        summaryCont.style.display = "block";
-    } else if (view === "deferred") {
-        deferredButton.classList.add("active");
-        description.innerText = "Deferred / Partial — detailed collection performance";
-        deferredCont.style.display = "block";
-    } else if (view === "clusters") {
-        clustersButton.classList.add("active");
-        description.innerText = "Cluster cards — aggregated targets and achieved per cluster";
-        clustersCont.style.display = "block";
-    } else {
-        branchesButton.classList.add("active");
-        description.innerText = "Detailed daily collection performance";
-        branchesCont.style.display = "block";
-    }
-
-    loading.style.display = "none";
-
-    const currentBranch = document.getElementById("branchFilter").value;
-    const currentTeam   = document.getElementById("teamFilter").value;
-    populateFilters(currentBranch, currentTeam);
-
-    applyFilters();
+    ["summary", "branches", "deferred", "recovery", "clusters"].forEach(v => { document.getElementById(v + "Button").classList.toggle("active", v === view); document.getElementById(v + "Container").style.display = v === view ? "block" : "none"; });
+    const desc = { summary: "Summary and portfolio breakdown", branches: "Detailed daily collection performance (25 Branches)", deferred: "Marshal Portfolio — Total target and collection", recovery: "Recovery Accounts — Branch, Team & Cluster", clusters: "Cluster cards — Aggregated targets and achieved" };
+    document.getElementById("viewDescription").innerText = desc[view]; processAndRender();
 }
-
-/* ========== HELPERS ========== */
 
 function calcPct(item) { return item.target > 0 ? (item.achieved / item.target) * 100 : 0; }
-function getPercentage(target, achieved) { const t = Number(target) || 0, a = Number(achieved) || 0; return t <= 0 ? 0 : (a / t) * 100; }
-function getStatusClass(v) { if (v >= 90) return "high"; if (v >= 70) return "medium"; return "low"; }
-function formatNumber(value) { return Number(value || 0).toLocaleString("en-KE", { maximumFractionDigits: 0 }); }
+function getPercentage(t, a) { return t <= 0 ? 0 : (a / t) * 100; }
+function getStatusClass(v) { return v >= 90 ? "high" : v >= 70 ? "medium" : "low"; }
+function formatNumber(value) { return Number(value || 0).toLocaleString("en-KE", { maximumFractionDigits: 2 }); }
+function escapeHtml(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
-function formatReportCell(value) {
-    if (value === "" || value === null || value === undefined) return "";
-    const num = Number(value);
-    if (!isNaN(num) && value !== "") return formatNumber(num);
-    return escapeHtml(String(value));
-}
+function updateKPIs(data, achKey) { let t=0, a=0; data.forEach(r => { t += Number(r.target)||0; a += Number(r[achKey]||r.achieved||0); }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t - a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
+function updateKPIsClusters(clusterData) { let t=0, a=0; Object.values(clusterData).forEach(c => { t += c.totalTarget; a += c.totalAchieved; }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t - a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
+function updateKPIsRecovery(recoveryData) { let t=0, a=0; recoveryData.forEach(r => { t+=r.target; a+=r.achieved; }); document.getElementById("totalTarget").innerText = formatNumber(t); document.getElementById("totalAchieved").innerText = formatNumber(a); document.getElementById("balance").innerText = formatNumber(t-a); document.getElementById("overallPercentage").innerText = (t>0?(a/t*100):0).toFixed(1) + "%"; }
 
-function escapeHtml(value) {
-    return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
-
-/* ========== KPI: Collection team data ========== */
-
-function updateKPIs(data) {
-    let target = 0, achieved = 0;
-    data.forEach(row => { target += Number(row.target) || 0; achieved += Number(row.achieved) || 0; });
-    const balance = target - achieved;
-    const pct = target > 0 ? (achieved / target) * 100 : 0;
-    document.getElementById("totalTarget").innerText = formatNumber(target);
-    document.getElementById("totalAchieved").innerText = formatNumber(achieved);
-    document.getElementById("balance").innerText = formatNumber(balance);
-    document.getElementById("overallPercentage").innerText = pct.toFixed(1) + "%";
-}
-
-/* ========== KPI: Deferred/Partial data ========== */
-
-function updateKPIsDeferred(data) {
-    let target = 0, week4Collection = 0;
-    data.forEach(row => {
-        target += Number(row.target || row.totalTarget || 0);
-        week4Collection += Number(row.week4Collection || row.achieved || 0);
-    });
-    const deficit = target - week4Collection;
-    const pct = target > 0 ? (week4Collection / target) * 100 : 0;
-    document.getElementById("totalTarget").innerText = formatNumber(target);
-    document.getElementById("totalAchieved").innerText = formatNumber(week4Collection);
-    document.getElementById("balance").innerText = formatNumber(deficit);
-    document.getElementById("overallPercentage").innerText = pct.toFixed(1) + "%";
-}
-
-/* ========== KPI: Clusters data ========== */
-
-function updateKPIsClusters() {
-    let target = 0, achieved = 0;
-    if (clusterData && clusterData.rows) {
-        clusterData.rows.forEach(row => {
-            if (String(row[0]).toUpperCase() === "TOTAL") return;
-            for (let i = 1; i < row.length; i += 2) {
-                target += Number(row[i]) || 0;
-                achieved += Number(row[i+1]) || 0;
-            }
-        });
-    }
-    const balance = target - achieved;
-    const pct = target > 0 ? (achieved / target) * 100 : 0;
-    document.getElementById("totalTarget").innerText = formatNumber(target);
-    document.getElementById("totalAchieved").innerText = formatNumber(achieved);
-    document.getElementById("balance").innerText = formatNumber(balance);
-    document.getElementById("overallPercentage").innerText = pct.toFixed(1) + "%";
-}
-
-/* ========== RENDER SUMMARY VIEW ========== */
-
-function renderSummaryView(data) {
-    renderTable(data);
-    renderCluster();
-    renderReportCard("weeklyTotalsCard", "weeklyTotalsHead", "weeklyTotalsBody", weeklyTotals);
-    renderReportCard("monthlyTotalsCard", "monthlyTotalsHead", "monthlyTotalsBody", monthlyTotals);
-    renderDeferredSummary();
-}
-
-/* ========== RENDER TABLE (Collection team summary + TOTAL row) ==========
-   The TOTAL row is calculated from the filtered data
-   passed to this function. When filters are applied,
-   the TOTAL reflects only the filtered rows.
-===================================================== */
+function renderSummaryView(data, defData, clusterData) { renderTable(data); renderClusterTable(clusterData); renderDeferredSummary(defData); }
 
 function renderTable(data) {
-    const tbody = document.getElementById("summaryBody");
-    if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">No collection data found for the selected filters.</div></td></tr>`;
-        return;
-    }
-
-    const summaryMap = new Map();
-    data.forEach(row => {
-        const team = String(row.collectionTeam || "Unknown");
-        if (!summaryMap.has(team)) { summaryMap.set(team, { collectionTeam: team, target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 }); }
-        const item = summaryMap.get(team);
-        item.target += Number(row.target) || 0; item.achieved += Number(row.achieved) || 0;
-        item.sunday += Number(row.sunday) || 0; item.monday += Number(row.monday) || 0;
-        item.tuesday += Number(row.tuesday) || 0; item.wednesday += Number(row.wednesday) || 0;
-        item.thursday += Number(row.thursday) || 0; item.friday += Number(row.friday) || 0;
-    });
-
-    const summaryData = Array.from(summaryMap.values()).sort((a, b) => calcPct(b) - calcPct(a));
-
-    let html = "";
-
-    // Data rows
-    summaryData.forEach(item => {
-        const pct = calcPct(item); const safe = Math.min(Math.max(pct, 0), 100);
-        html += `<tr><td><strong>${escapeHtml(item.collectionTeam)}</strong></td><td>${formatNumber(item.target)}</td><td>${formatNumber(item.achieved)}</td><td>${formatNumber(item.sunday)}</td><td>${formatNumber(item.monday)}</td><td>${formatNumber(item.tuesday)}</td><td>${formatNumber(item.wednesday)}</td><td>${formatNumber(item.thursday)}</td><td>${formatNumber(item.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div><div class="percentage-text">${pct.toFixed(1)}%</div></div></td></tr>`;
-    });
-
-    // ---- TOTAL row (calculated from filtered summaryData) ----
-    let tTarget = 0, tAchieved = 0, tSun = 0, tMon = 0, tTue = 0, tWed = 0, tThu = 0, tFri = 0;
-    summaryData.forEach(item => {
-        tTarget += item.target; tAchieved += item.achieved;
-        tSun += item.sunday; tMon += item.monday; tTue += item.tuesday;
-        tWed += item.wednesday; tThu += item.thursday; tFri += item.friday;
-    });
-    const tPct = tTarget > 0 ? (tAchieved / tTarget) * 100 : 0;
-    const tSafe = Math.min(Math.max(tPct, 0), 100);
-
-    html += `<tr class="total-row">
-<td><strong>TOTAL</strong></td>
-<td>${formatNumber(tTarget)}</td>
-<td>${formatNumber(tAchieved)}</td>
-<td>${formatNumber(tSun)}</td>
-<td>${formatNumber(tMon)}</td>
-<td>${formatNumber(tTue)}</td>
-<td>${formatNumber(tWed)}</td>
-<td>${formatNumber(tThu)}</td>
-<td>${formatNumber(tFri)}</td>
-<td class="percentage-cell"><div class="percentage-wrapper">
-<div class="progress"><div class="progress-bar ${getStatusClass(tPct)}" style="width:${tSafe}%;"></div></div>
-<div class="percentage-text">${tPct.toFixed(1)}%</div></div></td>
-</tr>`;
-
-    tbody.innerHTML = html;
+    const c = document.getElementById("summaryTableContainer"); if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`; return; }
+    const map = new Map(); data.forEach(r => { if (!map.has(r.collectionTeam)) map.set(r.collectionTeam, { collectionTeam: r.collectionTeam, target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 }); const m = map.get(r.collectionTeam); m.target+=r.target; m.achieved+=r.achieved; m.sunday+=r.sunday; m.monday+=r.monday; m.tuesday+=r.tuesday; m.wednesday+=r.wednesday; m.thursday+=r.thursday; m.friday+=r.friday; });
+    const s = Array.from(map.values()).sort((a,b) => calcPct(b)-calcPct(a)); let h = `<div class="table-container"><table><thead><tr><th>TEAM</th><th>TARGET</th><th>ACHIEVED</th><th>SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>%</th></tr></thead><tbody>`;
+    s.forEach(i => { const p=calcPct(i), w=Math.min(Math.max(p,0),100); h+=`<tr><td><strong>${escapeHtml(i.collectionTeam)}</strong></td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td>${formatNumber(i.sunday)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td></tr>`; });
+    c.innerHTML = h + `</tbody></table></div>`;
 }
-
-/* ========== RENDER CLUSTER PERFORMANCE ========== */
-
-function renderCluster() {
-    const card = document.getElementById("clusterCard");
-    const head = document.getElementById("clusterHead");
-    const body = document.getElementById("clusterBody");
-
-    if (!clusterData || !clusterData.headers || !clusterData.rows || clusterData.rows.length === 0) {
-        card.style.display = "none";
-        head.innerHTML = "";
-        body.innerHTML = "";
-        return;
-    }
-
-    card.style.display = "block";
-
-    const headers = clusterData.headers;
-    const dates   = clusterData.dates || [];
-
-    /* ---- Extract unique day names from header pairs ---- */
-    /* headers = ["CLUSTER","MONDAY TARGET","MONDAY ACHIEVED","TUESDAY TARGET",...] */
-    const dayNames = [];
-    for (let i = 1; i < headers.length; i += 2) {
-        const parts = String(headers[i] || "").trim().split(/\s+/);
-        dayNames.push(parts[0]);  // "MONDAY", "TUESDAY", ...
-    }
-
-    /* ---- Build grouped <thead> ---- */
-    /* Row 1: CLUSTER (rowspan 2) | MONDAY (colspan 2) | TUESDAY (colspan 2) | … */
-    let headHtml = "<tr>";
-    headHtml += '<th rowspan="2">CLUSTER</th>';
-    dayNames.forEach(day => {
-        headHtml += `<th colspan="2">${escapeHtml(day)}</th>`;
-    });
-    headHtml += "</tr>";
-
-    /* Row 2: TARGET | ACHIEVED repeated */
-    headHtml += "<tr>";
-    dayNames.forEach(() => {
-        headHtml += "<th>TARGET</th><th>ACHIEVED</th>";
-    });
-    headHtml += "</tr>";
-
-    /* Row 3 (dates): one date per day-pair, colspan 2 */
-    if (dates.length > 0) {
-        headHtml += '<tr class="date-row">';
-        headHtml += "<th></th>";
-        for (let i = 1; i < dates.length; i += 2) {
-            const dateStr = String(dates[i] || "").trim();
-            headHtml += `<th colspan="2" class="date-header">${escapeHtml(dateStr)}</th>`;
-        }
-        headHtml += "</tr>";
-    }
-
-    head.innerHTML = headHtml;
-
-    /* ---- Build <tbody> ---- */
-    let bodyHtml = "";
-    clusterData.rows.forEach(row => {
-        const firstCell = String(row[0] || "").toUpperCase().trim();
-        const isTotal   = firstCell === "TOTAL";
-        bodyHtml += `<tr class="${isTotal ? "total-row" : ""}">`;
-        row.forEach((cell, idx) => {
-            if (idx === 0) {
-                bodyHtml += `<td><strong>${escapeHtml(cell)}</strong></td>`;
-            } else {
-                bodyHtml += `<td>${formatReportCell(cell)}</td>`;
-            }
-        });
-        bodyHtml += "</tr>";
-    });
-    body.innerHTML = bodyHtml;
-}
-
-/* ========== RENDER CLUSTER CARDS VIEW ========== */
-
-function renderClusterCards() {
-    const grid = document.getElementById("clustersGrid");
-
-    if (!clusterData || !clusterData.rows || clusterData.rows.length === 0) {
-        grid.innerHTML = '<div class="empty-state">No cluster data found.</div>';
-        return;
-    }
-
-    let html = "";
-    
-    clusterData.rows.forEach(row => {
-        const clusterName = String(row[0] || "").trim();
-        // Skip the TOTAL row as we want to show individual cards
-        if (clusterName.toUpperCase() === "TOTAL") return;
-
-        let target = 0, achieved = 0;
-        // row structure: [Name, MonTarget, MonAch, TueTarget, TueAch, ...]
-        for (let i = 1; i < row.length; i += 2) {
-            target += Number(row[i]) || 0;
-            achieved += Number(row[i+1]) || 0;
-        }
-
-        const balance = target - achieved;
-        const pct = target > 0 ? (achieved / target) * 100 : 0;
-        const safe = Math.min(Math.max(pct, 0), 100);
-
-        html += `
-        <div class="cluster-card">
-            <div class="cluster-card-header">${escapeHtml(clusterName)}</div>
-            <div class="cluster-card-body">
-                <div class="cluster-stat">
-                    <span class="stat-label">Total Target</span>
-                    <span class="stat-value">${formatNumber(target)}</span>
-                </div>
-                <div class="cluster-stat">
-                    <span class="stat-label">Total Achieved</span>
-                    <span class="stat-value achieved">${formatNumber(achieved)}</span>
-                </div>
-                <div class="cluster-stat">
-                    <span class="stat-label">Balance</span>
-                    <span class="stat-value deficit">${formatNumber(balance)}</span>
-                </div>
-                <div class="percentage-wrapper cluster-progress">
-                    <div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div>
-                    <div class="percentage-text">${pct.toFixed(1)}%</div>
-                </div>
-            </div>
-        </div>`;
-    });
-
-    grid.innerHTML = html;
-}
-
-/* ========== RENDER REPORT CARD (Weekly / Monthly) ========== */
-
-function renderReportCard(cardId, headId, bodyId, reportData) {
-    const card = document.getElementById(cardId); const head = document.getElementById(headId); const body = document.getElementById(bodyId);
-    if (!reportData || !reportData.headers || !reportData.rows || reportData.rows.length === 0) { card.style.display = "none"; head.innerHTML = ""; body.innerHTML = ""; return; }
-    card.style.display = "block";
-    let headHtml = "<tr>"; reportData.headers.forEach(h => { headHtml += `<th>${escapeHtml(h)}</th>`; }); headHtml += "</tr>";
-    head.innerHTML = headHtml;
-    let bodyHtml = "";
-    reportData.rows.forEach(row => {
-        const hasData = row.some(v => v !== "" && v !== null && v !== undefined); if (!hasData) return;
-        const firstCell = String(row[0] || "").toUpperCase().trim(); const isTotal = firstCell === "TOTAL" || firstCell === "TOTAL ";
-        bodyHtml += `<tr class="${isTotal ? "total-row" : ""}">`;
-        row.forEach((cell, idx) => { if (idx === 0) bodyHtml += `<td><strong>${escapeHtml(cell)}</strong></td>`; else bodyHtml += `<td>${formatReportCell(cell)}</td>`; });
-        bodyHtml += "</tr>";
-    });
-    body.innerHTML = bodyHtml;
-}
-
-/* ========== RENDER DEFERRED SUMMARY (5 columns + TOTAL row) ========== */
-
-function renderDeferredSummary() {
-    const card = document.getElementById("deferredSummaryCard");
-    const tbody = document.getElementById("deferredSummaryBody");
-
-    if (!deferredData || deferredData.length === 0) {
-        card.style.display = "none"; tbody.innerHTML = ""; return;
-    }
-
-    card.style.display = "block";
-
-    const driMap = new Map();
-    deferredData.forEach(row => {
-        const dri = String(row.dri || row.collectionTeam || "Unknown");
-        if (!driMap.has(dri)) { driMap.set(dri, { dri: dri, totalTarget: 0, week4Collection: 0 }); }
-        const item = driMap.get(dri);
-        item.totalTarget += Number(row.target || row.totalTarget || 0);
-        item.week4Collection += Number(row.week4Collection || row.achieved || 0);
-    });
-
-    const driData = Array.from(driMap.values()).map(item => {
-        const deficit = item.totalTarget - item.week4Collection;
-        let performance = 0;
-        if (item.totalTarget > 0) { performance = (item.week4Collection / item.totalTarget) * 100; }
-        return { dri: item.dri, totalTarget: item.totalTarget, week4Collection: item.week4Collection, deficit: deficit, performance: performance };
-    }).sort((a, b) => b.performance - a.performance);
-
-    let html = "";
-    driData.forEach(item => {
-        const barWidth = Math.min(Math.max(item.performance, 0), 100);
-        html += `<tr>
-<td><strong>${escapeHtml(item.dri)}</strong></td>
-<td>${formatNumber(item.totalTarget)}</td>
-<td>${formatNumber(item.week4Collection)}</td>
-<td class="deficit-cell">${formatNumber(item.deficit)}</td>
-<td class="percentage-cell"><div class="percentage-wrapper">
-<div class="progress"><div class="progress-bar ${getStatusClass(item.performance)}" style="width:${barWidth}%;"></div></div>
-<div class="percentage-text">${item.performance.toFixed(1)}%</div></div></td>
-</tr>`;
-    });
-
-    // ---- TOTAL row ----
-    let gTarget = 0, gWeek4 = 0, gDeficit = 0;
-    driData.forEach(item => { gTarget += item.totalTarget; gWeek4 += item.week4Collection; gDeficit += item.deficit; });
-    const gPct = gTarget > 0 ? (gWeek4 / gTarget) * 100 : 0;
-    const gBar = Math.min(Math.max(gPct, 0), 100);
-
-    html += `<tr class="total-row">
-<td><strong>TOTAL</strong></td>
-<td>${formatNumber(gTarget)}</td>
-<td>${formatNumber(gWeek4)}</td>
-<td class="deficit-cell">${formatNumber(gDeficit)}</td>
-<td class="percentage-cell"><div class="percentage-wrapper">
-<div class="progress"><div class="progress-bar ${getStatusClass(gPct)}" style="width:${gBar}%;"></div></div>
-<div class="percentage-text">${gPct.toFixed(1)}%</div></div></td>
-</tr>`;
-
-    tbody.innerHTML = html;
-}
-
-/* ========== RENDER BRANCHES (per-row + TOTAL row) ==========
-   The TOTAL row is calculated from the filtered data.
-   When filters are applied, the TOTAL reflects
-   only the filtered rows.
-===================================================== */
 
 function renderBranches(data) {
-    const tbody = document.getElementById("branchesBody");
-    if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">No collection data found for the selected filters.</div></td></tr>`;
-        return;
-    }
-
-    const sortedData = [...data].sort((a, b) => getPercentage(b.target, b.achieved) - getPercentage(a.target, a.achieved));
-    let html = "";
-
-    // Data rows
-    sortedData.forEach(row => {
-        const pct = getPercentage(row.target, row.achieved); const safe = Math.min(Math.max(pct, 0), 100);
-        html += `<tr><td><strong>${escapeHtml(row.collectionTeam)}</strong></td><td>${escapeHtml(row.branch)}</td><td>${formatNumber(row.target)}</td><td>${formatNumber(row.achieved)}</td><td>${formatNumber(row.sunday)}</td><td>${formatNumber(row.monday)}</td><td>${formatNumber(row.tuesday)}</td><td>${formatNumber(row.wednesday)}</td><td>${formatNumber(row.thursday)}</td><td>${formatNumber(row.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div><div class="percentage-text">${pct.toFixed(1)}%</div></div></td></tr>`;
-    });
-
-    // ---- TOTAL row (calculated from filtered data) ----
-    let tTarget = 0, tAchieved = 0, tSun = 0, tMon = 0, tTue = 0, tWed = 0, tThu = 0, tFri = 0;
-    data.forEach(row => {
-        tTarget += Number(row.target) || 0; tAchieved += Number(row.achieved) || 0;
-        tSun += Number(row.sunday) || 0; tMon += Number(row.monday) || 0;
-        tTue += Number(row.tuesday) || 0; tWed += Number(row.wednesday) || 0;
-        tThu += Number(row.thursday) || 0; tFri += Number(row.friday) || 0;
-    });
-    const tPct = tTarget > 0 ? (tAchieved / tTarget) * 100 : 0;
-    const tSafe = Math.min(Math.max(tPct, 0), 100);
-
-    html += `<tr class="total-row">
-<td><strong>TOTAL</strong></td>
-<td></td>
-<td>${formatNumber(tTarget)}</td>
-<td>${formatNumber(tAchieved)}</td>
-<td>${formatNumber(tSun)}</td>
-<td>${formatNumber(tMon)}</td>
-<td>${formatNumber(tTue)}</td>
-<td>${formatNumber(tWed)}</td>
-<td>${formatNumber(tThu)}</td>
-<td>${formatNumber(tFri)}</td>
-<td class="percentage-cell"><div class="percentage-wrapper">
-<div class="progress"><div class="progress-bar ${getStatusClass(tPct)}" style="width:${tSafe}%;"></div></div>
-<div class="percentage-text">${tPct.toFixed(1)}%</div></div></td>
-</tr>`;
-
-    tbody.innerHTML = html;
+    const c = document.getElementById("branchesContainer"); if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`; return; }
+    let h = `<div class="table-container"><table><thead><tr><th>TEAM</th><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>%</th></tr></thead><tbody>`;
+    data.forEach(i => { const p=getPercentage(i.target,i.achieved), w=Math.min(Math.max(p,0),100); h+=`<tr><td><strong>${escapeHtml(i.collectionTeam)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td>${formatNumber(i.sunday)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td></tr>`; });
+    c.innerHTML = h + `</tbody></table></div>`;
 }
-
-/* ========== RENDER DEFERRED (per-row + TOTAL row) ==========
-   The TOTAL row is calculated from the filtered data.
-   When filters are applied, the TOTAL reflects
-   only the filtered rows.
-===================================================== */
 
 function renderDeferred(data) {
-    const tbody = document.getElementById("deferredBody");
-    if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="14"><div class="empty-state">No deferred/partial data found for the selected filters.</div></td></tr>`;
-        return;
-    }
-
-    const sortedData = [...data].sort((a, b) => {
-        const wA = Number(a.week4Collection || a.achieved || 0);
-        const tA = Number(a.target || a.totalTarget || 0);
-        const wB = Number(b.week4Collection || b.achieved || 0);
-        const tB = Number(b.target || b.totalTarget || 0);
-        const pctA = tA > 0 ? (wA / tA) * 100 : 0;
-        const pctB = tB > 0 ? (wB / tB) * 100 : 0;
-        return pctB - pctA;
-    });
-
-    let html = "";
-
-    // Data rows
-    sortedData.forEach(row => {
-        const dri               = row.dri || row.collectionTeam || "";
-        const branch            = row.branch || "";
-        const deferredTarget    = Number(row.deferredTarget || 0);
-        const partialTarget     = Number(row.partialTarget || 0);
-        const totalTarget       = Number(row.target || row.totalTarget || 0);
-        const monday            = Number(row.monday || 0);
-        const tuesday           = Number(row.tuesday || 0);
-        const wednesday         = Number(row.wednesday || 0);
-        const thursday          = Number(row.thursday || 0);
-        const friday            = Number(row.friday || 0);
-        const week4Collection   = Number(row.week4Collection || row.achieved || 0);
-        const deficit           = totalTarget - week4Collection;
-        const pct               = totalTarget > 0 ? (week4Collection / totalTarget) * 100 : 0;
-        const safe              = Math.min(Math.max(pct, 0), 100);
-        const collectionMarshal = row.collectionMarshal || "";
-
-        html += `<tr>
-<td><strong>${escapeHtml(dri)}</strong></td>
-<td>${escapeHtml(branch)}</td>
-<td>${formatNumber(deferredTarget)}</td>
-<td>${formatNumber(partialTarget)}</td>
-<td>${formatNumber(totalTarget)}</td>
-<td>${formatNumber(monday)}</td>
-<td>${formatNumber(tuesday)}</td>
-<td>${formatNumber(wednesday)}</td>
-<td>${formatNumber(thursday)}</td>
-<td>${formatNumber(friday)}</td>
-<td>${formatNumber(week4Collection)}</td>
-<td class="deficit-cell">${formatNumber(deficit)}</td>
-<td class="percentage-cell"><div class="percentage-wrapper">
-<div class="progress"><div class="progress-bar ${getStatusClass(pct)}" style="width:${safe}%;"></div></div>
-<div class="percentage-text">${pct.toFixed(1)}%</div></div></td>
-<td>${escapeHtml(collectionMarshal)}</td>
-</tr>`;
-    });
-
-    // ---- TOTAL row (calculated from filtered data) ----
-    let tDeferred = 0, tPartial = 0, tTotalTarget = 0;
-    let tMon = 0, tTue = 0, tWed = 0, tThu = 0, tFri = 0;
-    let tWeek4 = 0;
-
-    data.forEach(row => {
-        tDeferred += Number(row.deferredTarget || 0);
-        tPartial += Number(row.partialTarget || 0);
-        tTotalTarget += Number(row.target || row.totalTarget || 0);
-        tMon += Number(row.monday || 0);
-        tTue += Number(row.tuesday || 0);
-        tWed += Number(row.wednesday || 0);
-        tThu += Number(row.thursday || 0);
-        tFri += Number(row.friday || 0);
-        tWeek4 += Number(row.week4Collection || row.achieved || 0);
-    });
-
-    const tDeficit = tTotalTarget - tWeek4;
-    const tPct = tTotalTarget > 0 ? (tWeek4 / tTotalTarget) * 100 : 0;
-    const tSafe = Math.min(Math.max(tPct, 0), 100);
-
-    html += `<tr class="total-row">
-<td><strong>TOTAL</strong></td>
-<td></td>
-<td>${formatNumber(tDeferred)}</td>
-<td>${formatNumber(tPartial)}</td>
-<td>${formatNumber(tTotalTarget)}</td>
-<td>${formatNumber(tMon)}</td>
-<td>${formatNumber(tTue)}</td>
-<td>${formatNumber(tWed)}</td>
-<td>${formatNumber(tThu)}</td>
-<td>${formatNumber(tFri)}</td>
-<td>${formatNumber(tWeek4)}</td>
-<td class="deficit-cell">${formatNumber(tDeficit)}</td>
-<td class="percentage-cell"><div class="percentage-wrapper">
-<div class="progress"><div class="progress-bar ${getStatusClass(tPct)}" style="width:${tSafe}%;"></div></div>
-<div class="percentage-text">${tPct.toFixed(1)}%</div></div></td>
-<td></td>
-</tr>`;
-
-    tbody.innerHTML = html;
+    const c = document.getElementById("deferredContainer"); if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No portfolio data.</div></div>`; return; }
+    let h = `<div class="table-container"><table><thead><tr><th>DRI</th><th>BRANCH</th><th>TOTAL TGT</th><th>DEF TGT</th><th>PART TGT</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>COLLECTED</th><th>DEFICIT</th><th>%</th><th>MARSHAL</th></tr></thead><tbody>`;
+    data.forEach(i => { const p=getPercentage(i.target,i.week4Collection), w=Math.min(Math.max(p,0),100), def=Math.max(0,i.target-i.week4Collection); h+=`<tr><td><strong>${escapeHtml(i.dri)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.deferredTarget)}</td><td>${formatNumber(i.partialTarget)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td>${formatNumber(i.week4Collection)}</td><td class="deficit-cell">${formatNumber(def)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td><td>${escapeHtml(i.collectionMarshal)}</td></tr>`; });
+    c.innerHTML = h + `</tbody></table></div>`;
 }
 
-/* ========== INIT + AUTO REFRESH ========== */
+function renderRecovery(recoveryData) {
+    const branchMap = new Map(); recoveryData.forEach(r => { if(!branchMap.has(r.branch)) branchMap.set(r.branch, {target:0, achieved:0}); const m = branchMap.get(r.branch); m.target+=r.target; m.achieved+=r.achieved; });
+    let h1=""; Array.from(branchMap.entries()).sort((a,b)=>b[1].target-a[1].target).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h1+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
+    document.getElementById("recoveryBranchBody").innerHTML = h1;
 
-window.addEventListener("load", () => loadData());
-setInterval(() => loadData(), 300000);
+    const teamMap = new Map(); recoveryData.forEach(r => { if(!teamMap.has(r.dri)) teamMap.set(r.dri, {target:0, achieved:0}); const m = teamMap.get(r.dri); m.target+=r.target; m.achieved+=r.achieved; });
+    let h2=""; Array.from(teamMap.entries()).sort((a,b)=>b[1].target-a[1].target).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
+    document.getElementById("recoveryTeamBody").innerHTML = h2;
 
+    const clusterMap = buildClusterData(recoveryData); const c = document.getElementById("recoveryClusterGrid"); 
+    if (!Object.keys(clusterMap).length) { c.innerHTML = `<div class="empty-state">No cluster data.</div>`; return; }
+    let h3 = ""; Object.keys(clusterMap).sort().forEach(cl => { const cd = clusterMap[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
+    h3+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
+    c.innerHTML = h3;
+}
+
+function renderClusterView(clusterData) {
+    const uCard = document.getElementById("unscheduledCard"); const uBody = document.getElementById("unscheduledBody");
+    if (unscheduledAggregated.target > 0) {
+        uCard.style.display = "block";
+        uBody.innerHTML = `<tr><td>${formatNumber(unscheduledAggregated.target)}</td><td>${formatNumber(unscheduledAggregated.achieved)}</td><td class="deficit-cell">${formatNumber(unscheduledAggregated.deficit)}</td></tr>`;
+    } else { uCard.style.display = "none"; }
+    renderClusterCards(clusterData);
+}
+
+function renderClusterCards(clusterData) {
+    const c = document.getElementById("clustersGrid"); if (!Object.keys(clusterData).length) { c.innerHTML = `<div class="empty-state">No scheduled cluster data.</div>`; return; }
+    let h = ""; Object.keys(clusterData).sort().forEach(cl => { const cd = clusterData[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
+    h+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
+    c.innerHTML = h;
+}
+
+function renderDeferredSummary(data) {
+    if (!data.length) { document.getElementById("deferredSummaryCard").style.display="none"; document.getElementById("marshalSummaryCard").style.display="none"; return; }
+    const driMap = new Map(); data.forEach(r => { if(!driMap.has(r.dri)) driMap.set(r.dri, {target:0, collected:0}); const m=driMap.get(r.dri); m.target+=r.target; m.collected+=r.week4Collection; });
+    let h1=""; Array.from(driMap.entries()).sort((a,b)=>(b[1].collected/b[1].target||0)-(a[1].collected/a[1].target||0)).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.collected), p=i.target>0?(i.collected/i.target*100):0; h1+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.collected)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
+    document.getElementById("deferredSummaryBody").innerHTML = h1; document.getElementById("deferredSummaryCard").style.display="block";
+    const marMap = new Map(); data.forEach(r => { if(!marMap.has(r.collectionMarshal)) marMap.set(r.collectionMarshal, {target:0, collected:0}); const m=marMap.get(r.collectionMarshal); m.target+=r.target; m.collected+=r.week4Collection; });
+    let h2=""; Array.from(marMap.entries()).sort((a,b)=>(b[1].collected/b[1].target||0)-(a[1].collected/a[1].target||0)).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.collected), p=i.target>0?(i.collected/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.collected)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
+    document.getElementById("marshalSummaryBody").innerHTML = h2; document.getElementById("marshalSummaryCard").style.display="block";
+}
+
+function renderClusterTable(clusterData) {
+    const card = document.getElementById("clusterCard"), thead = document.getElementById("clusterHead"), tbody = document.getElementById("clusterBody");
+    if (!Object.keys(clusterData).length) { card.style.display="none"; return; } card.style.display="block";
+    const allDates = new Set(); Object.values(clusterData).forEach(c => Object.keys(c.days).forEach(d => allDates.add(d))); const sortedDates = Array.from(allDates).sort();
+    let headHtml = "<tr><th>CLUSTER</th><th>TOTAL TARGET</th><th>TOTAL ACHIEVED</th><th>%</th>"; sortedDates.forEach(d => { headHtml += `<th>${formatDisplayDate(d)} TGT</th><th>${formatDisplayDate(d)} ACH</th>`; }); headHtml += "</tr>"; thead.innerHTML = headHtml;
+    let bodyHtml = ""; const gT = {target:0, achieved:0, days:{}};
+    Object.keys(clusterData).sort().forEach(cl => { const c = clusterData[cl]; const p = c.totalTarget>0?(c.totalAchieved/c.totalTarget*100):0; bodyHtml += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`; sortedDates.forEach(d => { const dayData = c.days[d] || {target:0, achieved:0}; bodyHtml += `<td>${formatNumber(dayData.target)}</td><td>${formatNumber(dayData.achieved)}</td>`; }); bodyHtml += `</tr>`; gT.target+=c.totalTarget; gT.achieved+=c.totalAchieved; });
+    const gP = gT.target>0?(gT.achieved/gT.target*100):0; let totalHtml = `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(gT.target)}</td><td>${formatNumber(gT.achieved)}</td><td>${gP.toFixed(1)}%</td>`;
+    sortedDates.forEach(d => { let t=0,a=0; Object.values(clusterData).forEach(c => { if(c.days[d]){t+=c.days[d].target; a+=c.days[d].achieved;} }); totalHtml += `<td>${formatNumber(t)}</td><td>${formatNumber(a)}</td>`; }); totalHtml += "</tr>"; tbody.innerHTML = bodyHtml + totalHtml;
+}
+
+document.addEventListener("DOMContentLoaded", () => { setDatePreset("today"); loadData(); setInterval(() => loadData(), 300000); });
 </script>
-
 </body>
 </html>
