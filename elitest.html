@@ -408,7 +408,8 @@ function renderDefermentOverview(stats) {
 
 function renderDefermentByDimension(map, tbodyId) {
     const entries = Array.from(map.entries()).filter(([, e]) => e.target > 0 || e.d1Count > 0 || e.d2Count > 0);
-    entries.sort((a, b) => (b[1].d2Value - a[1].d2Value) || (b[1].d1Value - a[1].d1Value) || (b[1].target - a[1].target));
+    /* Descending by performance (% achieved), like the Summary table; ties broken by bigger target first */
+    entries.sort((a, b) => (perfPct(b[1].target, b[1].achieved) - perfPct(a[1].target, a[1].achieved)) || (b[1].target - a[1].target));
     if (!entries.length) { document.getElementById(tbodyId).innerHTML = `<tr><td colspan="8" style="text-align:center;color:#64748b;font-style:italic;">No data for the current selection.</td></tr>`; return; }
     let h = ""; const T = mkDeferEntry();
     entries.forEach(([name, e]) => {
@@ -452,7 +453,7 @@ function renderTopDeferred(rows) {
     tbody.innerHTML = h;
 }
 
-/* ================= DAILY SUMMARY LOCAL DATE FILTER (calendar month — original logic) ================= */
+/* ================= DAILY SUMMARY LOCAL DATE FILTER (calendar month) ================= */
 function getMonthRange() {
     const now = new Date();
     return { start: toISO(new Date(now.getFullYear(), now.getMonth(), 1)), end: toISO(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
@@ -614,6 +615,7 @@ function switchView(view) {
 }
 
 function calcPct(item) { return item.target > 0 ? (item.achieved / item.target) * 100 : 0; }
+function perfPct(target, achieved) { return target > 0 ? (achieved / target) * 100 : 0; }
 function getPercentage(t, a) { return t <= 0 ? 0 : (a / t) * 100; }
 function getStatusClass(v) { return v >= 90 ? "high" : v >= 70 ? "medium" : "low"; }
 function formatNumber(value) { return Number(value || 0).toLocaleString("en-KE", { maximumFractionDigits: 2 }); }
@@ -665,6 +667,7 @@ function renderDailySummary(rawRows) {
         m.target += Number(r.target) || 0;
         m.achieved += Number(r.achieved) || 0;
     });
+    /* Chronological — this is a time-series table, not a ranking */
     const days = Array.from(dailyMap.entries()).sort((a,b) => a[0].localeCompare(b[0]));
 
     const hasUnscheduled = unscheduledAggregated.target > 0 || unscheduledAggregated.achieved > 0;
@@ -694,6 +697,8 @@ function renderDailySummary(rawRows) {
 
 function renderBranches(data) {
     const c = document.getElementById("branchesContainer"); if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`; return; }
+    /* Descending by performance (% achieved) */
+    data = [...data].sort((a,b) => perfPct(b.target, b.achieved) - perfPct(a.target, a.achieved));
     let h = `<div class="table-container"><table><thead><tr><th>TEAM</th><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>%</th></tr></thead><tbody>`;
     data.forEach(i => { const p=getPercentage(i.target,i.achieved), w=Math.min(Math.max(p,0),100); h+=`<tr><td><strong>${escapeHtml(i.collectionTeam)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td>${formatNumber(i.sunday)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td></tr>`; });
     c.innerHTML = h + `</tbody></table></div>`;
@@ -701,23 +706,29 @@ function renderBranches(data) {
 
 function renderDeferred(data) {
     const c = document.getElementById("deferredContainer"); if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No portfolio data.</div></div>`; return; }
+    /* Descending by performance (% achieved vs collected) */
+    data = [...data].sort((a,b) => perfPct(b.target, b.week4Collection) - perfPct(a.target, a.week4Collection));
     let h = `<div class="table-container"><table><thead><tr><th>DRI</th><th>BRANCH</th><th>TOTAL TGT</th><th>DEF TGT</th><th>PART TGT</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>COLLECTED</th><th>DEFICIT</th><th>%</th><th>MARSHAL</th></tr></thead><tbody>`;
     data.forEach(i => { const p=getPercentage(i.target,i.week4Collection), w=Math.min(Math.max(p,0),100), def=Math.max(0,i.target-i.week4Collection); h+=`<tr><td><strong>${escapeHtml(i.dri)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.deferredTarget)}</td><td>${formatNumber(i.partialTarget)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td>${formatNumber(i.week4Collection)}</td><td class="deficit-cell">${formatNumber(def)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td><td>${escapeHtml(i.collectionMarshal)}</td></tr>`; });
     c.innerHTML = h + `</tbody></table></div>`;
 }
 
 function renderRecovery(recoveryData) {
+    /* Branchwise — descending by performance (% achieved) */
     const branchMap = new Map(); recoveryData.forEach(r => { if(!branchMap.has(r.branch)) branchMap.set(r.branch, {target:0, achieved:0}); const m = branchMap.get(r.branch); m.target+=r.target; m.achieved+=r.achieved; });
-    let h1=""; Array.from(branchMap.entries()).sort((a,b)=>b[1].target-a[1].target).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h1+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
+    let h1=""; Array.from(branchMap.entries()).sort((a,b)=>perfPct(b[1].target,b[1].achieved)-perfPct(a[1].target,a[1].achieved)).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h1+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
     document.getElementById("recoveryBranchBody").innerHTML = h1;
 
+    /* Team — descending by performance (% achieved) */
     const teamMap = new Map(); recoveryData.forEach(r => { if(!teamMap.has(r.dri)) teamMap.set(r.dri, {target:0, achieved:0}); const m = teamMap.get(r.dri); m.target+=r.target; m.achieved+=r.achieved; });
-    let h2=""; Array.from(teamMap.entries()).sort((a,b)=>b[1].target-a[1].target).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
+    let h2=""; Array.from(teamMap.entries()).sort((a,b)=>perfPct(b[1].target,b[1].achieved)-perfPct(a[1].target,a[1].achieved)).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
     document.getElementById("recoveryTeamBody").innerHTML = h2;
 
+    /* Cluster cards — descending by performance (% achieved) */
     const clusterMap = buildClusterData(recoveryData); const c = document.getElementById("recoveryClusterGrid"); 
     if (!Object.keys(clusterMap).length) { c.innerHTML = `<div class="empty-state">No cluster data.</div>`; return; }
-    let h3 = ""; Object.keys(clusterMap).sort().forEach(cl => { const cd = clusterMap[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
+    const sortedClusters = Object.keys(clusterMap).sort((x,y) => perfPct(clusterMap[y].totalTarget, clusterMap[y].totalAchieved) - perfPct(clusterMap[x].totalTarget, clusterMap[x].totalAchieved));
+    let h3 = ""; sortedClusters.forEach(cl => { const cd = clusterMap[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
     h3+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
     c.innerHTML = h3;
 }
@@ -733,7 +744,9 @@ function renderClusterView(clusterData) {
 
 function renderClusterCards(clusterData) {
     const c = document.getElementById("clustersGrid"); if (!Object.keys(clusterData).length) { c.innerHTML = `<div class="empty-state">No scheduled cluster data.</div>`; return; }
-    let h = ""; Object.keys(clusterData).sort().forEach(cl => { const cd = clusterData[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
+    /* Descending by performance (% achieved) */
+    const sortedClusters = Object.keys(clusterData).sort((x,y) => perfPct(clusterData[y].totalTarget, clusterData[y].totalAchieved) - perfPct(clusterData[x].totalTarget, clusterData[x].totalAchieved));
+    let h = ""; sortedClusters.forEach(cl => { const cd = clusterData[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
     h+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
     c.innerHTML = h;
 }
@@ -757,9 +770,11 @@ function renderClusterTable(clusterData) {
     head1 += `</tr>`; head2 += `</tr>`;
     thead.innerHTML = head1 + head2;
 
+    /* Cluster rows — descending by performance (% achieved) */
+    const sortedClusters = Object.keys(clusterData).sort((x,y) => perfPct(clusterData[y].totalTarget, clusterData[y].totalAchieved) - perfPct(clusterData[x].totalTarget, clusterData[x].totalAchieved));
     let bodyHtml = "";
     const gT = { target: 0, achieved: 0 };
-    Object.keys(clusterData).sort().forEach(cl => {
+    sortedClusters.forEach(cl => {
         const c = clusterData[cl];
         const p = c.totalTarget > 0 ? (c.totalAchieved / c.totalTarget * 100) : 0;
         bodyHtml += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`;
