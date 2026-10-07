@@ -96,6 +96,12 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .unscheduled-hint { padding: 12px 20px 16px; font-size: 12px; color: #94a3b8; font-style: italic; border-top: 1px dashed #2a3a55; }
 .unscheduled-hint strong { color: #f59e0b; font-style: normal; }
 
+/* ---- Daily Collections Summary Calendar Highlights ---- */
+.report-table tbody tr.today-row { background-color: rgba(250, 204, 21, 0.15) !important; box-shadow: inset 4px 0 0 #facc15; }
+.report-table tbody tr.today-row td { color: #fef08a; font-weight: 700; }
+.report-table tbody tr.today-row td.deficit-cell { color: #fca5a5 !important; }
+.report-table tbody tr.missed-past td { color: #f87171 !important; }
+
 /* ---- Daily Collections Summary local controls (independent of .date-preset) ---- */
 .daily-controls { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dc-btn { padding: 5px 12px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: .3px; white-space: nowrap; box-shadow: none; }
@@ -674,6 +680,8 @@ function renderDailySummary(rawRows) {
     if (!days.length && !hasUnscheduled) { card.style.display = "none"; return; }
     card.style.display = "block";
 
+    const todayStr = toISO(new Date()); // Get today's date for highlighting
+
     let h = "";
     if (!days.length) {
         h = `<tr><td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">No scheduled collections in the selected range.</td></tr>`;
@@ -682,7 +690,17 @@ function renderDailySummary(rawRows) {
         days.forEach(([d, v]) => {
             const deficit = Math.max(0, v.target - v.achieved);
             T.target += v.target; T.achieved += v.achieved;
-            h += `<tr><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(deficit)}</td></tr>`;
+            
+            /* Determine highlighting */
+            let rowClass = "";
+            if (d === todayStr) {
+                rowClass += " today-row";
+            }
+            if (d < todayStr && v.achieved < v.target) {
+                rowClass += " missed-past";
+            }
+            
+            h += `<tr class="${rowClass.trim()}"><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(deficit)}</td></tr>`;
         });
         const tDef = Math.max(0, T.target - T.achieved);
         h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td class="deficit-cell">${formatNumber(tDef)}</td></tr>`;
