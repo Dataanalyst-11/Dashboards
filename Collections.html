@@ -96,12 +96,6 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .unscheduled-hint { padding: 12px 20px 16px; font-size: 12px; color: #94a3b8; font-style: italic; border-top: 1px dashed #2a3a55; }
 .unscheduled-hint strong { color: #f59e0b; font-style: normal; }
 
-/* ---- Daily Collections Summary Calendar Highlights ---- */
-.report-table tbody tr.today-row { background-color: rgba(250, 204, 21, 0.15) !important; box-shadow: inset 4px 0 0 #facc15; }
-.report-table tbody tr.today-row td { color: #fef08a; font-weight: 700; }
-.report-table tbody tr.today-row td.deficit-cell { color: #fca5a5 !important; }
-.report-table tbody tr.missed-past td { color: #f87171 !important; }
-
 /* ---- Daily Collections Summary local controls (independent of .date-preset) ---- */
 .daily-controls { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dc-btn { padding: 5px 12px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: .3px; white-space: nowrap; box-shadow: none; }
@@ -125,6 +119,20 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .defer-value.warn { color: #fcd34d; }
 .defer-value.danger { color: #fca5a5; }
 .defer-sub { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+/* ---- Deferment Timeline: red = deferred (past), yellow = today ---- */
+#deferTimelineBody tr.tl-past td { background: rgba(239, 68, 68, .13) !important; }
+#deferTimelineBody tr.tl-past:hover td { background: rgba(239, 68, 68, .22) !important; }
+#deferTimelineBody tr.tl-past td:first-child { color: #fca5a5; }
+#deferTimelineBody tr.tl-today td { background: rgba(250, 204, 21, .16) !important; border-top: 1px solid rgba(250, 204, 21, .7); border-bottom: 1px solid rgba(250, 204, 21, .7); color: #fde68a; font-weight: 700; }
+#deferTimelineBody tr.tl-today:hover td { background: rgba(250, 204, 21, .25) !important; }
+#deferTimelineBody tr.tl-today td:first-child { color: #fde047; }
+.tl-legend { display: flex; gap: 18px; padding: 12px 20px 16px; font-size: 12px; color: #94a3b8; border-top: 1px dashed #2a3a55; align-items: center; flex-wrap: wrap; }
+.tl-legend-item { display: inline-flex; align-items: center; gap: 8px; }
+.tl-swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; border: 1px solid #334155; }
+.sw-past { background: rgba(239, 68, 68, .3); border-color: #ef4444; }
+.sw-today { background: rgba(250, 204, 21, .3); border-color: #facc15; }
+.sw-future { background: rgba(15, 23, 42, .8); }
 
 /* ============ CLUSTER PERFORMANCE — grouped date headers ============ */
 #clusterCard .report-table thead tr.date-row th { text-align: center; background: rgba(37, 99, 235, .14); border-left: 1px solid #334155; border-bottom: 1px solid #2563eb; color: #bfdbfe; letter-spacing: .8px; padding: 10px 8px; }
@@ -269,11 +277,12 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 <div id="defermentsContainer" style="display:none">
     <div class="report-card" style="margin-top:0"><div class="report-card-header">DEFERMENT OVERVIEW</div><div class="defer-overview-grid" id="deferOverviewGrid"></div></div>
     <div class="deferred-report-grid">
-        <div class="report-card"><div class="report-card-header">DEFERMENTS BY COLLECTION TEAM</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>TEAM</th><th>TARGET</th><th>ACHIEVED</th><th>1ST DEFERRED</th><th>1ST %</th><th>RE-DEFERRED (2ND)</th><th>2ND %</th><th>RISK</th></tr></thead><tbody id="deferTeamBody"></tbody></table></div></div>
-        <div class="report-card"><div class="report-card-header">DEFERMENTS BY BRANCH</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>1ST DEFERRED</th><th>1ST %</th><th>RE-DEFERRED (2ND)</th><th>2ND %</th><th>RISK</th></tr></thead><tbody id="deferBranchBody"></tbody></table></div></div>
+        <div class="report-card"><div class="report-card-header">DEFERMENTS BY COLLECTION TEAM</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>TEAM</th><th>TARGET</th><th>ACHIEVED</th><th>1ST DEF OUTSTANDING</th><th>1ST %</th><th>2ND DEF OUTSTANDING</th><th>2ND %</th><th>RISK</th></tr></thead><tbody id="deferTeamBody"></tbody></table></div></div>
+        <div class="report-card"><div class="report-card-header">DEFERMENTS BY BRANCH</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>1ST DEF OUTSTANDING</th><th>1ST %</th><th>2ND DEF OUTSTANDING</th><th>2ND %</th><th>RISK</th></tr></thead><tbody id="deferBranchBody"></tbody></table></div></div>
     </div>
-    <div class="report-card" style="margin-top:18px"><div class="report-card-header">DEFERMENT TIMELINE (BY DEFERMENT DATE)</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>DATE</th><th>1ST DEF ACCOUNTS</th><th>1ST DEF VALUE</th><th>RE-DEF ACCOUNTS</th><th>RE-DEF VALUE</th><th>TOTAL DEF VALUE</th></tr></thead><tbody id="deferTimelineBody"></tbody></table></div></div>
-    <div class="report-card" id="deferTopCard" style="margin-top:18px"><div class="report-card-header">TOP 15 DEFERRED ACCOUNTS</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>TEAM</th><th>BRANCH</th><th>CLUSTER</th><th>ACCOUNT TARGET</th><th>STATUS</th><th>1ST DEF DATE</th><th>2ND DEF DATE</th></tr></thead><tbody id="deferTopBody"></tbody></table></div></div>
+    <div class="report-card" style="margin-top:18px"><div class="report-card-header">DEFERMENT TIMELINE (BY DEFERMENT DATE)</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>DATE</th><th>1ST DEF ACCOUNTS</th><th>1ST DEF OUTSTANDING</th><th>RE-DEF ACCOUNTS</th><th>RE-DEF OUTSTANDING</th><th>TOTAL OUTSTANDING</th></tr></thead><tbody id="deferTimelineBody"></tbody></table></div></div>
+    <div class="tl-legend"><span class="tl-legend-item"><span class="tl-swatch sw-past"></span>Deferred — past dates</span><span class="tl-legend-item"><span class="tl-swatch sw-today"></span>Today</span><span class="tl-legend-item"><span class="tl-swatch sw-future"></span>Upcoming</span></div>
+    <div class="report-card" id="deferTopCard" style="margin-top:18px"><div class="report-card-header">TOP 15 DEFERRED ACCOUNTS</div><div class="report-table-wrapper"><table class="report-table"><thead><tr><th>TEAM</th><th>BRANCH</th><th>CLUSTER</th><th>ACCOUNT TARGET</th><th>OUTSTANDING</th><th>STATUS</th><th>1ST DEF DATE</th><th>2ND DEF DATE</th></tr></thead><tbody id="deferTopBody"></tbody></table></div></div>
 </div>
 </div>
 
@@ -290,8 +299,14 @@ let unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
 let currentAllMainRaw = [];        /* full main-flow rows, never date-filtered (Daily Collections Summary source) */
 let currentDailySourceRows = [];   /* branch/team/search-filtered version of the above */
 
+/* ===== RECOVERY DETECTION — reads COLUMN F (dri), with column E (category) as fallback ===== */
+const isRecoveryRow = (r) =>
+    String(r.dri || "").toUpperCase().trim() === "RECOVERY" ||
+    String(r.category || "").toUpperCase().trim() === "RECOVERY";
+
+/* Main flow = everything that is NOT recovery (recovery lives ONLY in the Recovery switch) */
 const isMainFlow = (r) => {
-    if (r.category === "RECOVERY") return false;
+    if (isRecoveryRow(r)) return false;
     if (r.dri === "ANDERSON WATHOME" && r.branch === "LEGAL & AUCTIONEERS") return false;
     if (r.dri === "DIANA AKHENDA" && r.branch === "PSALMS & COVIGEN") return false;
     return true;
@@ -310,7 +325,7 @@ function processAndRender() {
     const unscheduledFiltered = rawDataCache.filter(r => !r.date);
 
     const mainData = scheduledFiltered.filter(isMainFlow);
-    const recoveryData = scheduledFiltered.filter(r => r.category === "RECOVERY");
+    const recoveryData = scheduledFiltered.filter(isRecoveryRow);
 
     unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
     unscheduledFiltered.filter(isMainFlow).forEach(r => { unscheduledAggregated.target += r.target; unscheduledAggregated.achieved += r.achieved; });
@@ -358,8 +373,12 @@ function buildClusterData(rows) {
     return clusterTotals;
 }
 
-/* ================= DEFERMENTS ENGINE (columns V & X) — ACCOUNTS, not items ================= */
+/* ================= DEFERMENTS ENGINE (columns V & X) — ACCOUNTS =================
+   Deferred value (outstanding) = Target - Collection, floored at 0, per deferred account.
+   An account with both V and X dates counts in both buckets (2nd is the re-deferred subset). */
 function mkDeferEntry() { return { target:0, achieved:0, d1Count:0, d1Value:0, d2Count:0, d2Value:0 }; }
+function deferRate1(e) { return e.target > 0 ? (e.d1Value / e.target * 100) : 0; }
+function deferRate2(e) { return e.target > 0 ? (e.d2Value / e.target * 100) : 0; }
 
 function buildDefermentStats(rows) {
     const s = {
@@ -370,6 +389,7 @@ function buildDefermentStats(rows) {
     };
     rows.forEach(r => {
         const val = Number(r.target) || 0, ach = Number(r.achieved) || 0;
+        const out = Math.max(0, val - ach);   /* deferred outstanding = Target - Collection */
         s.totalTarget += val; s.totalAchieved += ach;
         const tKey = r.dri || "UNKNOWN", bKey = r.branch || "UNKNOWN";
         if (!s.byTeam.has(tKey)) s.byTeam.set(tKey, mkDeferEntry());
@@ -377,14 +397,14 @@ function buildDefermentStats(rows) {
         const bt = s.byTeam.get(tKey), bb = s.byBranch.get(bKey);
         bt.target += val; bt.achieved += ach; bb.target += val; bb.achieved += ach;
         if (r.firstDeferral) {
-            s.d1Count++; s.d1Value += val; bt.d1Count++; bt.d1Value += val; bb.d1Count++; bb.d1Value += val;
+            s.d1Count++; s.d1Value += out; bt.d1Count++; bt.d1Value += out; bb.d1Count++; bb.d1Value += out;
             if (!s.timeline1.has(r.firstDeferral)) s.timeline1.set(r.firstDeferral, { count:0, value:0 });
-            const t1 = s.timeline1.get(r.firstDeferral); t1.count++; t1.value += val;
+            const t1 = s.timeline1.get(r.firstDeferral); t1.count++; t1.value += out;
         }
         if (r.secondDeferral) {
-            s.d2Count++; s.d2Value += val; bt.d2Count++; bt.d2Value += val; bb.d2Count++; bb.d2Value += val;
+            s.d2Count++; s.d2Value += out; bt.d2Count++; bt.d2Value += out; bb.d2Count++; bb.d2Value += out;
             if (!s.timeline2.has(r.secondDeferral)) s.timeline2.set(r.secondDeferral, { count:0, value:0 });
-            const t2 = s.timeline2.get(r.secondDeferral); t2.count++; t2.value += val;
+            const t2 = s.timeline2.get(r.secondDeferral); t2.count++; t2.value += out;
         }
         if (r.firstDeferral || r.secondDeferral) s.top.push(r);
     });
@@ -402,31 +422,30 @@ function renderDefermentsView(stats) {
 }
 
 function renderDefermentOverview(stats) {
-    const rate1 = stats.totalTarget > 0 ? (stats.d1Value / stats.totalTarget * 100) : 0;
-    const rate2 = stats.totalTarget > 0 ? (stats.d2Value / stats.totalTarget * 100) : 0;
+    const rate1 = deferRate1({ target: stats.totalTarget, d1Value: stats.d1Value });
+    const rate2 = deferRate2({ target: stats.totalTarget, d2Value: stats.d2Value });
     const pct = stats.totalTarget > 0 ? (stats.totalAchieved / stats.totalTarget * 100) : 0;
     document.getElementById("deferOverviewGrid").innerHTML = `
         <div class="defer-box"><div class="stat-label">Portfolio Target</div><div class="defer-value">${formatNumber(stats.totalTarget)}</div><div class="defer-sub">${stats.accountCount} accounts monitored</div></div>
-        <div class="defer-box"><div class="stat-label">1st Deferments (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} accounts • ${rate1.toFixed(1)}% of target</div></div>
-        <div class="defer-box"><div class="stat-label">Re-Deferments (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} accounts • ${rate2.toFixed(1)}% of target</div></div>
+        <div class="defer-box"><div class="stat-label">1st Deferred — Outstanding (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} accounts • ${rate1.toFixed(1)}% of target</div></div>
+        <div class="defer-box"><div class="stat-label">Re-Deferred — Outstanding (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} accounts • ${rate2.toFixed(1)}% of target</div></div>
         <div class="defer-box"><div class="stat-label">Still Uncollected</div><div class="defer-value">${formatNumber(Math.max(0, stats.totalTarget - stats.totalAchieved))}</div><div class="defer-sub">${pct.toFixed(1)}% achieved overall</div></div>`;
 }
 
 function renderDefermentByDimension(map, tbodyId) {
     const entries = Array.from(map.entries()).filter(([, e]) => e.target > 0 || e.d1Count > 0 || e.d2Count > 0);
-    /* Descending by performance (% achieved), like the Summary table; ties broken by bigger target first */
-    entries.sort((a, b) => (perfPct(b[1].target, b[1].achieved) - perfPct(a[1].target, a[1].achieved)) || (b[1].target - a[1].target));
+    /* WORST OFFENDERS FIRST: highest deferment rate (outstanding vs target), then re-deferment rate, then bigger target */
+    entries.sort((a, b) => (deferRate1(b[1]) - deferRate1(a[1])) || (deferRate2(b[1]) - deferRate2(a[1])) || (b[1].target - a[1].target));
     if (!entries.length) { document.getElementById(tbodyId).innerHTML = `<tr><td colspan="8" style="text-align:center;color:#64748b;font-style:italic;">No data for the current selection.</td></tr>`; return; }
     let h = ""; const T = mkDeferEntry();
     entries.forEach(([name, e]) => {
         T.target += e.target; T.achieved += e.achieved; T.d1Count += e.d1Count; T.d1Value += e.d1Value; T.d2Count += e.d2Count; T.d2Value += e.d2Value;
-        const r1 = e.target > 0 ? (e.d1Value / e.target * 100) : 0;
-        const r2 = e.target > 0 ? (e.d2Value / e.target * 100) : 0;
+        const r1 = deferRate1(e), r2 = deferRate2(e);
         const risk = e.d2Count > 0 ? "high" : (r1 >= 30 ? "medium" : "low");
         h += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(e.target)}</td><td>${formatNumber(e.achieved)}</td><td class="deficit-cell">${formatNumber(e.d1Value)} <span class="mini">(${e.d1Count} acc)</span></td><td>${r1.toFixed(1)}%</td><td class="deficit-cell">${formatNumber(e.d2Value)} <span class="mini">(${e.d2Count} acc)</span></td><td>${r2.toFixed(1)}%</td><td>${riskChip(risk)}</td></tr>`;
     });
-    const tr1 = T.target > 0 ? (T.d1Value / T.target * 100) : 0;
-    const tr2 = T.target > 0 ? (T.d2Value / T.target * 100) : 0;
+    const tr1 = deferRate1({ target: T.target, d1Value: T.d1Value });
+    const tr2 = deferRate2({ target: T.target, d2Value: T.d2Value });
     h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td>${formatNumber(T.d1Value)} <span class="mini">(${T.d1Count} acc)</span></td><td>${tr1.toFixed(1)}%</td><td>${formatNumber(T.d2Value)} <span class="mini">(${T.d2Count} acc)</span></td><td>${tr2.toFixed(1)}%</td><td>—</td></tr>`;
     document.getElementById(tbodyId).innerHTML = h;
 }
@@ -436,12 +455,15 @@ function renderDefermentTimeline(stats) {
     const dates = new Set([...stats.timeline1.keys(), ...stats.timeline2.keys()]);
     if (!dates.size) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;font-style:italic;">No deferments recorded for the current selection.</td></tr>`; return; }
     const sorted = Array.from(dates).sort();
+    const todayISO = toISO(new Date());
     let h = ""; const T = { c1:0, v1:0, c2:0, v2:0 };
     sorted.forEach(d => {
         const a = stats.timeline1.get(d) || { count:0, value:0 };
         const b = stats.timeline2.get(d) || { count:0, value:0 };
         T.c1 += a.count; T.v1 += a.value; T.c2 += b.count; T.v2 += b.value;
-        h += `<tr><td>${formatDMY(d)}</td><td>${a.count}</td><td>${formatNumber(a.value)}</td><td>${b.count}</td><td class="deficit-cell">${formatNumber(b.value)}</td><td>${formatNumber(a.value + b.value)}</td></tr>`;
+        /* red fill = deferred (before today), yellow fill = today, no fill = upcoming */
+        const rowCls = d === todayISO ? "tl-today" : (d < todayISO ? "tl-past" : "");
+        h += `<tr class="${rowCls}"><td>${formatDMY(d)}</td><td>${a.count}</td><td>${formatNumber(a.value)}</td><td>${b.count}</td><td class="deficit-cell">${formatNumber(b.value)}</td><td>${formatNumber(a.value + b.value)}</td></tr>`;
     });
     h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${T.c1}</td><td>${formatNumber(T.v1)}</td><td>${T.c2}</td><td>${formatNumber(T.v2)}</td><td>${formatNumber(T.v1 + T.v2)}</td></tr>`;
     tbody.innerHTML = h;
@@ -454,7 +476,8 @@ function renderTopDeferred(rows) {
     const top = [...rows].sort((a, b) => (Number(b.target) || 0) - (Number(a.target) || 0)).slice(0, 15);
     let h = "";
     top.forEach(r => {
-        h += `<tr><td>${escapeHtml(r.dri)}</td><td>${escapeHtml(r.branch)}</td><td>${escapeHtml(r.cluster)}</td><td>${formatNumber(r.target)}</td><td>${escapeHtml(r.status || "")}</td><td>${r.firstDeferral ? formatDMY(r.firstDeferral) : "—"}</td><td>${r.secondDeferral ? formatDMY(r.secondDeferral) : "—"}</td></tr>`;
+        const out = Math.max(0, (Number(r.target) || 0) - (Number(r.achieved) || 0));
+        h += `<tr><td>${escapeHtml(r.dri)}</td><td>${escapeHtml(r.branch)}</td><td>${escapeHtml(r.cluster)}</td><td>${formatNumber(r.target)}</td><td class="deficit-cell">${formatNumber(out)}</td><td>${escapeHtml(r.status || "")}</td><td>${r.firstDeferral ? formatDMY(r.firstDeferral) : "—"}</td><td>${r.secondDeferral ? formatDMY(r.secondDeferral) : "—"}</td></tr>`;
     });
     tbody.innerHTML = h;
 }
@@ -616,7 +639,7 @@ function applyFilters(allData, deferredData, clusterData, recoveryData) {
 function switchView(view) {
     currentView = view;
     ["summary", "branches", "deferred", "recovery", "clusters", "deferments"].forEach(v => { document.getElementById(v + "Button").classList.toggle("active", v === view); document.getElementById(v + "Container").style.display = v === view ? "block" : "none"; });
-    const desc = { summary: "Summary and portfolio breakdown", branches: "Detailed daily collection performance (25 Branches)", deferred: "Marshal Portfolio — Total target and collection", recovery: "Recovery Accounts — Branch, Team & Cluster", clusters: "Cluster cards — Aggregated targets and achieved", deferments: "Deferment analysis — 1st & 2nd deferred accounts by team, branch and date (full portfolio)" };
+    const desc = { summary: "Summary and portfolio breakdown", branches: "Detailed daily collection performance (25 Branches)", deferred: "Marshal Portfolio — Total target and collection", recovery: "Recovery Accounts — Branch, Team & Cluster", clusters: "Cluster cards — Aggregated targets and achieved", deferments: "Deferment analysis — outstanding = Target − Collection; worst offenders first" };
     document.getElementById("viewDescription").innerText = desc[view]; processAndRender();
 }
 
@@ -637,7 +660,7 @@ function setKPIs(l1, v1, l2, v2, l3, v3, l4, v4) {
 function updateKPIs(data, achKey) { let t=0, a=0; data.forEach(r => { t += Number(r.target)||0; a += Number(r[achKey]||r.achieved||0); }); setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t - a), "Overall Achievement", (t>0?(a/t*100):0).toFixed(1) + "%"); }
 function updateKPIsClusters(clusterData) { let t=0, a=0; Object.values(clusterData).forEach(c => { t += c.totalTarget; a += c.totalAchieved; }); setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t - a), "Overall Achievement", (t>0?(a/t*100):0).toFixed(1) + "%"); }
 function updateKPIsRecovery(recoveryData) { let t=0, a=0; recoveryData.forEach(r => { t+=r.target; a+=r.achieved; }); setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t-a), "Overall Achievement", (t>0?(a/t*100):0).toFixed(1) + "%"); }
-function updateKPIsDeferments(s) { const rate = s.totalTarget > 0 ? (s.d1Value / s.totalTarget * 100) : 0; setKPIs("Portfolio Target", formatNumber(s.totalTarget), "1st Deferment Value", formatNumber(s.d1Value), "Re-Deferred Value", formatNumber(s.d2Value), "Deferment Rate", rate.toFixed(1) + "%"); }
+function updateKPIsDeferments(s) { const rate = s.totalTarget > 0 ? (s.d1Value / s.totalTarget * 100) : 0; setKPIs("Portfolio Target", formatNumber(s.totalTarget), "1st Deferred Outstanding", formatNumber(s.d1Value), "2nd Deferred Outstanding", formatNumber(s.d2Value), "Deferment Rate", rate.toFixed(1) + "%"); }
 
 function renderSummaryView(data, dailyRaw, clusterData) { renderTable(data); renderClusterTable(clusterData); renderDailySummary(dailyRaw); }
 
@@ -680,8 +703,6 @@ function renderDailySummary(rawRows) {
     if (!days.length && !hasUnscheduled) { card.style.display = "none"; return; }
     card.style.display = "block";
 
-    const todayStr = toISO(new Date()); // Get today's date for highlighting
-
     let h = "";
     if (!days.length) {
         h = `<tr><td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">No scheduled collections in the selected range.</td></tr>`;
@@ -690,17 +711,7 @@ function renderDailySummary(rawRows) {
         days.forEach(([d, v]) => {
             const deficit = Math.max(0, v.target - v.achieved);
             T.target += v.target; T.achieved += v.achieved;
-            
-            /* Determine highlighting */
-            let rowClass = "";
-            if (d === todayStr) {
-                rowClass += " today-row";
-            }
-            if (d < todayStr && v.achieved < v.target) {
-                rowClass += " missed-past";
-            }
-            
-            h += `<tr class="${rowClass.trim()}"><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(deficit)}</td></tr>`;
+            h += `<tr><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(deficit)}</td></tr>`;
         });
         const tDef = Math.max(0, T.target - T.achieved);
         h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td class="deficit-cell">${formatNumber(tDef)}</td></tr>`;
