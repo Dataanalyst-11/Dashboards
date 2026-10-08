@@ -299,8 +299,14 @@ let unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
 let currentAllMainRaw = [];        /* full main-flow rows, never date-filtered (Daily Collections Summary source) */
 let currentDailySourceRows = [];   /* branch/team/search-filtered version of the above */
 
+/* ===== RECOVERY DETECTION — reads COLUMN F (dri), with column E (category) as fallback ===== */
+const isRecoveryRow = (r) =>
+    String(r.dri || "").toUpperCase().trim() === "RECOVERY" ||
+    String(r.category || "").toUpperCase().trim() === "RECOVERY";
+
+/* Main flow = everything that is NOT recovery (recovery lives ONLY in the Recovery switch) */
 const isMainFlow = (r) => {
-    if (r.category === "RECOVERY") return false;
+    if (isRecoveryRow(r)) return false;
     if (r.dri === "ANDERSON WATHOME" && r.branch === "LEGAL & AUCTIONEERS") return false;
     if (r.dri === "DIANA AKHENDA" && r.branch === "PSALMS & COVIGEN") return false;
     return true;
@@ -319,7 +325,7 @@ function processAndRender() {
     const unscheduledFiltered = rawDataCache.filter(r => !r.date);
 
     const mainData = scheduledFiltered.filter(isMainFlow);
-    const recoveryData = scheduledFiltered.filter(r => r.category === "RECOVERY");
+    const recoveryData = scheduledFiltered.filter(isRecoveryRow);
 
     unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
     unscheduledFiltered.filter(isMainFlow).forEach(r => { unscheduledAggregated.target += r.target; unscheduledAggregated.achieved += r.achieved; });
