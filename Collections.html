@@ -71,6 +71,19 @@ tbody tr.total-row { background: rgba(37, 99, 235, .12) !important; }
 tbody tr.total-row:hover { background: rgba(37, 99, 235, .18) !important; }
 tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid #2563eb; border-bottom: 2px solid #2563eb; }
 
+/* ---- Summary: On Target / Off Target per day ---- */
+.sum-table thead th { text-align: center; }
+.sum-table thead tr:first-child th:first-child { text-align: left; }
+.sum-table thead tr.sub-row th { font-size: 10px; color: #64748b; padding: 7px 6px; border-bottom: 2px solid #2563eb; }
+.sum-table thead tr.sub-row th.off-h { color: #fcd34d; }
+.sum-table .dg { border-left: 1px solid #334155; }
+.sum-table td.off-cell { color: #fcd34d; }
+.sum-table td.dim { color: #475569; text-align: center; }
+.sum-table tbody tr.total-row td.dg { border-left: 1px solid #2563eb; }
+.sum-table tbody tr.total-row td.center { text-align: center; }
+.rec-note { margin: -14px 0 22px; padding: 10px 16px; font-size: 12px; color: #94a3b8; background: rgba(15, 23, 42, .6); border: 1px dashed #2a3a55; border-radius: 8px; }
+.rec-note strong { color: #6ee7b7; }
+
 .percentage-cell { min-width: 0; }
 .percentage-wrapper { display: flex; align-items: center; gap: 8px; width: 100%; }
 .progress { height: 10px; background: #1e293b; border-radius: 20px; overflow: hidden; flex: 1; min-width: 25px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .4); }
@@ -96,7 +109,6 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .unscheduled-hint { padding: 12px 20px 16px; font-size: 12px; color: #94a3b8; font-style: italic; border-top: 1px dashed #2a3a55; }
 .unscheduled-hint strong { color: #f59e0b; font-style: normal; }
 
-/* ---- Daily Collections Summary local controls (independent of .date-preset) ---- */
 .daily-controls { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dc-btn { padding: 5px 12px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: .3px; white-space: nowrap; box-shadow: none; }
 .dc-btn:hover { border-color: #3b82f6; color: #e2e8f0; background: #1e293b; }
@@ -105,14 +117,12 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .daily-controls input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
 .dc-sep { color: #64748b; font-size: 11px; }
 
-/* ---- Risk chips (deferments) ---- */
 .risk-chip { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
 .risk-chip.high { background: rgba(239, 68, 68, .15); color: #fca5a5; border: 1px solid #ef4444; }
 .risk-chip.medium { background: rgba(245, 158, 11, .15); color: #fcd34d; border: 1px solid #f59e0b; }
 .risk-chip.low { background: rgba(16, 185, 129, .15); color: #6ee7b7; border: 1px solid #10b981; }
 .mini { color: #64748b; font-size: 11px; font-weight: 600; }
 
-/* ---- Deferment overview boxes ---- */
 .defer-overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; padding: 16px; }
 .defer-box { background: rgba(15, 23, 42, .6); border: 1px solid #2a3a55; border-radius: 10px; padding: 14px 16px; }
 .defer-value { font-size: 22px; font-weight: 800; color: #f1f5f9; margin-top: 6px; font-feature-settings: "tnum"; }
@@ -120,7 +130,6 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .defer-value.danger { color: #fca5a5; }
 .defer-sub { font-size: 11px; color: #64748b; margin-top: 4px; }
 
-/* ---- Deferment Timeline: red = deferred (past), yellow = today ---- */
 #deferTimelineBody tr.tl-past td { background: rgba(239, 68, 68, .13) !important; }
 #deferTimelineBody tr.tl-past:hover td { background: rgba(239, 68, 68, .22) !important; }
 #deferTimelineBody tr.tl-past td:first-child { color: #fca5a5; }
@@ -134,7 +143,15 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .sw-today { background: rgba(250, 204, 21, .3); border-color: #facc15; }
 .sw-future { background: rgba(15, 23, 42, .8); }
 
-/* ============ CLUSTER PERFORMANCE — grouped date headers ============ */
+/* ---- Daily Collections Summary: red = past dates, yellow = today ---- */
+#dailySummaryBody tr.tl-past td { background: rgba(239, 68, 68, .13) !important; }
+#dailySummaryBody tr.tl-past:hover td { background: rgba(239, 68, 68, .22) !important; }
+#dailySummaryBody tr.tl-past td:first-child { color: #fca5a5; }
+#dailySummaryBody tr.tl-today td { background: rgba(250, 204, 21, .16) !important; border-top: 1px solid rgba(250, 204, 21, .7); border-bottom: 1px solid rgba(250, 204, 21, .7); color: #fde68a; font-weight: 700; }
+#dailySummaryBody tr.tl-today:hover td { background: rgba(250, 204, 21, .25) !important; }
+#dailySummaryBody tr.tl-today td:first-child { color: #fde047; }
+#dailySummaryBody tr.tl-today td.deficit-cell { color: #fde68a !important; }
+
 #clusterCard .report-table thead tr.date-row th { text-align: center; background: rgba(37, 99, 235, .14); border-left: 1px solid #334155; border-bottom: 1px solid #2563eb; color: #bfdbfe; letter-spacing: .8px; padding: 10px 8px; }
 #clusterCard .report-table thead tr.date-row th[rowspan] { background: transparent; border-left: none; border-bottom: 1px solid #2a3a55; color: #94a3b8; vertical-align: middle; }
 #clusterCard .report-table thead tr.sub-row th { text-align: center; font-size: 10px; padding: 7px 8px; color: #64748b; background: rgba(15, 23, 42, .6); border-bottom: 1px solid #2a3a55; }
@@ -240,6 +257,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 
 <div id="summaryContainer" style="display:none">
     <div id="summaryTableContainer"></div>
+    <div id="summaryRecNote" class="rec-note" style="display:none"></div>
     <div class="report-card" id="clusterCard" style="display:none"><div class="report-card-header">CLUSTER PERFORMANCE</div><div class="report-table-wrapper"><table class="report-table"><thead id="clusterHead"></thead><tbody id="clusterBody"></tbody></table></div></div>
     <div class="report-card" id="dailySummaryCard" style="display:none">
         <div class="report-card-header" style="flex-wrap:wrap; row-gap:8px;">
@@ -257,6 +275,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
                 <tbody id="dailySummaryBody"></tbody>
             </table>
         </div>
+        <div class="tl-legend"><span class="tl-legend-item"><span class="tl-swatch sw-past"></span>Past dates</span><span class="tl-legend-item"><span class="tl-swatch sw-today"></span>Today</span><span class="tl-legend-item"><span class="tl-swatch sw-future"></span>Upcoming</span></div>
         <div id="unscheduledHint" class="unscheduled-hint" style="display:none"></div>
     </div>
 </div>
@@ -289,46 +308,61 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 <div class="toast" id="toast"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzq-W4-xr0manbmL7C8wgApuorAGVr4ZvQHplQrI4eaqrE0xDSdWzwM3IBI2I1X8mWh/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyYuZQGImMwp_t_fl3dpOYUPeB65MjnIXeRZesxrx3x4-PtYDr7IqwWfKIiMyNnqRo/exec";
 
-let rawDataCache = []; 
-let currentView = "branches", refreshInProgress = false;
+/* SUMMARY-BR rows whose BRANCH = "RECOVERY" are added to the team named on that row
+   (ANDERSON WATHOME / STEVE WILLIAMSON) in the Summary table.
+   true  = recovery collections are shown under ON TARGET
+   false = recovery collections are shown under OFF TARGET */
+const RECOVERY_AS_ON_TARGET = true;
+
+const $ = id => document.getElementById(id);
+
+let rawDataCache = [];
+let summaryBrCache = [];
+let currentView = "branches";
+let refreshInProgress = false;
 let dateFilter = { startDate: null, endDate: null, preset: "today" };
 let dailyDateFilter = { mode: "month", startDate: null, endDate: null };
 let unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
-let currentAllMainRaw = [];        /* full main-flow rows, never date-filtered (Daily Collections Summary source) */
-let currentDailySourceRows = [];   /* branch/team/search-filtered version of the above */
+let currentAllMainRaw = [];
+let currentDailySourceRows = [];
+let currentAllData = [];
+let currentDeferredData = [];
+let currentClusterData = {};
+let currentRecoveryData = [];
 
-/* ===== RECOVERY DETECTION — reads COLUMN F (dri), with column E (category) as fallback ===== */
-const isRecoveryRow = (r) =>
+/* ============ RECOVERY / MAIN FLOW DETECTION ============ */
+const isRecoveryRow = r =>
     String(r.dri || "").toUpperCase().trim() === "RECOVERY" ||
     String(r.category || "").toUpperCase().trim() === "RECOVERY";
 
-/* Main flow = everything that is NOT recovery (recovery lives ONLY in the Recovery switch) */
-const isMainFlow = (r) => {
+const isMainFlow = r => {
     if (isRecoveryRow(r)) return false;
-    if (r.dri === "ANDERSON WATHOME" && r.branch === "LEGAL & AUCTIONEERS") return false;
-    if (r.dri === "DIANA AKHENDA" && r.branch === "PSALMS & COVIGEN") return false;
+    if (normKey(r.dri) === "ANDERSON WATHOME" && normKey(r.branch) === "LEGAL & AUCTIONEERS") return false;
+    if (normKey(r.dri) === "DIANA AKHENDA" && normKey(r.branch) === "PSALMS & COVIGEN") return false;
     return true;
 };
 
+/* ============ PROCESS AND RENDER ============ */
 function processAndRender() {
     if (rawDataCache.length === 0) return;
-    
+
     const scheduledFiltered = rawDataCache.filter(r => {
         if (!r.date) return false;
         if (dateFilter.startDate && r.date < dateFilter.startDate) return false;
         if (dateFilter.endDate && r.date > dateFilter.endDate) return false;
         return true;
     });
-
     const unscheduledFiltered = rawDataCache.filter(r => !r.date);
-
     const mainData = scheduledFiltered.filter(isMainFlow);
     const recoveryData = scheduledFiltered.filter(isRecoveryRow);
 
     unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
-    unscheduledFiltered.filter(isMainFlow).forEach(r => { unscheduledAggregated.target += r.target; unscheduledAggregated.achieved += r.achieved; });
+    unscheduledFiltered.filter(isMainFlow).forEach(r => {
+        unscheduledAggregated.target += Number(r.target) || 0;
+        unscheduledAggregated.achieved += Number(r.achieved) || 0;
+    });
     unscheduledAggregated.deficit = Math.max(0, unscheduledAggregated.target - unscheduledAggregated.achieved);
 
     const allData = aggregateMain(mainData);
@@ -339,57 +373,73 @@ function processAndRender() {
     currentDeferredData = deferredData;
     currentClusterData = clusterData;
     currentRecoveryData = recoveryData;
-    currentAllMainRaw = rawDataCache.filter(isMainFlow);   /* full month, ignores date filter */
+    currentAllMainRaw = rawDataCache.filter(isMainFlow);   /* full main flow, ignores the Period filter */
 
     populateFilters(allData, deferredData);
     applyFilters(allData, deferredData, clusterData, recoveryData);
 }
 
+/* ============ AGGREGATION ============ */
 function aggregateMain(rows) {
     const map = new Map();
     rows.forEach(r => {
-        const key = r.dri + "||" + r.branch;
-        if (!map.has(key)) map.set(key, { collectionTeam: r.dri, branch: r.branch, target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 });
-        const m = map.get(key); m.target += r.target; m.achieved += r.achieved;
-        if(r.date) { const d = new Date(r.date + "T00:00:00"); const dayIdx = d.getDay(); if (dayIdx === 0) m.sunday += r.achieved; else if (dayIdx === 1) m.monday += r.achieved; else if (dayIdx === 2) m.tuesday += r.achieved; else if (dayIdx === 3) m.wednesday += r.achieved; else if (dayIdx === 4) m.thursday += r.achieved; else if (dayIdx === 5) m.friday += r.achieved; }
+        const key = normKey(r.dri) + "||" + normKey(r.branch);
+        if (!map.has(key)) map.set(key, { collectionTeam: r.dri, branch: r.branch, target: 0, achieved: 0, byDate: {}, sunday: 0, monday: 0, tuesday: 0, wednesday: 0, thursday: 0, friday: 0 });
+        const m = map.get(key), amt = Number(r.achieved) || 0;
+        m.target += Number(r.target) || 0;
+        m.achieved += amt;
+        if (r.date) {
+            m.byDate[r.date] = (m.byDate[r.date] || 0) + amt;   /* planned-date collections = ON TARGET */
+            const idx = new Date(r.date + "T00:00:00").getDay();
+            if (idx >= 0 && idx <= 5) m[DAY_KEYS[idx]] += amt;
+        }
     });
-    return Array.from(map.values()).sort((a,b) => a.collectionTeam.localeCompare(b.collectionTeam));
+    return Array.from(map.values()).sort((a, b) => String(a.collectionTeam || "").localeCompare(String(b.collectionTeam || "")));
 }
 
 function aggregateMarshal(rows) {
     const map = new Map();
     rows.forEach(r => {
-        const key = r.dri + "||" + r.branch;
-        if (!map.has(key)) map.set(key, { dri: r.dri, branch: r.branch, target:0, deferredTarget:0, partialTarget:0, week4Collection:0, collectionMarshal: r.dri, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 });
-        const m = map.get(key); m.target += r.target; m.week4Collection += r.achieved;
-        if (r.status === "DEFERRED") m.deferredTarget += r.target; if (r.status === "PARTIAL") m.partialTarget += r.target;
-        if(r.date) { const d = new Date(r.date + "T00:00:00"); const dayIdx = d.getDay(); if (dayIdx === 1) m.monday += r.achieved; else if (dayIdx === 2) m.tuesday += r.achieved; else if (dayIdx === 3) m.wednesday += r.achieved; else if (dayIdx === 4) m.thursday += r.achieved; else if (dayIdx === 5) m.friday += r.achieved; }
+        const key = normKey(r.dri) + "||" + normKey(r.branch);
+        if (!map.has(key)) map.set(key, { dri: r.dri, branch: r.branch, target: 0, deferredTarget: 0, partialTarget: 0, week4Collection: 0, collectionMarshal: r.dri, monday: 0, tuesday: 0, wednesday: 0, thursday: 0, friday: 0 });
+        const m = map.get(key), tgt = Number(r.target) || 0, amt = Number(r.achieved) || 0;
+        m.target += tgt;
+        m.week4Collection += amt;
+        if (r.status === "DEFERRED") m.deferredTarget += tgt;
+        if (r.status === "PARTIAL") m.partialTarget += tgt;
+        if (r.date) {
+            const idx = new Date(r.date + "T00:00:00").getDay();
+            if (idx >= 1 && idx <= 5) m[DAY_KEYS[idx]] += amt;
+        }
     });
-    return Array.from(map.values()).sort((a,b) => a.dri.localeCompare(b.dri));
+    return Array.from(map.values()).sort((a, b) => String(a.dri || "").localeCompare(String(b.dri || "")));
 }
 
 function buildClusterData(rows) {
-    const clusterTotals = {}; rows.forEach(r => { const cl = r.cluster || "UNKNOWN"; if (!clusterTotals[cl]) clusterTotals[cl] = { totalTarget: 0, totalAchieved: 0, days: {} }; clusterTotals[cl].totalTarget += r.target; clusterTotals[cl].totalAchieved += r.achieved; if(r.date) { const dayKey = r.date; if (!clusterTotals[cl].days[dayKey]) clusterTotals[cl].days[dayKey] = { target: 0, achieved: 0 }; clusterTotals[cl].days[dayKey].target += r.target; clusterTotals[cl].days[dayKey].achieved += r.achieved; }});
-    return clusterTotals;
+    const out = {};
+    rows.forEach(r => {
+        const cl = r.cluster || "UNKNOWN", tgt = Number(r.target) || 0, amt = Number(r.achieved) || 0;
+        if (!out[cl]) out[cl] = { totalTarget: 0, totalAchieved: 0, days: {} };
+        out[cl].totalTarget += tgt;
+        out[cl].totalAchieved += amt;
+        if (r.date) {
+            if (!out[cl].days[r.date]) out[cl].days[r.date] = { target: 0, achieved: 0 };
+            out[cl].days[r.date].target += tgt;
+            out[cl].days[r.date].achieved += amt;
+        }
+    });
+    return out;
 }
 
-/* ================= DEFERMENTS ENGINE (columns V & X) — ACCOUNTS =================
-   Deferred value (outstanding) = Target - Collection, floored at 0, per deferred account.
-   An account with both V and X dates counts in both buckets (2nd is the re-deferred subset). */
-function mkDeferEntry() { return { target:0, achieved:0, d1Count:0, d1Value:0, d2Count:0, d2Value:0 }; }
+/* ============ DEFERMENTS ENGINE ============ */
+function mkDeferEntry() { return { target: 0, achieved: 0, d1Count: 0, d1Value: 0, d2Count: 0, d2Value: 0 }; }
 function deferRate1(e) { return e.target > 0 ? (e.d1Value / e.target * 100) : 0; }
 function deferRate2(e) { return e.target > 0 ? (e.d2Value / e.target * 100) : 0; }
 
 function buildDefermentStats(rows) {
-    const s = {
-        totalTarget: 0, totalAchieved: 0, accountCount: rows.length,
-        d1Count: 0, d1Value: 0, d2Count: 0, d2Value: 0,
-        byTeam: new Map(), byBranch: new Map(),
-        timeline1: new Map(), timeline2: new Map(), top: []
-    };
+    const s = { totalTarget: 0, totalAchieved: 0, accountCount: rows.length, d1Count: 0, d1Value: 0, d2Count: 0, d2Value: 0, byTeam: new Map(), byBranch: new Map(), timeline1: new Map(), timeline2: new Map(), top: [] };
     rows.forEach(r => {
-        const val = Number(r.target) || 0, ach = Number(r.achieved) || 0;
-        const out = Math.max(0, val - ach);   /* deferred outstanding = Target - Collection */
+        const val = Number(r.target) || 0, ach = Number(r.achieved) || 0, out = Math.max(0, val - ach);
         s.totalTarget += val; s.totalAchieved += ach;
         const tKey = r.dri || "UNKNOWN", bKey = r.branch || "UNKNOWN";
         if (!s.byTeam.has(tKey)) s.byTeam.set(tKey, mkDeferEntry());
@@ -398,12 +448,12 @@ function buildDefermentStats(rows) {
         bt.target += val; bt.achieved += ach; bb.target += val; bb.achieved += ach;
         if (r.firstDeferral) {
             s.d1Count++; s.d1Value += out; bt.d1Count++; bt.d1Value += out; bb.d1Count++; bb.d1Value += out;
-            if (!s.timeline1.has(r.firstDeferral)) s.timeline1.set(r.firstDeferral, { count:0, value:0 });
+            if (!s.timeline1.has(r.firstDeferral)) s.timeline1.set(r.firstDeferral, { count: 0, value: 0 });
             const t1 = s.timeline1.get(r.firstDeferral); t1.count++; t1.value += out;
         }
         if (r.secondDeferral) {
             s.d2Count++; s.d2Value += out; bt.d2Count++; bt.d2Value += out; bb.d2Count++; bb.d2Value += out;
-            if (!s.timeline2.has(r.secondDeferral)) s.timeline2.set(r.secondDeferral, { count:0, value:0 });
+            if (!s.timeline2.has(r.secondDeferral)) s.timeline2.set(r.secondDeferral, { count: 0, value: 0 });
             const t2 = s.timeline2.get(r.secondDeferral); t2.count++; t2.value += out;
         }
         if (r.firstDeferral || r.secondDeferral) s.top.push(r);
@@ -424,8 +474,8 @@ function renderDefermentsView(stats) {
 function renderDefermentOverview(stats) {
     const rate1 = deferRate1({ target: stats.totalTarget, d1Value: stats.d1Value });
     const rate2 = deferRate2({ target: stats.totalTarget, d2Value: stats.d2Value });
-    const pct = stats.totalTarget > 0 ? (stats.totalAchieved / stats.totalTarget * 100) : 0;
-    document.getElementById("deferOverviewGrid").innerHTML = `
+    const pct = stats.totalTarget > 0 ? stats.totalAchieved / stats.totalTarget * 100 : 0;
+    $("deferOverviewGrid").innerHTML = `
         <div class="defer-box"><div class="stat-label">Portfolio Target</div><div class="defer-value">${formatNumber(stats.totalTarget)}</div><div class="defer-sub">${stats.accountCount} accounts monitored</div></div>
         <div class="defer-box"><div class="stat-label">1st Deferred — Outstanding (Col V)</div><div class="defer-value warn">${formatNumber(stats.d1Value)}</div><div class="defer-sub">${stats.d1Count} accounts • ${rate1.toFixed(1)}% of target</div></div>
         <div class="defer-box"><div class="stat-label">Re-Deferred — Outstanding (Col X)</div><div class="defer-value danger">${formatNumber(stats.d2Value)}</div><div class="defer-sub">${stats.d2Count} accounts • ${rate2.toFixed(1)}% of target</div></div>
@@ -434,35 +484,29 @@ function renderDefermentOverview(stats) {
 
 function renderDefermentByDimension(map, tbodyId) {
     const entries = Array.from(map.entries()).filter(([, e]) => e.target > 0 || e.d1Count > 0 || e.d2Count > 0);
-    /* WORST OFFENDERS FIRST: highest deferment rate (outstanding vs target), then re-deferment rate, then bigger target */
     entries.sort((a, b) => (deferRate1(b[1]) - deferRate1(a[1])) || (deferRate2(b[1]) - deferRate2(a[1])) || (b[1].target - a[1].target));
-    if (!entries.length) { document.getElementById(tbodyId).innerHTML = `<tr><td colspan="8" style="text-align:center;color:#64748b;font-style:italic;">No data for the current selection.</td></tr>`; return; }
+    if (!entries.length) { $(tbodyId).innerHTML = `<tr><td colspan="8" style="text-align:center;color:#64748b;font-style:italic;">No data for the current selection.</td></tr>`; return; }
     let h = ""; const T = mkDeferEntry();
     entries.forEach(([name, e]) => {
         T.target += e.target; T.achieved += e.achieved; T.d1Count += e.d1Count; T.d1Value += e.d1Value; T.d2Count += e.d2Count; T.d2Value += e.d2Value;
-        const r1 = deferRate1(e), r2 = deferRate2(e);
-        const risk = e.d2Count > 0 ? "high" : (r1 >= 30 ? "medium" : "low");
+        const r1 = deferRate1(e), r2 = deferRate2(e), risk = e.d2Count > 0 ? "high" : r1 >= 30 ? "medium" : "low";
         h += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(e.target)}</td><td>${formatNumber(e.achieved)}</td><td class="deficit-cell">${formatNumber(e.d1Value)} <span class="mini">(${e.d1Count} acc)</span></td><td>${r1.toFixed(1)}%</td><td class="deficit-cell">${formatNumber(e.d2Value)} <span class="mini">(${e.d2Count} acc)</span></td><td>${r2.toFixed(1)}%</td><td>${riskChip(risk)}</td></tr>`;
     });
-    const tr1 = deferRate1({ target: T.target, d1Value: T.d1Value });
-    const tr2 = deferRate2({ target: T.target, d2Value: T.d2Value });
+    const tr1 = deferRate1({ target: T.target, d1Value: T.d1Value }), tr2 = deferRate2({ target: T.target, d2Value: T.d2Value });
     h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td>${formatNumber(T.d1Value)} <span class="mini">(${T.d1Count} acc)</span></td><td>${tr1.toFixed(1)}%</td><td>${formatNumber(T.d2Value)} <span class="mini">(${T.d2Count} acc)</span></td><td>${tr2.toFixed(1)}%</td><td>—</td></tr>`;
-    document.getElementById(tbodyId).innerHTML = h;
+    $(tbodyId).innerHTML = h;
 }
 
 function renderDefermentTimeline(stats) {
-    const tbody = document.getElementById("deferTimelineBody");
+    const tbody = $("deferTimelineBody");
     const dates = new Set([...stats.timeline1.keys(), ...stats.timeline2.keys()]);
     if (!dates.size) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;font-style:italic;">No deferments recorded for the current selection.</td></tr>`; return; }
-    const sorted = Array.from(dates).sort();
     const todayISO = toISO(new Date());
-    let h = ""; const T = { c1:0, v1:0, c2:0, v2:0 };
-    sorted.forEach(d => {
-        const a = stats.timeline1.get(d) || { count:0, value:0 };
-        const b = stats.timeline2.get(d) || { count:0, value:0 };
+    let h = ""; const T = { c1: 0, v1: 0, c2: 0, v2: 0 };
+    Array.from(dates).sort().forEach(d => {
+        const a = stats.timeline1.get(d) || { count: 0, value: 0 }, b = stats.timeline2.get(d) || { count: 0, value: 0 };
         T.c1 += a.count; T.v1 += a.value; T.c2 += b.count; T.v2 += b.value;
-        /* red fill = deferred (before today), yellow fill = today, no fill = upcoming */
-        const rowCls = d === todayISO ? "tl-today" : (d < todayISO ? "tl-past" : "");
+        const rowCls = d === todayISO ? "tl-today" : d < todayISO ? "tl-past" : "";
         h += `<tr class="${rowCls}"><td>${formatDMY(d)}</td><td>${a.count}</td><td>${formatNumber(a.value)}</td><td>${b.count}</td><td class="deficit-cell">${formatNumber(b.value)}</td><td>${formatNumber(a.value + b.value)}</td></tr>`;
     });
     h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${T.c1}</td><td>${formatNumber(T.v1)}</td><td>${T.c2}</td><td>${formatNumber(T.v2)}</td><td>${formatNumber(T.v1 + T.v2)}</td></tr>`;
@@ -470,7 +514,7 @@ function renderDefermentTimeline(stats) {
 }
 
 function renderTopDeferred(rows) {
-    const card = document.getElementById("deferTopCard"), tbody = document.getElementById("deferTopBody");
+    const card = $("deferTopCard"), tbody = $("deferTopBody");
     if (!rows || !rows.length) { card.style.display = "none"; return; }
     card.style.display = "block";
     const top = [...rows].sort((a, b) => (Number(b.target) || 0) - (Number(a.target) || 0)).slice(0, 15);
@@ -482,7 +526,7 @@ function renderTopDeferred(rows) {
     tbody.innerHTML = h;
 }
 
-/* ================= DAILY SUMMARY LOCAL DATE FILTER (calendar month) ================= */
+/* ============ DAILY SUMMARY LOCAL DATE FILTER ============ */
 function getMonthRange() {
     const now = new Date();
     return { start: toISO(new Date(now.getFullYear(), now.getMonth(), 1)), end: toISO(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
@@ -492,84 +536,127 @@ function setDailyRange(mode) {
     if (mode === "month") {
         const r = getMonthRange();
         dailyDateFilter = { mode: "month", startDate: r.start, endDate: r.end };
-        document.getElementById("dailyFrom").value = r.start;
-        document.getElementById("dailyTo").value = r.end;
+        $("dailyFrom").value = r.start;
+        $("dailyTo").value = r.end;
     }
-    document.getElementById("dailyMonthBtn").classList.toggle("active", mode === "month");
+    $("dailyMonthBtn").classList.toggle("active", mode === "month");
     renderDailySummaryOnly();
 }
 
 function onDailyCustom() {
-    const s = document.getElementById("dailyFrom").value, e = document.getElementById("dailyTo").value;
+    const s = $("dailyFrom").value, e = $("dailyTo").value;
     if (s && e && s > e) { showToast("Daily filter: start date cannot be after end date", "error"); return; }
     dailyDateFilter = { mode: "custom", startDate: s || null, endDate: e || null };
-    document.getElementById("dailyMonthBtn").classList.remove("active");
+    $("dailyMonthBtn").classList.remove("active");
     renderDailySummaryOnly();
 }
 
 function renderDailySummaryOnly() { renderDailySummary(currentDailySourceRows); }
 
-/* ================= CORE ================= */
+/* ============ DATE HELPERS ============ */
 function getPresetRange(preset) {
-    const now = new Date(); const y = now.getFullYear(), m = now.getMonth(), d = now.getDate(); const dayOfWeek = now.getDay(); let start, end;
-    switch (preset) { case "today": start = new Date(y, m, d); end = new Date(y, m, d); break; case "thisWeek": { const o = dayOfWeek === 0 ? 6 : dayOfWeek - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; } case "thisMonth": start = new Date(y, m, 1); end = new Date(y, m + 1, 0); break; case "last7": start = new Date(y, m, d - 6); end = new Date(y, m, d); break; default: start = new Date(y, m, d); end = new Date(y, m, d); }
+    const now = new Date(), y = now.getFullYear(), m = now.getMonth(), d = now.getDate(), dow = now.getDay();
+    let start, end;
+    switch (preset) {
+        case "thisWeek": { const o = dow === 0 ? 6 : dow - 1; start = new Date(y, m, d - o); end = new Date(y, m, d - o + 6); break; }
+        case "thisMonth": start = new Date(y, m, 1); end = new Date(y, m + 1, 0); break;
+        case "last7": start = new Date(y, m, d - 6); end = new Date(y, m, d); break;
+        default: start = new Date(y, m, d); end = new Date(y, m, d);
+    }
     return { start, end };
 }
 
 function toISO(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
-function formatDisplayDate(iso) { if (!iso) return ""; const p = iso.split("-"); const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return `${parseInt(p[2])} ${months[parseInt(p[1]) - 1]} ${p[0]}`; }
+function formatDisplayDate(iso) {
+    if (!iso) return "";
+    const p = iso.split("-"), months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${parseInt(p[2])} ${months[parseInt(p[1]) - 1]} ${p[0]}`;
+}
 function formatDMY(iso) { if (!iso) return ""; const p = iso.split("-"); return `${p[2]}/${p[1]}/${p[0]}`; }
 
 function setDatePreset(preset) {
-    dateFilter.preset = preset; const range = getPresetRange(preset); dateFilter.startDate = toISO(range.start); dateFilter.endDate = toISO(range.end);
-    document.getElementById("startDate").value = dateFilter.startDate; document.getElementById("endDate").value = dateFilter.endDate;
-    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.toggle("active", btn.dataset.preset === preset)); updateDateRangeBadge(); processAndRender();
+    dateFilter.preset = preset;
+    const range = getPresetRange(preset);
+    dateFilter.startDate = toISO(range.start);
+    dateFilter.endDate = toISO(range.end);
+    $("startDate").value = dateFilter.startDate;
+    $("endDate").value = dateFilter.endDate;
+    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.toggle("active", btn.dataset.preset === preset));
+    updateDateRangeBadge();
+    processAndRender();
 }
 
 function onDateInputChange() {
-    const s = document.getElementById("startDate").value, e = document.getElementById("endDate").value;
+    const s = $("startDate").value, e = $("endDate").value;
     if (s && e && s > e) { showToast("Start date cannot be after end date", "error"); return; }
     dateFilter.preset = null; dateFilter.startDate = s; dateFilter.endDate = e;
-    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.remove("active")); updateDateRangeBadge(); processAndRender();
+    document.querySelectorAll(".date-preset").forEach(btn => btn.classList.remove("active"));
+    updateDateRangeBadge();
+    processAndRender();
 }
 
-function updateDateRangeBadge() { document.getElementById("dateRangeBadge").textContent = `Viewing: ${formatDisplayDate(dateFilter.startDate)} — ${formatDisplayDate(dateFilter.endDate)}`; }
-function showToast(msg, type) { const t = document.getElementById("toast"); t.innerHTML = `<span>${type === "error" ? "⚠" : "✔"}</span> ${msg}`; t.style.borderColor = type === "error" ? "#991b1b" : "#2563eb"; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
+function updateDateRangeBadge() { $("dateRangeBadge").textContent = `Viewing: ${formatDisplayDate(dateFilter.startDate)} — ${formatDisplayDate(dateFilter.endDate)}`; }
 
+function showToast(msg, type) {
+    const t = $("toast");
+    t.innerHTML = `<span>${type === "error" ? "⚠" : "✔"}</span> ${msg}`;
+    t.style.borderColor = type === "error" ? "#991b1b" : "#2563eb";
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+/* ============ LOAD DATA ============ */
 async function loadData(manualRefresh = false) {
-    if (refreshInProgress) return; refreshInProgress = true;
-    const btn = document.getElementById("refreshButton"); btn.disabled = true; btn.classList.add("spinning"); document.getElementById("loading").style.display = "block";
+    if (refreshInProgress) return;
+    refreshInProgress = true;
+    const btn = $("refreshButton");
+    btn.disabled = true; btn.classList.add("spinning");
+    $("loading").style.display = "block";
     try {
         const response = await fetch(API_URL + "?t=" + Date.now(), { cache: "no-store" });
         if (!response.ok) { const errText = await response.text(); throw new Error(`Server error ${response.status}: ${errText.substring(0, 150)}`); }
         const result = await response.json();
         if (result.status !== "success") throw new Error(result.message || "Unknown API Error");
-        rawDataCache = result.data || []; 
-        localStorage.setItem('dashboardCache', JSON.stringify(rawDataCache));
-        document.getElementById("lastUpdate").innerText = new Date().toLocaleString("en-KE");
-        if (manualRefresh) showToast("Sheet data refreshed"); processAndRender();
-    } catch (err) { 
-        const cachedData = localStorage.getItem('dashboardCache');
+        rawDataCache = result.data || [];
+        summaryBrCache = result.summaryBr || [];
+        if (result.summaryBrNote) console.warn("SUMMARY-BR:", result.summaryBrNote);
+        localStorage.setItem("dashboardCache", JSON.stringify(rawDataCache));
+        localStorage.setItem("summaryBrCache", JSON.stringify(summaryBrCache));
+        $("lastUpdate").innerText = new Date().toLocaleString("en-KE");
+        if (manualRefresh) showToast(result.summaryBrNote ? "Refreshed — " + result.summaryBrNote : "Sheet data refreshed", result.summaryBrNote ? "error" : undefined);
+        processAndRender();
+    } catch (err) {
+        const cachedData = localStorage.getItem("dashboardCache");
         if (cachedData) {
             rawDataCache = JSON.parse(cachedData);
+            summaryBrCache = JSON.parse(localStorage.getItem("summaryBrCache") || "[]");
             showToast("API failed. Loaded from local cache.", "error");
             processAndRender();
         } else {
-            document.getElementById("error").style.display = "block"; 
-            document.getElementById("error").innerText = "Data fetch failed & no cache available: " + err.message;
+            $("error").style.display = "block";
+            $("error").innerText = "Data fetch failed & no cache available: " + err.message;
         }
-    } 
-    finally { btn.disabled = false; btn.classList.remove("spinning"); document.getElementById("loading").style.display = "none"; refreshInProgress = false; }
+    } finally {
+        btn.disabled = false; btn.classList.remove("spinning");
+        $("loading").style.display = "none";
+        refreshInProgress = false;
+    }
 }
 
+/* ============ FILTERS ============ */
 function populateFilters(allData, deferredData) {
-    const branchSelect = document.getElementById("branchFilter"), teamSelect = document.getElementById("teamFilter");
-    const isDeferred = currentView === "deferred", dataSource = isDeferred ? deferredData : allData, teamKey = isDeferred ? "dri" : "collectionTeam";
-    const branches = [...new Set(dataSource.map(r => r.branch).filter(Boolean))].sort(); const teams = [...new Set(dataSource.map(r => r[teamKey]).filter(Boolean))].sort();
+    const branchSelect = $("branchFilter"), teamSelect = $("teamFilter");
+    const isDeferred = currentView === "deferred";
+    const dataSource = isDeferred ? deferredData : allData, teamKey = isDeferred ? "dri" : "collectionTeam";
+    const branches = [...new Set(dataSource.map(r => r.branch).filter(Boolean))].sort();
+    const teams = [...new Set(dataSource.map(r => r[teamKey]).filter(Boolean))].sort();
     const prevBranch = branchSelect.value, prevTeam = teamSelect.value;
-    branchSelect.innerHTML = `<option value="ALL">All Branches</option>`; branches.forEach(b => branchSelect.innerHTML += `<option value="${b}">${b}</option>`);
-    teamSelect.innerHTML = `<option value="ALL">All Teams</option>`; teams.forEach(t => teamSelect.innerHTML += `<option value="${t}">${t}</option>`);
-    branchSelect.value = branches.includes(prevBranch) ? prevBranch : "ALL"; teamSelect.value = teams.includes(prevTeam) ? prevTeam : "ALL";
+    branchSelect.innerHTML = `<option value="ALL">All Branches</option>`;
+    branches.forEach(b => { branchSelect.innerHTML += `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`; });
+    teamSelect.innerHTML = `<option value="ALL">All Teams</option>`;
+    teams.forEach(t => { teamSelect.innerHTML += `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`; });
+    branchSelect.value = branches.includes(prevBranch) ? prevBranch : "ALL";
+    teamSelect.value = teams.includes(prevTeam) ? prevTeam : "ALL";
 }
 
 function applyFilters(allData, deferredData, clusterData, recoveryData) {
@@ -577,111 +664,265 @@ function applyFilters(allData, deferredData, clusterData, recoveryData) {
     deferredData = deferredData || currentDeferredData;
     clusterData = clusterData || currentClusterData;
     recoveryData = recoveryData || currentRecoveryData;
-
     if (!allData) return;
 
-    const branch = document.getElementById("branchFilter").value;
-    const team = document.getElementById("teamFilter").value;
-    const search = document.getElementById("searchBox").value.toLowerCase().trim();
+    const branch = $("branchFilter").value, team = $("teamFilter").value;
+    const search = $("searchBox").value.toLowerCase().trim();
 
     const filter = (row, key) =>
         (branch === "ALL" || row.branch === branch) &&
         (team === "ALL" || row[key] === team) &&
-        (!search || row[key].toLowerCase().includes(search));
+        (!search || String(row[key] || "").toLowerCase().includes(search));
 
     const fAll = allData.filter(r => filter(r, "collectionTeam"));
     const fDef = deferredData.filter(r => filter(r, "dri"));
 
-    /* Daily Collections Summary source: FULL month — Branch/Team/Search apply, NEVER the overhead date filter */
-    currentDailySourceRows = currentAllMainRaw.filter(r =>
+    const rawFilter = r =>
         (branch === "ALL" || r.branch === branch) &&
         (team === "ALL" || r.dri === team) &&
-        (!search || String(r.dri || "").toLowerCase().includes(search))
-    );
+        (!search || String(r.dri || "").toLowerCase().includes(search));
 
-    /* Deferments source: FULL portfolio (ignores date filter), responds to Branch/Team/Search */
+    currentDailySourceRows = currentAllMainRaw.filter(rawFilter);
+
     let dStats = null;
-    if (currentView === "deferments") {
-        dStats = buildDefermentStats(currentAllMainRaw.filter(r =>
-            (branch === "ALL" || r.branch === branch) &&
-            (team === "ALL" || r.dri === team) &&
-            (!search || String(r.dri || "").toLowerCase().includes(search))
-        ));
-    }
+    if (currentView === "deferments") dStats = buildDefermentStats(currentAllMainRaw.filter(rawFilter));
 
-    if (currentView === "deferred") {
-        updateKPIs(fDef, "week4Collection");
-    } else if (currentView === "clusters") {
-        updateKPIsClusters(clusterData);
-    } else if (currentView === "recovery") {
-        updateKPIsRecovery(recoveryData);
-    } else if (currentView === "deferments") {
-        updateKPIsDeferments(dStats);
-    } else {
-        updateKPIs(fAll, "achieved");
-    }
+    if (currentView === "deferred") updateKPIs(fDef, "week4Collection");
+    else if (currentView === "clusters") updateKPIsClusters(clusterData);
+    else if (currentView === "recovery") updateKPIsRecovery(recoveryData);
+    else if (currentView === "deferments") updateKPIsDeferments(dStats);
+    else updateKPIs(fAll, "achieved");
 
-    if (currentView === "summary") {
-        renderSummaryView(fAll, currentDailySourceRows, clusterData);
-    } else if (currentView === "deferred") {
-        renderDeferred(fDef);
-    } else if (currentView === "clusters") {
-        renderClusterView(clusterData);
-    } else if (currentView === "recovery") {
-        renderRecovery(recoveryData);
-    } else if (currentView === "deferments") {
-        renderDefermentsView(dStats);
-    } else {
-        renderBranches(fAll);
-    }
+    if (currentView === "summary") renderSummaryView(fAll, currentDailySourceRows, clusterData);
+    else if (currentView === "deferred") renderDeferred(fDef);
+    else if (currentView === "clusters") renderClusterView(clusterData);
+    else if (currentView === "recovery") renderRecovery(recoveryData);
+    else if (currentView === "deferments") renderDefermentsView(dStats);
+    else renderBranches(fAll);
 }
 
 function switchView(view) {
     currentView = view;
-    ["summary", "branches", "deferred", "recovery", "clusters", "deferments"].forEach(v => { document.getElementById(v + "Button").classList.toggle("active", v === view); document.getElementById(v + "Container").style.display = v === view ? "block" : "none"; });
-    const desc = { summary: "Summary and portfolio breakdown", branches: "Detailed daily collection performance (25 Branches)", deferred: "Marshal Portfolio — Total target and collection", recovery: "Recovery Accounts — Branch, Team & Cluster", clusters: "Cluster cards — Aggregated targets and achieved", deferments: "Deferment analysis — outstanding = Target − Collection; worst offenders first" };
-    document.getElementById("viewDescription").innerText = desc[view]; processAndRender();
+    ["summary", "branches", "deferred", "recovery", "clusters", "deferments"].forEach(v => {
+        $(v + "Button").classList.toggle("active", v === view);
+        $(v + "Container").style.display = v === view ? "block" : "none";
+    });
+    const desc = {
+        summary: "Summary — ON TARGET + OFF TARGET = SUMMARY-BR (recovery collections included)",
+        branches: "Detailed daily collection performance (25 Branches)",
+        deferred: "Marshal Portfolio — Total target and collection",
+        recovery: "Recovery Accounts — Branch, Team & Cluster",
+        clusters: "Cluster cards — Aggregated targets and achieved",
+        deferments: "Deferment analysis — outstanding = Target − Collection; worst offenders first"
+    };
+    $("viewDescription").innerText = desc[view];
+    processAndRender();
 }
 
+/* ============ NUMBER / DISPLAY HELPERS ============ */
 function calcPct(item) { return item.target > 0 ? (item.achieved / item.target) * 100 : 0; }
 function perfPct(target, achieved) { return target > 0 ? (achieved / target) * 100 : 0; }
 function getPercentage(t, a) { return t <= 0 ? 0 : (a / t) * 100; }
 function getStatusClass(v) { return v >= 90 ? "high" : v >= 70 ? "medium" : "low"; }
 function formatNumber(value) { return Number(value || 0).toLocaleString("en-KE", { maximumFractionDigits: 2 }); }
-function escapeHtml(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-
-function setKPIs(l1, v1, l2, v2, l3, v3, l4, v4) {
-    document.getElementById("kpiLabel1").innerText = l1; document.getElementById("totalTarget").innerText = v1;
-    document.getElementById("kpiLabel2").innerText = l2; document.getElementById("totalAchieved").innerText = v2;
-    document.getElementById("kpiLabel3").innerText = l3; document.getElementById("balance").innerText = v3;
-    document.getElementById("kpiLabel4").innerText = l4; document.getElementById("overallPercentage").innerText = v4;
+function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+function pctCell(p) {
+    const w = Math.min(Math.max(p, 0), 100);
+    return `<td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td>`;
 }
 
-function updateKPIs(data, achKey) { let t=0, a=0; data.forEach(r => { t += Number(r.target)||0; a += Number(r[achKey]||r.achieved||0); }); setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t - a), "Overall Achievement", (t>0?(a/t*100):0).toFixed(1) + "%"); }
-function updateKPIsClusters(clusterData) { let t=0, a=0; Object.values(clusterData).forEach(c => { t += c.totalTarget; a += c.totalAchieved; }); setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t - a), "Overall Achievement", (t>0?(a/t*100):0).toFixed(1) + "%"); }
-function updateKPIsRecovery(recoveryData) { let t=0, a=0; recoveryData.forEach(r => { t+=r.target; a+=r.achieved; }); setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t-a), "Overall Achievement", (t>0?(a/t*100):0).toFixed(1) + "%"); }
-function updateKPIsDeferments(s) { const rate = s.totalTarget > 0 ? (s.d1Value / s.totalTarget * 100) : 0; setKPIs("Portfolio Target", formatNumber(s.totalTarget), "1st Deferred Outstanding", formatNumber(s.d1Value), "2nd Deferred Outstanding", formatNumber(s.d2Value), "Deferment Rate", rate.toFixed(1) + "%"); }
+/* ============ KPI ============ */
+function setKPIs(l1, v1, l2, v2, l3, v3, l4, v4) {
+    $("kpiLabel1").innerText = l1; $("totalTarget").innerText = v1;
+    $("kpiLabel2").innerText = l2; $("totalAchieved").innerText = v2;
+    $("kpiLabel3").innerText = l3; $("balance").innerText = v3;
+    $("kpiLabel4").innerText = l4; $("overallPercentage").innerText = v4;
+}
+function setStandardKPIs(t, a) {
+    setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t - a), "Overall Achievement", (t > 0 ? a / t * 100 : 0).toFixed(1) + "%");
+}
+function updateKPIs(data, achKey) {
+    let t = 0, a = 0;
+    data.forEach(r => { t += Number(r.target) || 0; a += Number(r[achKey] || r.achieved || 0); });
+    setStandardKPIs(t, a);
+}
+function updateKPIsClusters(clusterData) {
+    let t = 0, a = 0;
+    Object.values(clusterData).forEach(c => { t += Number(c.totalTarget) || 0; a += Number(c.totalAchieved) || 0; });
+    setStandardKPIs(t, a);
+}
+function updateKPIsRecovery(recoveryData) {
+    let t = 0, a = 0;
+    recoveryData.forEach(r => { t += Number(r.target) || 0; a += Number(r.achieved) || 0; });
+    setStandardKPIs(t, a);
+}
+function updateKPIsDeferments(s) {
+    if (!s) return;
+    const rate = s.totalTarget > 0 ? (s.d1Value / s.totalTarget * 100) : 0;
+    setKPIs("Portfolio Target", formatNumber(s.totalTarget), "1st Deferred Outstanding", formatNumber(s.d1Value), "2nd Deferred Outstanding", formatNumber(s.d2Value), "Deferment Rate", rate.toFixed(1) + "%");
+}
 
-function renderSummaryView(data, dailyRaw, clusterData) { renderTable(data); renderClusterTable(clusterData); renderDailySummary(dailyRaw); }
+/* ============ SUMMARY VIEW ============ */
+function renderSummaryView(data, dailyRaw, clusterData) {
+    renderTable(data);
+    renderClusterTable(clusterData);
+    renderDailySummary(dailyRaw);
+}
+
+/* ============================================================
+   SUMMARY / ON-OFF TARGET ENGINE
+
+   SUMMARY-BR is the source of truth for the daily TOTAL.
+     ON  = MIN(planned-date collections, SUMMARY-BR)
+     OFF = SUMMARY-BR − ON            (never negative)
+   RECOVERY-branch rows in SUMMARY-BR are added to the team on that row
+   (ANDERSON WATHOME / STEVE WILLIAMSON), as ON or OFF per RECOVERY_AS_ON_TARGET.
+   ============================================================ */
+const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
+const DAY_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI"];
+const normKey = s => String(s || "").toUpperCase().replace(/\s+/g, " ").trim();
+const isRecoveryBranch = b => normKey(b) === "RECOVERY";
+const SUMMARY_IS_CUMULATIVE = false;
+
+function isExcludedPair(team, branch) {
+    const t = normKey(team), b = normKey(branch);
+    return (t === "ANDERSON WATHOME" && b === "LEGAL & AUCTIONEERS") || (t === "DIANA AKHENDA" && b === "PSALMS & COVIGEN");
+}
+
+function brDailyValues(r) {
+    const raw = DAY_KEYS.map(k => Number(r[k]) || 0);
+    if (!SUMMARY_IS_CUMULATIVE) return raw;
+    return raw.map((v, i) => i === 0 ? v : (v === 0 ? 0 : v - raw[i - 1]));
+}
+
+function getSheetWeekDates() {
+    const now = new Date();
+    const sun = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    return DAY_KEYS.map((_, i) => toISO(new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + i)));
+}
+
+function summaryRowPassesFilters(r, branchSel, teamSel, search) {
+    if (isExcludedPair(r.team, r.branch)) return false;
+    if (branchSel !== "ALL" && normKey(r.branch) !== normKey(branchSel)) return false;
+    if (teamSel !== "ALL" && normKey(r.team) !== normKey(teamSel)) return false;
+    if (search && !String(r.team || "").toLowerCase().includes(search)) return false;
+    return true;
+}
 
 function renderTable(data) {
-    const c = document.getElementById("summaryTableContainer"); if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`; return; }
-    const map = new Map(); data.forEach(r => { if (!map.has(r.collectionTeam)) map.set(r.collectionTeam, { collectionTeam: r.collectionTeam, target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 }); const m = map.get(r.collectionTeam); m.target+=r.target; m.achieved+=r.achieved; m.sunday+=r.sunday; m.monday+=r.monday; m.tuesday+=r.tuesday; m.wednesday+=r.wednesday; m.thursday+=r.thursday; m.friday+=r.friday; });
-    const s = Array.from(map.values()).sort((a,b) => calcPct(b)-calcPct(a));
-    const T = { target:0, achieved:0, sunday:0, monday:0, tuesday:0, wednesday:0, thursday:0, friday:0 };
-    let h = `<div class="table-container"><table><thead><tr><th>TEAM</th><th>TARGET</th><th>ACHIEVED</th><th>SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>%</th></tr></thead><tbody>`;
-    s.forEach(i => { T.target+=i.target; T.achieved+=i.achieved; T.sunday+=i.sunday; T.monday+=i.monday; T.tuesday+=i.tuesday; T.wednesday+=i.wednesday; T.thursday+=i.thursday; T.friday+=i.friday; const p=calcPct(i), w=Math.min(Math.max(p,0),100); h+=`<tr><td><strong>${escapeHtml(i.collectionTeam)}</strong></td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td>${formatNumber(i.sunday)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td></tr>`; });
-    const tp = T.target>0?(T.achieved/T.target*100):0, tw = Math.min(Math.max(tp,0),100);
-    h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td>${formatNumber(T.sunday)}</td><td>${formatNumber(T.monday)}</td><td>${formatNumber(T.tuesday)}</td><td>${formatNumber(T.wednesday)}</td><td>${formatNumber(T.thursday)}</td><td>${formatNumber(T.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(tp)}" style="width:${tw}%;"></div></div><div class="percentage-text">${tp.toFixed(1)}%</div></div></td></tr>`;
-    c.innerHTML = h + `</tbody></table></div>`;
+    const c = $("summaryTableContainer"), note = $("summaryRecNote");
+    const branchSel = $("branchFilter").value, teamSel = $("teamFilter").value;
+    const search = $("searchBox").value.toLowerCase().trim();
+
+    const weekDates = getSheetWeekDates();
+    const active = weekDates.map(d => (!dateFilter.startDate || d >= dateFilter.startDate) && (!dateFilter.endDate || d <= dateFilter.endDate));
+    const zeros = () => [0, 0, 0, 0, 0, 0];
+
+    const teams = new Map();
+    const getTeam = name => {
+        const k = normKey(name);
+        if (!teams.has(k)) teams.set(k, { team: String(name || "").trim(), target: 0, achieved: 0, planned: zeros(), on: zeros(), off: zeros(), br: zeros(), rec: zeros() });
+        return teams.get(k);
+    };
+
+    /* 1) planned-date collections (COMBINED AGING) */
+    data.forEach(r => {
+        const t = getTeam(r.collectionTeam);
+        t.target += Number(r.target) || 0;
+        t.achieved += Number(r.achieved) || 0;
+        weekDates.forEach((d, i) => { if (active[i]) t.planned[i] += Number(r.byDate && r.byDate[d]) || 0; });
+    });
+
+    /* 2) SUMMARY-BR: normal branches -> br, RECOVERY branch -> rec (per team) */
+    summaryBrCache.forEach(r => {
+        if (!summaryRowPassesFilters(r, branchSel, teamSel, search)) return;
+        const t = getTeam(r.team), isRec = isRecoveryBranch(r.branch);
+        brDailyValues(r).forEach((v, i) => {
+            if (!active[i]) return;
+            const x = Math.max(0, Number(v) || 0);
+            if (isRec) t.rec[i] += x; else t.br[i] += x;
+        });
+    });
+
+    /* 3) reconcile ON / OFF so that ON + OFF = SUMMARY-BR (incl. recovery) */
+    teams.forEach(t => {
+        for (let i = 0; i < 6; i++) {
+            if (!active[i]) { t.on[i] = 0; t.off[i] = 0; continue; }
+            const main = Math.max(0, t.br[i]), planned = Math.max(0, t.planned[i]), rec = Math.max(0, t.rec[i]);
+            const onMain = Math.min(planned, main);
+            t.on[i] = onMain + (RECOVERY_AS_ON_TARGET ? rec : 0);
+            t.off[i] = (main - onMain) + (RECOVERY_AS_ON_TARGET ? 0 : rec);
+        }
+    });
+
+    const s = Array.from(teams.values()).filter(t => t.target > 0 || t.achieved > 0 || t.br.some(v => v > 0) || t.rec.some(v => v > 0));
+    if (!s.length) {
+        c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`;
+        note.style.display = "none";
+        return;
+    }
+    s.sort((a, b) => calcPct(b) - calcPct(a));
+
+    const T = { target: 0, achieved: 0, on: zeros(), off: zeros() };
+
+    let h = `<div class="table-container" style="overflow-x:auto"><table class="sum-table"><thead>
+        <tr><th rowspan="2">TEAM</th><th rowspan="2">TARGET</th><th rowspan="2">ACHIEVED</th>`
+        + DAY_LABELS.map(d => `<th class="dg" colspan="2">${d}</th>`).join("")
+        + `<th rowspan="2">%</th></tr><tr class="sub-row">`
+        + DAY_LABELS.map(() => `<th class="dg">ON TARGET</th><th class="off-h">OFF TARGET</th>`).join("")
+        + `</tr></thead><tbody>`;
+
+    s.forEach(i => {
+        T.target += i.target; T.achieved += i.achieved;
+        h += `<tr><td><strong>${escapeHtml(i.team)}</strong></td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td>`;
+        for (let k = 0; k < 6; k++) {
+            T.on[k] += i.on[k]; T.off[k] += i.off[k];
+            h += active[k]
+                ? `<td class="dg">${formatNumber(i.on[k])}</td><td class="off-cell">${formatNumber(i.off[k])}</td>`
+                : `<td class="dg dim">–</td><td class="dim">–</td>`;
+        }
+        h += pctCell(calcPct(i)) + `</tr>`;
+    });
+
+    const tp = T.target > 0 ? (T.achieved / T.target * 100) : 0;
+
+    h += `<tr class="total-row"><td><strong>SUB TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td>`;
+    for (let k = 0; k < 6; k++) {
+        h += active[k]
+            ? `<td class="dg">${formatNumber(T.on[k])}</td><td>${formatNumber(T.off[k])}</td>`
+            : `<td class="dg dim">–</td><td class="dim">–</td>`;
+    }
+    h += pctCell(tp) + `</tr>`;
+
+    h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td></td><td></td>`;
+    for (let k = 0; k < 6; k++) {
+        h += active[k]
+            ? `<td class="dg center" colspan="2">${formatNumber(T.on[k] + T.off[k])}</td>`
+            : `<td class="dg dim" colspan="2">–</td>`;
+    }
+    h += `<td></td></tr></tbody></table></div>`;
+    c.innerHTML = h;
+
+    /* note: recovery collections included, per team */
+    const recParts = s
+        .map(t => ({ team: t.team, total: t.rec.reduce((a, v, i) => a + (active[i] ? v : 0), 0) }))
+        .filter(x => x.total > 0);
+    if (recParts.length) {
+        note.style.display = "block";
+        note.innerHTML = `Includes <strong>RECOVERY</strong> collections from SUMMARY-BR (shown under ${RECOVERY_AS_ON_TARGET ? "ON" : "OFF"} TARGET): ` +
+            recParts.map(x => `${escapeHtml(x.team)} <strong>${formatNumber(x.total)}</strong>`).join(" | ");
+    } else {
+        note.style.display = "none";
+        note.innerHTML = "";
+    }
 }
 
+/* ============ DAILY SUMMARY ============ */
 function renderDailySummary(rawRows) {
-    const card = document.getElementById("dailySummaryCard");
-    const tbody = document.getElementById("dailySummaryBody");
-    const hint = document.getElementById("unscheduledHint");
+    const card = $("dailySummaryCard"), tbody = $("dailySummaryBody"), hint = $("unscheduledHint");
 
-    /* Apply the card's OWN date filter (independent of the overhead Period bar) */
     const scoped = (rawRows || []).filter(r => {
         if (!r.date) return false;
         if (dailyDateFilter.startDate && r.date < dailyDateFilter.startDate) return false;
@@ -696,8 +937,7 @@ function renderDailySummary(rawRows) {
         m.target += Number(r.target) || 0;
         m.achieved += Number(r.achieved) || 0;
     });
-    /* Chronological — this is a time-series table, not a ranking */
-    const days = Array.from(dailyMap.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+    const days = Array.from(dailyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
     const hasUnscheduled = unscheduledAggregated.target > 0 || unscheduledAggregated.achieved > 0;
     if (!days.length && !hasUnscheduled) { card.style.display = "none"; return; }
@@ -708,13 +948,13 @@ function renderDailySummary(rawRows) {
         h = `<tr><td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">No scheduled collections in the selected range.</td></tr>`;
     } else {
         const T = { target: 0, achieved: 0 };
+        const todayISO = toISO(new Date());
         days.forEach(([d, v]) => {
-            const deficit = Math.max(0, v.target - v.achieved);
             T.target += v.target; T.achieved += v.achieved;
-            h += `<tr><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(deficit)}</td></tr>`;
+            const rowCls = d === todayISO ? "tl-today" : (d < todayISO ? "tl-past" : "");
+            h += `<tr class="${rowCls}"><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, v.target - v.achieved))}</td></tr>`;
         });
-        const tDef = Math.max(0, T.target - T.achieved);
-        h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td class="deficit-cell">${formatNumber(tDef)}</td></tr>`;
+        h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, T.target - T.achieved))}</td></tr>`;
     }
     tbody.innerHTML = h;
 
@@ -724,46 +964,72 @@ function renderDailySummary(rawRows) {
     } else { hint.style.display = "none"; hint.innerHTML = ""; }
 }
 
+/* ============ BRANCHES ============ */
 function renderBranches(data) {
-    const c = document.getElementById("branchesContainer"); if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`; return; }
-    /* Descending by performance (% achieved) */
-    data = [...data].sort((a,b) => perfPct(b.target, b.achieved) - perfPct(a.target, a.achieved));
+    const c = $("branchesContainer");
+    if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`; return; }
+    data = [...data].sort((a, b) => perfPct(b.target, b.achieved) - perfPct(a.target, a.achieved));
     let h = `<div class="table-container"><table><thead><tr><th>TEAM</th><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>%</th></tr></thead><tbody>`;
-    data.forEach(i => { const p=getPercentage(i.target,i.achieved), w=Math.min(Math.max(p,0),100); h+=`<tr><td><strong>${escapeHtml(i.collectionTeam)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td>${formatNumber(i.sunday)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td></tr>`; });
+    data.forEach(i => {
+        h += `<tr><td><strong>${escapeHtml(i.collectionTeam)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td>${formatNumber(i.sunday)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td>${pctCell(getPercentage(i.target, i.achieved))}</tr>`;
+    });
     c.innerHTML = h + `</tbody></table></div>`;
 }
 
+/* ============ MARSHAL ============ */
 function renderDeferred(data) {
-    const c = document.getElementById("deferredContainer"); if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No portfolio data.</div></div>`; return; }
-    /* Descending by performance (% achieved vs collected) */
-    data = [...data].sort((a,b) => perfPct(b.target, b.week4Collection) - perfPct(a.target, a.week4Collection));
+    const c = $("deferredContainer");
+    if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No portfolio data.</div></div>`; return; }
+    data = [...data].sort((a, b) => perfPct(b.target, b.week4Collection) - perfPct(a.target, a.week4Collection));
     let h = `<div class="table-container"><table><thead><tr><th>DRI</th><th>BRANCH</th><th>TOTAL TGT</th><th>DEF TGT</th><th>PART TGT</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>COLLECTED</th><th>DEFICIT</th><th>%</th><th>MARSHAL</th></tr></thead><tbody>`;
-    data.forEach(i => { const p=getPercentage(i.target,i.week4Collection), w=Math.min(Math.max(p,0),100), def=Math.max(0,i.target-i.week4Collection); h+=`<tr><td><strong>${escapeHtml(i.dri)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.deferredTarget)}</td><td>${formatNumber(i.partialTarget)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td>${formatNumber(i.week4Collection)}</td><td class="deficit-cell">${formatNumber(def)}</td><td class="percentage-cell"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></td><td>${escapeHtml(i.collectionMarshal)}</td></tr>`; });
+    data.forEach(i => {
+        const def = Math.max(0, i.target - i.week4Collection);
+        h += `<tr><td><strong>${escapeHtml(i.dri)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.deferredTarget)}</td><td>${formatNumber(i.partialTarget)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td><td>${formatNumber(i.week4Collection)}</td><td class="deficit-cell">${formatNumber(def)}</td>${pctCell(getPercentage(i.target, i.week4Collection))}<td>${escapeHtml(i.collectionMarshal)}</td></tr>`;
+    });
     c.innerHTML = h + `</tbody></table></div>`;
+}
+
+/* ============ RECOVERY VIEW ============ */
+function recoveryRows(map) {
+    return Array.from(map.entries())
+        .sort((a, b) => perfPct(b[1].target, b[1].achieved) - perfPct(a[1].target, a[1].achieved))
+        .map(([n, i]) => {
+            const d = Math.max(0, i.target - i.achieved), p = i.target > 0 ? i.achieved / i.target * 100 : 0;
+            return `<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`;
+        }).join("");
+}
+
+function groupTA(rows, key) {
+    const map = new Map();
+    rows.forEach(r => {
+        if (!map.has(r[key])) map.set(r[key], { target: 0, achieved: 0 });
+        const m = map.get(r[key]);
+        m.target += Number(r.target) || 0;
+        m.achieved += Number(r.achieved) || 0;
+    });
+    return map;
+}
+
+function clusterCardHtml(cl, cd) {
+    const def = Math.max(0, cd.totalTarget - cd.totalAchieved), p = cd.totalTarget > 0 ? cd.totalAchieved / cd.totalTarget * 100 : 0, w = Math.min(Math.max(p, 0), 100);
+    return `<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`;
+}
+
+function sortedClusterKeys(cd) {
+    return Object.keys(cd).sort((x, y) => perfPct(cd[y].totalTarget, cd[y].totalAchieved) - perfPct(cd[x].totalTarget, cd[x].totalAchieved));
 }
 
 function renderRecovery(recoveryData) {
-    /* Branchwise — descending by performance (% achieved) */
-    const branchMap = new Map(); recoveryData.forEach(r => { if(!branchMap.has(r.branch)) branchMap.set(r.branch, {target:0, achieved:0}); const m = branchMap.get(r.branch); m.target+=r.target; m.achieved+=r.achieved; });
-    let h1=""; Array.from(branchMap.entries()).sort((a,b)=>perfPct(b[1].target,b[1].achieved)-perfPct(a[1].target,a[1].achieved)).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h1+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
-    document.getElementById("recoveryBranchBody").innerHTML = h1;
-
-    /* Team — descending by performance (% achieved) */
-    const teamMap = new Map(); recoveryData.forEach(r => { if(!teamMap.has(r.dri)) teamMap.set(r.dri, {target:0, achieved:0}); const m = teamMap.get(r.dri); m.target+=r.target; m.achieved+=r.achieved; });
-    let h2=""; Array.from(teamMap.entries()).sort((a,b)=>perfPct(b[1].target,b[1].achieved)-perfPct(a[1].target,a[1].achieved)).forEach(([n,i])=>{ const d=Math.max(0,i.target-i.achieved), p=i.target>0?(i.achieved/i.target*100):0; h2+=`<tr><td>${escapeHtml(n)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td class="deficit-cell">${formatNumber(d)}</td><td>${p.toFixed(1)}%</td></tr>`; });
-    document.getElementById("recoveryTeamBody").innerHTML = h2;
-
-    /* Cluster cards — descending by performance (% achieved) */
-    const clusterMap = buildClusterData(recoveryData); const c = document.getElementById("recoveryClusterGrid"); 
+    $("recoveryBranchBody").innerHTML = recoveryRows(groupTA(recoveryData, "branch"));
+    $("recoveryTeamBody").innerHTML = recoveryRows(groupTA(recoveryData, "dri"));
+    const clusterMap = buildClusterData(recoveryData), c = $("recoveryClusterGrid");
     if (!Object.keys(clusterMap).length) { c.innerHTML = `<div class="empty-state">No cluster data.</div>`; return; }
-    const sortedClusters = Object.keys(clusterMap).sort((x,y) => perfPct(clusterMap[y].totalTarget, clusterMap[y].totalAchieved) - perfPct(clusterMap[x].totalTarget, clusterMap[x].totalAchieved));
-    let h3 = ""; sortedClusters.forEach(cl => { const cd = clusterMap[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
-    h3+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
-    c.innerHTML = h3;
+    c.innerHTML = sortedClusterKeys(clusterMap).map(cl => clusterCardHtml(cl, clusterMap[cl])).join("");
 }
 
+/* ============ CLUSTERS ============ */
 function renderClusterView(clusterData) {
-    const uCard = document.getElementById("unscheduledCard"); const uBody = document.getElementById("unscheduledBody");
+    const uCard = $("unscheduledCard"), uBody = $("unscheduledBody");
     if (unscheduledAggregated.target > 0) {
         uCard.style.display = "block";
         uBody.innerHTML = `<tr><td>${formatNumber(unscheduledAggregated.target)}</td><td>${formatNumber(unscheduledAggregated.achieved)}</td><td class="deficit-cell">${formatNumber(unscheduledAggregated.deficit)}</td></tr>`;
@@ -772,63 +1038,59 @@ function renderClusterView(clusterData) {
 }
 
 function renderClusterCards(clusterData) {
-    const c = document.getElementById("clustersGrid"); if (!Object.keys(clusterData).length) { c.innerHTML = `<div class="empty-state">No scheduled cluster data.</div>`; return; }
-    /* Descending by performance (% achieved) */
-    const sortedClusters = Object.keys(clusterData).sort((x,y) => perfPct(clusterData[y].totalTarget, clusterData[y].totalAchieved) - perfPct(clusterData[x].totalTarget, clusterData[x].totalAchieved));
-    let h = ""; sortedClusters.forEach(cl => { const cd = clusterData[cl], def=Math.max(0,cd.totalTarget-cd.totalAchieved), p=cd.totalTarget>0?(cd.totalAchieved/cd.totalTarget*100):0, w=Math.min(Math.max(p,0),100);
-    h+=`<div class="cluster-card"><div class="cluster-card-header">${escapeHtml(cl)}</div><div class="cluster-card-body"><div class="cluster-stat"><span class="stat-label">Target</span><span class="stat-value">${formatNumber(cd.totalTarget)}</span></div><div class="cluster-stat"><span class="stat-label">Achieved</span><span class="stat-value achieved">${formatNumber(cd.totalAchieved)}</span></div><div class="cluster-stat"><span class="stat-label">Deficit</span><span class="stat-value deficit">${formatNumber(def)}</span></div><div style="margin-top:auto;"><div class="percentage-wrapper"><div class="progress"><div class="progress-bar ${getStatusClass(p)}" style="width:${w}%;"></div></div><div class="percentage-text">${p.toFixed(1)}%</div></div></div></div></div>`; });
-    c.innerHTML = h;
+    const c = $("clustersGrid");
+    if (!Object.keys(clusterData).length) { c.innerHTML = `<div class="empty-state">No scheduled cluster data.</div>`; return; }
+    c.innerHTML = sortedClusterKeys(clusterData).map(cl => clusterCardHtml(cl, clusterData[cl])).join("");
 }
 
 function renderClusterTable(clusterData) {
-    const card = document.getElementById("clusterCard"), thead = document.getElementById("clusterHead"), tbody = document.getElementById("clusterBody");
+    const card = $("clusterCard"), thead = $("clusterHead"), tbody = $("clusterBody");
     if (!Object.keys(clusterData).length) { card.style.display = "none"; return; }
     card.style.display = "block";
 
     const allDates = new Set();
     Object.values(clusterData).forEach(c => Object.keys(c.days).forEach(d => allDates.add(d)));
     const sortedDates = Array.from(allDates).sort();
+    const gcls = gi => gi % 2 === 1 ? ` class="gs galt"` : ` class="gs"`;
 
     let head1 = `<tr class="date-row"><th rowspan="2">CLUSTER</th><th rowspan="2">TOTAL TARGET</th><th rowspan="2">TOTAL ACHIEVED</th><th rowspan="2">%</th>`;
     let head2 = `<tr class="sub-row">`;
     sortedDates.forEach((d, gi) => {
-        const cls = gi % 2 === 1 ? ` class="gs galt"` : ` class="gs"`;
-        head1 += `<th${cls} colspan="2">${formatDisplayDate(d)}</th>`;
-        head2 += `<th${cls}>TARGET</th><th${cls}>ACHIEVED</th>`;
+        head1 += `<th${gcls(gi)} colspan="2">${formatDisplayDate(d)}</th>`;
+        head2 += `<th${gcls(gi)}>TARGET</th><th${gcls(gi)}>ACHIEVED</th>`;
     });
-    head1 += `</tr>`; head2 += `</tr>`;
-    thead.innerHTML = head1 + head2;
+    thead.innerHTML = head1 + `</tr>` + head2 + `</tr>`;
 
-    /* Cluster rows — descending by performance (% achieved) */
-    const sortedClusters = Object.keys(clusterData).sort((x,y) => perfPct(clusterData[y].totalTarget, clusterData[y].totalAchieved) - perfPct(clusterData[x].totalTarget, clusterData[x].totalAchieved));
-    let bodyHtml = "";
+    let body = "";
     const gT = { target: 0, achieved: 0 };
-    sortedClusters.forEach(cl => {
-        const c = clusterData[cl];
-        const p = c.totalTarget > 0 ? (c.totalAchieved / c.totalTarget * 100) : 0;
-        bodyHtml += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`;
+    sortedClusterKeys(clusterData).forEach(cl => {
+        const c = clusterData[cl], p = c.totalTarget > 0 ? c.totalAchieved / c.totalTarget * 100 : 0;
+        body += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`;
         sortedDates.forEach((d, gi) => {
-            const dayData = c.days[d] || { target: 0, achieved: 0 };
-            const cls = gi % 2 === 1 ? ` class="gs galt"` : ` class="gs"`;
-            bodyHtml += `<td${cls}>${formatNumber(dayData.target)}</td><td${cls}>${formatNumber(dayData.achieved)}</td>`;
+            const dd = c.days[d] || { target: 0, achieved: 0 };
+            body += `<td${gcls(gi)}>${formatNumber(dd.target)}</td><td${gcls(gi)}>${formatNumber(dd.achieved)}</td>`;
         });
-        bodyHtml += `</tr>`;
+        body += `</tr>`;
         gT.target += c.totalTarget; gT.achieved += c.totalAchieved;
     });
 
-    const gP = gT.target > 0 ? (gT.achieved / gT.target * 100) : 0;
-    let totalHtml = `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(gT.target)}</td><td>${formatNumber(gT.achieved)}</td><td>${gP.toFixed(1)}%</td>`;
+    const gP = gT.target > 0 ? gT.achieved / gT.target * 100 : 0;
+    let total = `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(gT.target)}</td><td>${formatNumber(gT.achieved)}</td><td>${gP.toFixed(1)}%</td>`;
     sortedDates.forEach((d, gi) => {
         let t = 0, a = 0;
         Object.values(clusterData).forEach(c => { if (c.days[d]) { t += c.days[d].target; a += c.days[d].achieved; } });
-        const cls = gi % 2 === 1 ? ` class="gs galt"` : ` class="gs"`;
-        totalHtml += `<td${cls}>${formatNumber(t)}</td><td${cls}>${formatNumber(a)}</td>`;
+        total += `<td${gcls(gi)}>${formatNumber(t)}</td><td${gcls(gi)}>${formatNumber(a)}</td>`;
     });
-    totalHtml += `</tr>`;
-    tbody.innerHTML = bodyHtml + totalHtml;
+    tbody.innerHTML = body + total + `</tr>`;
 }
 
-document.addEventListener("DOMContentLoaded", () => { setDailyRange("month"); setDatePreset("today"); loadData(); setInterval(() => loadData(), 300000); });
+/* ============ STARTUP ============ */
+document.addEventListener("DOMContentLoaded", () => {
+    setDailyRange("month");
+    setDatePreset("today");
+    loadData();
+    setInterval(() => loadData(), 60000);
+});
 </script>
 </body>
 </html>
