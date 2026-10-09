@@ -855,6 +855,8 @@ function renderTable(data) {
             t.on[i] = onMain + (RECOVERY_AS_ON_TARGET ? rec : 0);
             t.off[i] = (main - onMain) + (RECOVERY_AS_ON_TARGET ? 0 : rec);
         }
+        /* ACHIEVED (Summary) = sum of ON TARGET + OFF TARGET over the filtered range. TARGET stays = planned collections. */
+        t.achieved = t.on.reduce((a, v) => a + v, 0) + t.off.reduce((a, v) => a + v, 0);
     });
 
     const s = Array.from(teams.values()).filter(t => t.target > 0 || t.achieved > 0 || t.br.some(v => v > 0) || t.rec.some(v => v > 0));
