@@ -143,6 +143,15 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .sw-today { background: rgba(250, 204, 21, .3); border-color: #facc15; }
 .sw-future { background: rgba(15, 23, 42, .8); }
 
+/* ---- Daily Collections Summary: red = past dates, yellow = today ---- */
+#dailySummaryBody tr.tl-past td { background: rgba(239, 68, 68, .13) !important; }
+#dailySummaryBody tr.tl-past:hover td { background: rgba(239, 68, 68, .22) !important; }
+#dailySummaryBody tr.tl-past td:first-child { color: #fca5a5; }
+#dailySummaryBody tr.tl-today td { background: rgba(250, 204, 21, .16) !important; border-top: 1px solid rgba(250, 204, 21, .7); border-bottom: 1px solid rgba(250, 204, 21, .7); color: #fde68a; font-weight: 700; }
+#dailySummaryBody tr.tl-today:hover td { background: rgba(250, 204, 21, .25) !important; }
+#dailySummaryBody tr.tl-today td:first-child { color: #fde047; }
+#dailySummaryBody tr.tl-today td.deficit-cell { color: #fde68a !important; }
+
 #clusterCard .report-table thead tr.date-row th { text-align: center; background: rgba(37, 99, 235, .14); border-left: 1px solid #334155; border-bottom: 1px solid #2563eb; color: #bfdbfe; letter-spacing: .8px; padding: 10px 8px; }
 #clusterCard .report-table thead tr.date-row th[rowspan] { background: transparent; border-left: none; border-bottom: 1px solid #2a3a55; color: #94a3b8; vertical-align: middle; }
 #clusterCard .report-table thead tr.sub-row th { text-align: center; font-size: 10px; padding: 7px 8px; color: #64748b; background: rgba(15, 23, 42, .6); border-bottom: 1px solid #2a3a55; }
@@ -266,17 +275,8 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
                 <tbody id="dailySummaryBody"></tbody>
             </table>
         </div>
+        <div class="tl-legend"><span class="tl-legend-item"><span class="tl-swatch sw-past"></span>Past dates</span><span class="tl-legend-item"><span class="tl-swatch sw-today"></span>Today</span><span class="tl-legend-item"><span class="tl-swatch sw-future"></span>Upcoming</span></div>
         <div id="unscheduledHint" class="unscheduled-hint" style="display:none"></div>
-    </div>
-    <div class="report-card" id="reconCard">
-        <div class="report-card-header">RECONCILIATION — WHERE ON + OFF ≠ SUMMARY-BR</div>
-        <div id="reconTotals" class="unscheduled-hint" style="border-top:none"></div>
-        <div class="report-table-wrapper">
-            <table class="report-table">
-                <thead><tr><th>TEAM</th><th>BRANCH</th><th>DAY</th><th>SUMMARY-BR</th><th>PLANNED (ON)</th><th>RAW DIFF</th><th>ISSUE</th></tr></thead>
-                <tbody id="reconBody"></tbody>
-            </table>
-        </div>
     </div>
 </div>
 
@@ -769,7 +769,6 @@ function renderSummaryView(data, dailyRaw, clusterData) {
     renderTable(data);
     renderClusterTable(clusterData);
     renderDailySummary(dailyRaw);
-    renderReconcile();
 }
 
 /* ============================================================
@@ -920,71 +919,6 @@ function renderTable(data) {
     }
 }
 
-/* ============================================================
-   RECONCILIATION (diagnostic only)
-   ============================================================ */
-function renderReconcile() {
-    const branchSel = $("branchFilter").value, teamSel = $("teamFilter").value;
-    const search = $("searchBox").value.toLowerCase().trim();
-    const weekDates = getSheetWeekDates();
-    const map = new Map();
-
-    const get = (team, branch) => {
-        const k = normKey(team) + "||" + normKey(branch);
-        if (!map.has(k)) map.set(k, { team, branch, br: [0,0,0,0,0,0], plan: [0,0,0,0,0,0], inBr: false, inPlan: false });
-        return map.get(k);
-    };
-
-    currentAllMainRaw.forEach(r => {
-        if (branchSel !== "ALL" && r.branch !== branchSel) return;
-        if (teamSel !== "ALL" && r.dri !== teamSel) return;
-        if (search && !String(r.dri || "").toLowerCase().includes(search)) return;
-        const x = get(r.dri, r.branch);
-        x.inPlan = true;
-        const i = weekDates.indexOf(r.date);
-        if (i >= 0) x.plan[i] += Math.max(0, Number(r.achieved) || 0);
-    });
-
-    let recSum = 0;   /* RECOVERY-branch rows: no planned counterpart by design, added straight to the totals */
-    summaryBrCache.forEach(r => {
-        if (!summaryRowPassesFilters(r, branchSel, teamSel, search)) return;
-        if (isRecoveryBranch(r.branch)) {
-            brDailyValues(r).forEach(v => { recSum += Math.max(0, Number(v) || 0); });
-            return;
-        }
-        const x = get(r.team, r.branch);
-        x.inBr = true;
-        brDailyValues(r).forEach((v, i) => { x.br[i] += Math.max(0, Number(v) || 0); });
-    });
-
-    let sumBr = recSum, sumPlan = 0, sumDisplay = recSum, issueCount = 0, h = "";
-
-    map.forEach(x => {
-        for (let i = 0; i < 6; i++) {
-            const br = Math.max(0, Number(x.br[i]) || 0), plan = Math.max(0, Number(x.plan[i]) || 0);
-            const rawDiff = br - plan;
-            const displayOn = Math.min(plan, br), displayOff = Math.max(0, br - displayOn);
-            sumBr += br; sumPlan += plan; sumDisplay += displayOn + displayOff;
-
-            let issue = "";
-            if (!x.inBr && plan > 0) issue = "COMBINED AGING has planned collections but SUMMARY-BR has no matching row.";
-            else if (!x.inPlan && br > 0) issue = "SUMMARY-BR has collections but no matching planned COMBINED AGING row.";
-            else if (rawDiff < 0) issue = "Planned exceeds SUMMARY-BR. Excess ignored in dashboard display.";
-
-            if (issue) {
-                issueCount++;
-                h += `<tr><td>${escapeHtml(x.team)}</td><td>${escapeHtml(x.branch)}</td><td>${DAY_LABELS[i]} ${formatDMY(weekDates[i])}</td><td>${formatNumber(br)}</td><td>${formatNumber(plan)}</td><td>${formatNumber(Math.max(0, rawDiff))}</td><td style="white-space:normal;text-align:left">${issue}</td></tr>`;
-            }
-        }
-    });
-
-    $("reconBody").innerHTML = h || `<tr><td colspan="7" style="text-align:center;color:#64748b;font-style:italic;">No source mismatches found.</td></tr>`;
-    $("reconTotals").innerHTML =
-        `SUMMARY-BR: <strong>${formatNumber(sumBr)}</strong> | Planned: <strong>${formatNumber(sumPlan)}</strong> | ` +
-        `Dashboard ON + OFF: <strong>${formatNumber(sumDisplay)}</strong> | Difference: <strong>${formatNumber(Math.abs(sumDisplay - sumBr))}</strong> | ` +
-        `Recovery included: <strong>${formatNumber(recSum)}</strong> | Issues: <strong>${issueCount}</strong>`;
-}
-
 /* ============ DAILY SUMMARY ============ */
 function renderDailySummary(rawRows) {
     const card = $("dailySummaryCard"), tbody = $("dailySummaryBody"), hint = $("unscheduledHint");
@@ -1014,9 +948,11 @@ function renderDailySummary(rawRows) {
         h = `<tr><td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">No scheduled collections in the selected range.</td></tr>`;
     } else {
         const T = { target: 0, achieved: 0 };
+        const todayISO = toISO(new Date());
         days.forEach(([d, v]) => {
             T.target += v.target; T.achieved += v.achieved;
-            h += `<tr><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, v.target - v.achieved))}</td></tr>`;
+            const rowCls = d === todayISO ? "tl-today" : (d < todayISO ? "tl-past" : "");
+            h += `<tr class="${rowCls}"><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, v.target - v.achieved))}</td></tr>`;
         });
         h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, T.target - T.achieved))}</td></tr>`;
     }
