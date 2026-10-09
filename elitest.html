@@ -863,6 +863,7 @@ function renderTable(data) {
     if (!s.length) {
         c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`;
         note.style.display = "none";
+        setStandardKPIs(0, 0);
         return;
     }
     s.sort((a, b) => calcPct(b) - calcPct(a));
@@ -906,6 +907,9 @@ function renderTable(data) {
     }
     h += `<td></td></tr></tbody></table></div>`;
     c.innerHTML = h;
+
+    /* Overhead KPI cards on the Summary switch = the same totals as the table (Achieved = ON + OFF) */
+    setStandardKPIs(T.target, T.achieved);
 
     /* note: recovery collections included, per team */
     const recParts = s
