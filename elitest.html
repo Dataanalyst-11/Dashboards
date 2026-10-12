@@ -17,6 +17,13 @@ body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; background: linear
 .last-update #lastUpdate { font-weight: 600; color: #60a5fa; }
 .date-range-badge { display: inline-block; background: linear-gradient(135deg, #1e3a5f 0%, #1e4480 100%); color: #93c5fd; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: .5px; margin-top: 6px; border: 1px solid #2563eb; }
 
+.header-right { display: flex; align-items: center; gap: 26px; position: relative; }
+.week-picker { display: flex; flex-direction: column; gap: 5px; }
+.week-picker label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #93c5fd; }
+#weekSelect { min-width: 210px; padding: 9px 12px; font-size: 14px; font-weight: 700; color: #f8fafc; background: #0f172a; border: 1px solid #2563eb; border-radius: 8px; box-shadow: 0 2px 8px rgba(37, 99, 235, .35); }
+#weekSelect option:disabled { color: #64748b; }
+@media(max-width:900px){ .header { flex-direction: column; align-items: flex-start; gap: 14px; } .header-right { flex-wrap: wrap; } }
+
 .dashboard { width: 100%; max-width: 100%; padding: 22px 30px; }
 
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
@@ -192,13 +199,19 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 <div class="header">
     <div>
         <div class="header-title">COLLECTION TEAM PERFORMANCE</div>
-        <div class="header-subtitle">Target vs Achieved | Daily Collection Monitoring</div>
+        <div class="header-subtitle">Target vs Achieved | Daily Collection Monitoring | <span id="weekBadge" style="color:#fcd34d;font-weight:700"></span></div>
         <div class="date-range-badge" id="dateRangeBadge">Loading...</div>
     </div>
-    <div class="last-update">
-        Last Updated<br>
-        <span id="lastUpdate">Loading...</span>
-        <div id="refreshStatus" class="refresh-status">Local caching active</div>
+    <div class="header-right">
+        <div class="week-picker">
+            <label for="weekSelect">Data Source</label>
+            <select id="weekSelect" onchange="selectWeek(this.value)"></select>
+        </div>
+        <div class="last-update">
+            Last Updated<br>
+            <span id="lastUpdate">Loading...</span>
+            <div id="refreshStatus" class="refresh-status">Local caching active</div>
+        </div>
     </div>
 </div>
 
@@ -308,7 +321,27 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 <div class="toast" id="toast"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyYuZQGImMwp_t_fl3dpOYUPeB65MjnIXeRZesxrx3x4-PtYDr7IqwWfKIiMyNnqRo/exec";
+/* ============================================================
+   DATA SOURCES (one per week)  — add / edit your weeks here
+   ------------------------------------------------------------
+   id        : unique key, also used for the per-week cache
+   label     : the name shown in the Data Source dropdown
+   url       : the deployed Apps Script web-app URL (…/exec) of that week's workbook
+               leave "" until the workbook is ready (shown greyed-out, not selectable)
+   weekStart : OPTIONAL. Any date inside that week (YYYY-MM-DD). Only needed if the
+               Sun–Fri SUMMARY-BR columns map to the wrong dates for an old week.
+   ============================================================ */
+const WEEKS = [
+    { id: "oct-w1", label: "October Week 1",  url: "https://script.google.com/macros/s/AKfycbyYuZQGImMwp_t_fl3dpOYUPeB65MjnIXeRZesxrx3x4-PtYDr7IqwWfKIiMyNnqRo/exec" },
+    { id: "oct-w2", label: "October Week 2",  url: "https://script.google.com/macros/s/AKfycby_ODxbSyrziPNA-T_ibrjS4Bm8iyLt1HfMx8oSkY2AuLCLCXYKZOaX_VSY_uixQo-P/exec" },
+    { id: "oct-w3", label: "October Week 3",  url: "" },
+    { id: "oct-w4", label: "October Week 4",  url: "" },
+    { id: "nov-w1", label: "November Week 1", url: "" },
+    { id: "nov-w2", label: "November Week 2", url: "" },
+    { id: "nov-w3", label: "November Week 3", url: "" },
+    { id: "nov-w4", label: "November Week 4", url: "" }
+    /* , { id: "dec-w1", label: "December Week 1", url: "" } */
+];
 
 /* SUMMARY-BR rows whose BRANCH = "RECOVERY" are added to the team named on that row
    (ANDERSON WATHOME / STEVE WILLIAMSON) in the Summary table.
@@ -321,7 +354,10 @@ const $ = id => document.getElementById(id);
 let rawDataCache = [];
 let summaryBrCache = [];
 let currentView = "branches";
-let refreshInProgress = false;
+let activeWeek = null;          /* the WEEKS entry currently shown */
+let loadSeq = 0;                /* increments on every load; stale responses are dropped */
+let currentAbort = null;        /* AbortController of the request in flight */
+let needAutoPeriod = false;     /* true right after a week switch -> pick a sensible Period once data is in */
 let dateFilter = { startDate: null, endDate: null, preset: "today" };
 let dailyDateFilter = { mode: "month", startDate: null, endDate: null };
 let unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
@@ -605,41 +641,175 @@ function showToast(msg, type) {
     setTimeout(() => t.classList.remove("show"), 3500);
 }
 
+/* ============ WEEK PICKER + PER-WEEK CACHE ============ */
+const cacheKey = (id, kind) => `dash::${id}::${kind}`;
+
+function readWeekCache(id) {
+    try {
+        const d = localStorage.getItem(cacheKey(id, "data"));
+        if (!d) return null;
+        return { data: JSON.parse(d), summaryBr: JSON.parse(localStorage.getItem(cacheKey(id, "br")) || "[]"), ts: Number(localStorage.getItem(cacheKey(id, "ts"))) || 0 };
+    } catch (e) { return null; }
+}
+
+function writeWeekCache(id, data, br) {
+    const put = () => {
+        localStorage.setItem(cacheKey(id, "data"), JSON.stringify(data));
+        localStorage.setItem(cacheKey(id, "br"), JSON.stringify(br));
+        localStorage.setItem(cacheKey(id, "ts"), String(Date.now()));
+    };
+    try { put(); }
+    catch (e) {
+        /* storage full: drop the OTHER weeks' caches and retry (the selected week always wins) */
+        WEEKS.forEach(w => { if (w.id !== id) ["data", "br", "ts"].forEach(k => localStorage.removeItem(cacheKey(w.id, k))); });
+        try { put(); } catch (e2) { console.warn("Local cache is full — this week is not cached.", e2); }
+    }
+}
+
+function buildWeekSelect() {
+    $("weekSelect").innerHTML = WEEKS.map(w =>
+        `<option value="${escapeHtml(w.id)}"${w.url ? "" : " disabled"}>${escapeHtml(w.label)}${w.url ? "" : " — not linked yet"}</option>`
+    ).join("");
+}
+
+function pickInitialWeekId() {
+    let saved = null;
+    try { saved = localStorage.getItem("activeWeekId"); } catch (e) {}
+    const linked = WEEKS.filter(w => w.url);
+    if (saved && linked.some(w => w.id === saved)) return saved;
+    return linked.length ? linked[linked.length - 1].id : null;   /* newest linked week */
+}
+
+function clearViews() {
+    ["branchesContainer", "deferredContainer", "summaryTableContainer", "recoveryBranchBody", "recoveryTeamBody", "recoveryClusterGrid",
+     "clustersGrid", "clusterBody", "clusterHead", "dailySummaryBody", "deferOverviewGrid", "deferTeamBody", "deferBranchBody",
+     "deferTimelineBody", "deferTopBody", "unscheduledBody"].forEach(id => { $(id).innerHTML = ""; });
+    ["clusterCard", "dailySummaryCard", "deferTopCard", "unscheduledCard", "summaryRecNote"].forEach(id => { $(id).style.display = "none"; });
+    currentAllData = []; currentDeferredData = []; currentClusterData = {}; currentRecoveryData = [];
+    currentAllMainRaw = []; currentDailySourceRows = [];
+    setStandardKPIs(0, 0);
+}
+
+function selectWeek(id) {
+    const w = WEEKS.find(x => x.id === id && x.url);
+    if (!w) {
+        $("loading").style.display = "none";
+        $("error").style.display = "block";
+        $("error").innerText = "No data source is linked yet. Add a web-app URL to a week in the WEEKS list at the top of the script.";
+        return;
+    }
+    activeWeek = w;
+    try { localStorage.setItem("activeWeekId", w.id); } catch (e) {}
+    $("weekSelect").value = w.id;
+    $("weekBadge").textContent = w.label;
+    document.title = "Collection Team Dashboard — " + w.label;
+
+    rawDataCache = []; summaryBrCache = [];
+    $("branchFilter").value = "ALL"; $("teamFilter").value = "ALL"; $("searchBox").value = "";
+    needAutoPeriod = true;
+    $("error").style.display = "none";
+
+    const cached = readWeekCache(w.id);
+    if (cached) {
+        /* instant paint from this week's own cache, then refresh from the network */
+        rawDataCache = cached.data || []; summaryBrCache = cached.summaryBr || [];
+        $("lastUpdate").innerText = cached.ts ? new Date(cached.ts).toLocaleString("en-KE") : "—";
+        $("refreshStatus").textContent = "Cached copy shown — refreshing…";
+        applyAutoPeriod();
+        processAndRender();
+    } else {
+        clearViews();
+        $("lastUpdate").innerText = "Loading...";
+        $("refreshStatus").textContent = "No cache yet for this week";
+    }
+    loadData(false, true);
+}
+
+/* ---- choose a sensible Period / Daily range for the week that was just opened ---- */
+function getDataDateRange() {
+    let min = null, max = null;
+    rawDataCache.forEach(r => { if (!r.date) return; if (!min || r.date < min) min = r.date; if (!max || r.date > max) max = r.date; });
+    return { min, max };
+}
+
+function applyAutoPeriod() {
+    if (!needAutoPeriod || rawDataCache.length === 0) return;
+    needAutoPeriod = false;
+    const { min, max } = getDataDateRange(), today = toISO(new Date());
+    const setPeriod = (s, e, preset) => {
+        dateFilter = { startDate: s, endDate: e, preset };
+        $("startDate").value = s; $("endDate").value = e;
+        document.querySelectorAll(".date-preset").forEach(b => b.classList.toggle("active", b.dataset.preset === preset));
+        updateDateRangeBadge();
+    };
+    if (!min || (today >= min && today <= max)) {
+        const r = getPresetRange("today");               /* a live week: behave exactly as before */
+        setPeriod(toISO(r.start), toISO(r.end), "today");
+        setDailyRange("month");
+    } else {
+        const wd = getSheetWeekDates();                   /* an archived / upcoming week: show the whole week */
+        const sat = new Date(wd[0] + "T00:00:00"); sat.setDate(sat.getDate() + 6);
+        setPeriod(wd[0], toISO(sat), null);
+        dailyDateFilter = { mode: "custom", startDate: min, endDate: max };
+        $("dailyFrom").value = min; $("dailyTo").value = max;
+        $("dailyMonthBtn").classList.remove("active");
+        renderDailySummaryOnly();
+    }
+}
+
 /* ============ LOAD DATA ============ */
-async function loadData(manualRefresh = false) {
-    if (refreshInProgress) return;
-    refreshInProgress = true;
+async function loadData(manualRefresh = false, isSwitch = false) {
+    const week = activeWeek;
+    if (!week) return;
+    if (currentAbort && !manualRefresh && !isSwitch) return;   /* auto-refresh never stacks on a running request */
+    if (currentAbort) currentAbort.abort();
+    const seq = ++loadSeq, ctrl = new AbortController();
+    currentAbort = ctrl;
+
     const btn = $("refreshButton");
     btn.disabled = true; btn.classList.add("spinning");
-    $("loading").style.display = "block";
+    $("loading").style.display = rawDataCache.length ? "none" : "block";
+
     try {
-        const response = await fetch(API_URL + "?t=" + Date.now(), { cache: "no-store" });
+        const sep = week.url.includes("?") ? "&" : "?";
+        const response = await fetch(week.url + sep + "t=" + Date.now(), { cache: "no-store", signal: ctrl.signal });
         if (!response.ok) { const errText = await response.text(); throw new Error(`Server error ${response.status}: ${errText.substring(0, 150)}`); }
         const result = await response.json();
+        if (seq !== loadSeq) return;                            /* user already switched week */
         if (result.status !== "success") throw new Error(result.message || "Unknown API Error");
+
         rawDataCache = result.data || [];
         summaryBrCache = result.summaryBr || [];
         if (result.summaryBrNote) console.warn("SUMMARY-BR:", result.summaryBrNote);
-        localStorage.setItem("dashboardCache", JSON.stringify(rawDataCache));
-        localStorage.setItem("summaryBrCache", JSON.stringify(summaryBrCache));
+        writeWeekCache(week.id, rawDataCache, summaryBrCache);
+
         $("lastUpdate").innerText = new Date().toLocaleString("en-KE");
-        if (manualRefresh) showToast(result.summaryBrNote ? "Refreshed — " + result.summaryBrNote : "Sheet data refreshed", result.summaryBrNote ? "error" : undefined);
+        $("refreshStatus").textContent = "Live data • cached locally";
+        $("error").style.display = "none";
+        if (manualRefresh) showToast(result.summaryBrNote ? "Refreshed — " + result.summaryBrNote : week.label + " refreshed", result.summaryBrNote ? "error" : undefined);
+        applyAutoPeriod();
         processAndRender();
     } catch (err) {
-        const cachedData = localStorage.getItem("dashboardCache");
-        if (cachedData) {
-            rawDataCache = JSON.parse(cachedData);
-            summaryBrCache = JSON.parse(localStorage.getItem("summaryBrCache") || "[]");
-            showToast("API failed. Loaded from local cache.", "error");
+        if (err.name === "AbortError" || seq !== loadSeq) return;
+        const cached = readWeekCache(week.id);
+        if (cached) {
+            rawDataCache = cached.data || []; summaryBrCache = cached.summaryBr || [];
+            $("lastUpdate").innerText = cached.ts ? new Date(cached.ts).toLocaleString("en-KE") : "—";
+            $("refreshStatus").textContent = "Offline — showing cached copy";
+            showToast("API failed. Loaded " + week.label + " from local cache.", "error");
+            applyAutoPeriod();
             processAndRender();
         } else {
+            $("refreshStatus").textContent = "No cache available";
             $("error").style.display = "block";
-            $("error").innerText = "Data fetch failed & no cache available: " + err.message;
+            $("error").innerText = "Data fetch failed for " + week.label + " & no cache available: " + err.message;
         }
     } finally {
-        btn.disabled = false; btn.classList.remove("spinning");
-        $("loading").style.display = "none";
-        refreshInProgress = false;
+        if (seq === loadSeq) {
+            btn.disabled = false; btn.classList.remove("spinning");
+            $("loading").style.display = "none";
+            currentAbort = null;
+        }
     }
 }
 
@@ -797,9 +967,20 @@ function brDailyValues(r) {
     return raw.map((v, i) => i === 0 ? v : (v === 0 ? 0 : v - raw[i - 1]));
 }
 
+/* Which calendar week do the SUMMARY-BR Sun–Fri columns belong to?
+   1) the week's optional weekStart, else
+   2) today's week when today falls inside the loaded data's dates (live week), else
+   3) the week of the last planned date in the data (archived / upcoming week) */
+function getAnchorDate() {
+    if (activeWeek && activeWeek.weekStart) return activeWeek.weekStart;
+    const { min, max } = getDataDateRange(), today = toISO(new Date());
+    if (!min || (today >= min && today <= max)) return today;
+    return max;
+}
+
 function getSheetWeekDates() {
-    const now = new Date();
-    const sun = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const base = new Date(getAnchorDate() + "T00:00:00");
+    const sun = new Date(base.getFullYear(), base.getMonth(), base.getDate() - base.getDay());
     return DAY_KEYS.map((_, i) => toISO(new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + i)));
 }
 
@@ -1092,10 +1273,11 @@ function renderClusterTable(clusterData) {
 
 /* ============ STARTUP ============ */
 document.addEventListener("DOMContentLoaded", () => {
+    buildWeekSelect();
     setDailyRange("month");
     setDatePreset("today");
-    loadData();
-    setInterval(() => loadData(), 60000);
+    selectWeek(pickInitialWeekId());
+    setInterval(() => loadData(), 60000);   /* refreshes the selected week only */
 });
 </script>
 </body>
