@@ -88,6 +88,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 .sum-table td.dim { color: #475569; text-align: center; }
 .sum-table tbody tr.total-row td.dg { border-left: 1px solid #2563eb; }
 .sum-table tbody tr.total-row td.center { text-align: center; }
+.sum-table .prior { display:block; font-size:10px; font-weight:600; font-style:italic; color:#8391a7; margin-top:2px; line-height:1.2; }
 .rec-note { margin: -14px 0 22px; padding: 10px 16px; font-size: 12px; color: #94a3b8; background: rgba(15, 23, 42, .6); border: 1px dashed #2a3a55; border-radius: 8px; }
 .rec-note strong { color: #6ee7b7; }
 
@@ -336,7 +337,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
    ============================================================ */
 const WEEKS = [
     { id: "oct-w1", label: "October Week 1",  from: "04/10/2026",to:  "09/10/2026", url: "https://script.google.com/macros/s/AKfycbyYuZQGImMwp_t_fl3dpOYUPeB65MjnIXeRZesxrx3x4-PtYDr7IqwWfKIiMyNnqRo/exec" },
-    { id: "oct-w2", label: "October Week 2",  from: "11/10/2026", to: "16/10/2026", url: "https://script.google.com/macros/s/AKfycbwdhOGFkss3kNhnO18-Vk8D5fdQmWfwYdwfFjcWv2kYUS2V3gtooodRFpk3JdyNT4Xq/exec" },
+    { id: "oct-w2", label: "October Week 2",  from: "11/10/2026", to: "16/10/2026", url: "https://script.google.com/macros/s/AKfycby8Pflp3EnCJhi-FQSWpiR_KGFu_zJO708IpZQatQ_IhzXuqX478iwZi0qEr_r50hVT/exec" },
     { id: "oct-w3", label: "October Week 3",  from: "18/10/2026", to: "23/10/2026", url: "" },
     { id: "oct-w4", label: "October Week 4",  from: "25/10/2026", to: "30/10/2026", url: "" },
     { id: "nov-w1", label: "November Week 1", from: "01/11/2026", to: "06/11/2026", url: "" },
@@ -1016,12 +1017,12 @@ function brDailyValues(r) {
     return raw.map((v, i) => i === 0 ? v : (v === 0 ? 0 : v - raw[i - 1]));
 }
 
-/* ledger rows grouped by date: Map(date -> { rows: [...], frozen }) — marker rows only register that a day is closed/live */
+/* ledger rows grouped by date: Map(date -> { rows: [...], frozen, upcoming }) — marker rows only register that a day is closed/live */
 function getLedgerByDate() {
     const out = new Map();
     if (!ledgerCache || !ledgerCache.enabled) return out;
     (ledgerCache.rows || []).forEach(r => {
-        if (!out.has(r.date)) out.set(r.date, { rows: [], frozen: !!r.frozen });
+        if (!out.has(r.date)) out.set(r.date, { rows: [], frozen: !!r.frozen, upcoming: !!r.upcoming });
         if (r.team !== "~CLOSED~") out.get(r.date).rows.push(r);
     });
     return out;
@@ -1052,6 +1053,13 @@ function summaryRowPassesFilters(r, branchSel, teamSel, search) {
     return true;
 }
 
+/* grey "earlier" note shown under an ON TARGET figure — information only, never added to any total */
+function priorNote(v) {
+    return v > 0
+        ? `<span class="prior" title="Collected on these planned accounts BEFORE this day. Already counted (as OFF TARGET) on the day it came in, so it is NOT added to any total.">${formatNumber(v)} earlier</span>`
+        : "";
+}
+
 function renderTable(data) {
     const c = $("summaryTableContainer");
     const branchSel = $("branchFilter").value, teamSel = $("teamFilter").value;
@@ -1071,7 +1079,7 @@ function renderTable(data) {
     const teams = new Map();
     const getTeam = name => {
         const k = normKey(name);
-        if (!teams.has(k)) teams.set(k, { team: String(name || "").trim(), target: 0, achieved: 0, planned: zeros(), on: zeros(), off: zeros(), br: zeros(), rec: zeros() });
+        if (!teams.has(k)) teams.set(k, { team: String(name || "").trim(), target: 0, achieved: 0, planned: zeros(), on: zeros(), off: zeros(), br: zeros(), rec: zeros(), prior: zeros() });
         return teams.get(k);
     };
 
@@ -1105,7 +1113,8 @@ function renderTable(data) {
         });
     });
 
-    /* 2b) days served by the ledger: ON = collected that day on that day's planned accounts, CASH = SUMMARY-BR of that day */
+    /* 2b) days served by the ledger: ON = collected that day on that day's planned accounts, CASH = SUMMARY-BR of that day,
+           PRIOR = already collected on that day's planned accounts before the day (shown grey, never summed into ON / OFF / ACHIEVED) */
     weekDates.forEach((d, i) => {
         if (!active[i] || !fromLedger[i]) return;
         const day = ledgerDays.get(d);
@@ -1117,6 +1126,7 @@ function renderTable(data) {
             if (isRecoveryBranch(r.branch)) { t.rec[i] += cash || 0; t.br[i] += cash || 0; return; }
             const on = Math.max(0, Number(r.on) || 0);
             t.on[i] += on;
+            t.prior[i] += Math.max(0, Number(r.prior) || 0);
             if (cash !== null) { t.off[i] += Math.abs(cash - on); t.br[i] += cash; }
         });
     });
@@ -1139,14 +1149,15 @@ function renderTable(data) {
     teams.forEach(t => {
         let recTotal = 0;
         for (let i = 0; i < 6; i++) {
-            if (!active[i]) { t.on[i] = 0; t.off[i] = 0; continue; }
+            if (!active[i]) { t.on[i] = 0; t.off[i] = 0; t.prior[i] = 0; continue; }
             const rec = Math.max(0, t.rec[i]);
             recTotal += rec;
             if (RECOVERY_AS_ON_TARGET) t.on[i] += rec; else t.off[i] += rec;
         }
         /* the team's recovery collections (SUMMARY-BR, RECOVERY branch) are added to that team's TARGET automatically */
         t.target += recTotal;
-        /* ACHIEVED (Summary) = sum of ON TARGET + OFF TARGET over the filtered range. TARGET stays = planned collections. */
+        /* ACHIEVED (Summary) = sum of ON TARGET + OFF TARGET over the filtered range. TARGET stays = planned collections.
+           PRIOR is deliberately NOT part of this sum. */
         t.achieved = t.on.reduce((a, v) => a + v, 0) + t.off.reduce((a, v) => a + v, 0);
     });
 
@@ -1158,13 +1169,13 @@ function renderTable(data) {
     }
     s.sort((a, b) => calcPct(b) - calcPct(a));
 
-    const T = { target: 0, achieved: 0, on: zeros(), off: zeros() };
+    const T = { target: 0, achieved: 0, on: zeros(), off: zeros(), prior: zeros() };
 
     let h = `<div class="table-container" style="overflow-x:auto"><table class="sum-table"><thead>
         <tr><th rowspan="2">TEAM</th><th rowspan="2">TARGET</th><th rowspan="2">ACHIEVED</th>`
         + DAY_LABELS.map((d, i) => {
             const day = fromLedger[i] ? ledgerDays.get(weekDates[i]) : null;
-            const tag = day ? (day.frozen ? ` <span title="Closed — frozen figures">🔒</span>` : ` <span class="mini" title="Today — updates until midnight">LIVE</span>`) : "";
+            const tag = day ? (day.upcoming ? "" : day.frozen ? ` <span title="Closed — frozen figures">🔒</span>` : ` <span class="mini" title="Today — updates until midnight">LIVE</span>`) : "";
             return `<th class="dg" colspan="2">${d} <span class="mini">${formatDMY(weekDates[i]).slice(0, 5)}</span>${tag}</th>`;
         }).join("")
         + `<th rowspan="2">%</th></tr><tr class="sub-row">`
@@ -1175,9 +1186,9 @@ function renderTable(data) {
         T.target += i.target; T.achieved += i.achieved;
         h += `<tr><td><strong>${escapeHtml(i.team)}</strong></td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td>`;
         for (let k = 0; k < 6; k++) {
-            T.on[k] += i.on[k]; T.off[k] += i.off[k];
+            T.on[k] += i.on[k]; T.off[k] += i.off[k]; T.prior[k] += i.prior[k];
             h += active[k]
-                ? `<td class="dg">${formatNumber(i.on[k])}</td><td class="off-cell">${formatNumber(i.off[k])}</td>`
+                ? `<td class="dg">${formatNumber(i.on[k])}${priorNote(i.prior[k])}</td><td class="off-cell">${formatNumber(i.off[k])}</td>`
                 : `<td class="dg dim">–</td><td class="dim">–</td>`;
         }
         h += pctCell(calcPct(i)) + `</tr>`;
@@ -1188,7 +1199,7 @@ function renderTable(data) {
     h += `<tr class="total-row"><td><strong>SUB TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td>`;
     for (let k = 0; k < 6; k++) {
         h += active[k]
-            ? `<td class="dg">${formatNumber(T.on[k])}</td><td>${formatNumber(T.off[k])}</td>`
+            ? `<td class="dg">${formatNumber(T.on[k])}${priorNote(T.prior[k])}</td><td>${formatNumber(T.off[k])}</td>`
             : `<td class="dg dim">–</td><td class="dim">–</td>`;
     }
     h += pctCell(tp) + `</tr>`;
@@ -1202,7 +1213,7 @@ function renderTable(data) {
     h += `<td></td></tr></tbody></table></div>`;
     c.innerHTML = h;
 
-    /* Overhead KPI cards on the Summary switch = the same totals as the table (Achieved = ON + OFF) */
+    /* Overhead KPI cards on the Summary switch = the same totals as the table (Achieved = ON + OFF; "earlier" is never included) */
     setStandardKPIs(T.target, T.achieved);
 }
 
