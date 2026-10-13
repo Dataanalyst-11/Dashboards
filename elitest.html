@@ -270,7 +270,6 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 
 <div id="summaryContainer" style="display:none">
     <div id="summaryTableContainer"></div>
-    <div id="summaryRecNote" class="rec-note" style="display:none"></div>
     <div class="report-card" id="clusterCard" style="display:none"><div class="report-card-header">CLUSTER PERFORMANCE</div><div class="report-table-wrapper"><table class="report-table"><thead id="clusterHead"></thead><tbody id="clusterBody"></tbody></table></div></div>
     <div class="report-card" id="dailySummaryCard" style="display:none">
         <div class="report-card-header" style="flex-wrap:wrap; row-gap:8px;">
@@ -328,19 +327,23 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
    label     : the name shown in the Data Source dropdown
    url       : the deployed Apps Script web-app URL (…/exec) of that week's workbook
                leave "" until the workbook is ready (shown greyed-out, not selectable)
+   from / to : OPTIONAL data window for that week, written DD/MM/YYYY (YYYY-MM-DD also works).
+               Only planned-date rows inside [from, to] are loaded; rows with no date are kept.
+               Leave "" to load everything the workbook sends.
+               e.g.  from: "11/10/2026", to: "16/10/2026"
    weekStart : OPTIONAL. Any date inside that week (YYYY-MM-DD). Only needed if the
                Sun–Fri SUMMARY-BR columns map to the wrong dates for an old week.
    ============================================================ */
 const WEEKS = [
-    { id: "oct-w1", label: "October Week 1",  url: "https://script.google.com/macros/s/AKfycbyYuZQGImMwp_t_fl3dpOYUPeB65MjnIXeRZesxrx3x4-PtYDr7IqwWfKIiMyNnqRo/exec" },
-    { id: "oct-w2", label: "October Week 2",  url: "https://script.google.com/macros/s/AKfycby_ODxbSyrziPNA-T_ibrjS4Bm8iyLt1HfMx8oSkY2AuLCLCXYKZOaX_VSY_uixQo-P/exec" },
-    { id: "oct-w3", label: "October Week 3",  url: "" },
-    { id: "oct-w4", label: "October Week 4",  url: "" },
-    { id: "nov-w1", label: "November Week 1", url: "" },
-    { id: "nov-w2", label: "November Week 2", url: "" },
-    { id: "nov-w3", label: "November Week 3", url: "" },
-    { id: "nov-w4", label: "November Week 4", url: "" }
-    /* , { id: "dec-w1", label: "December Week 1", url: "" } */
+    { id: "oct-w1", label: "October Week 1",  from: "04/10/2026",to:  "09/10/2026", url: "https://script.google.com/macros/s/AKfycbyYuZQGImMwp_t_fl3dpOYUPeB65MjnIXeRZesxrx3x4-PtYDr7IqwWfKIiMyNnqRo/exec" },
+    { id: "oct-w2", label: "October Week 2",  from: "11/10/2026", to: "16/10/2026", url: "https://script.google.com/macros/s/AKfycbwdhOGFkss3kNhnO18-Vk8D5fdQmWfwYdwfFjcWv2kYUS2V3gtooodRFpk3JdyNT4Xq/exec" },
+    { id: "oct-w3", label: "October Week 3",  from: "18/10/2026", to: "23/10/2026", url: "" },
+    { id: "oct-w4", label: "October Week 4",  from: "25/10/2026", to: "30/10/2026", url: "" },
+    { id: "nov-w1", label: "November Week 1", from: "01/11/2026", to: "06/11/2026", url: "" },
+    { id: "nov-w2", label: "November Week 2", from: "08/11/2026", to: "13/11/2026", url: "" },
+    { id: "nov-w3", label: "November Week 3", from: "15/11/2026", to: "20/11/2026", url: "" },
+    { id: "nov-w4", label: "November Week 4", from: "22/11/2026", to: "27/11/2026", url: "" }
+    /* , { id: "dec-w1", label: "December Week 1", from: "", to: "", url: "" } */
 ];
 
 /* SUMMARY-BR rows whose BRANCH = "RECOVERY" are added to the team named on that row
@@ -353,6 +356,7 @@ const $ = id => document.getElementById(id);
 
 let rawDataCache = [];
 let summaryBrCache = [];
+let ledgerCache = null;         /* frozen daily closing figures from the Apps Script day ledger (null = not available) */
 let currentView = "branches";
 let activeWeek = null;          /* the WEEKS entry currently shown */
 let loadSeq = 0;                /* increments on every load; stale responses are dropped */
@@ -641,6 +645,45 @@ function showToast(msg, type) {
     setTimeout(() => t.classList.remove("show"), 3500);
 }
 
+/* ============ WEEK DATA WINDOW (from / to) ============ */
+function parseConfigDate(v) {
+    if (!v) return null;
+    const str = String(v).trim(), pad = n => String(n).padStart(2, "0");
+    let m = str.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);          /* DD/MM/YYYY */
+    if (m) return `${m[3]}-${pad(m[2])}-${pad(m[1])}`;
+    m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);                            /* YYYY-MM-DD */
+    if (m) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+    console.warn("WEEKS: unreadable date '" + v + "' — use DD/MM/YYYY");
+    return null;
+}
+
+function getWeekRange(week) {
+    week = week || activeWeek;
+    return { from: week ? parseConfigDate(week.from) : null, to: week ? parseConfigDate(week.to) : null };
+}
+
+/* keep planned-date rows inside the week's [from, to]; rows with no date (unscheduled) are always kept */
+function filterByWeekRange(rows) {
+    const { from, to } = getWeekRange();
+    if (!from && !to) return rows;
+    return rows.filter(r => !r.date || ((!from || r.date >= from) && (!to || r.date <= to)));
+}
+
+/* the effective window: configured from/to, falling back to the loaded data's own dates */
+function getEffectiveRange() {
+    const dr = getDataDateRange(), cfg = getWeekRange();
+    return { min: cfg.from || dr.min, max: cfg.to || dr.max };
+}
+
+function applyWeekLimits() {
+    const { from, to } = getWeekRange();
+    ["startDate", "endDate", "dailyFrom", "dailyTo"].forEach(id => {
+        const el = $(id);
+        if (from) el.min = from; else el.removeAttribute("min");
+        if (to) el.max = to; else el.removeAttribute("max");
+    });
+}
+
 /* ============ WEEK PICKER + PER-WEEK CACHE ============ */
 const cacheKey = (id, kind) => `dash::${id}::${kind}`;
 
@@ -648,20 +691,21 @@ function readWeekCache(id) {
     try {
         const d = localStorage.getItem(cacheKey(id, "data"));
         if (!d) return null;
-        return { data: JSON.parse(d), summaryBr: JSON.parse(localStorage.getItem(cacheKey(id, "br")) || "[]"), ts: Number(localStorage.getItem(cacheKey(id, "ts"))) || 0 };
+        return { data: JSON.parse(d), summaryBr: JSON.parse(localStorage.getItem(cacheKey(id, "br")) || "[]"), ledger: JSON.parse(localStorage.getItem(cacheKey(id, "led")) || "null"), ts: Number(localStorage.getItem(cacheKey(id, "ts"))) || 0 };
     } catch (e) { return null; }
 }
 
-function writeWeekCache(id, data, br) {
+function writeWeekCache(id, data, br, ledger) {
     const put = () => {
         localStorage.setItem(cacheKey(id, "data"), JSON.stringify(data));
         localStorage.setItem(cacheKey(id, "br"), JSON.stringify(br));
+        localStorage.setItem(cacheKey(id, "led"), JSON.stringify(ledger || null));
         localStorage.setItem(cacheKey(id, "ts"), String(Date.now()));
     };
     try { put(); }
     catch (e) {
         /* storage full: drop the OTHER weeks' caches and retry (the selected week always wins) */
-        WEEKS.forEach(w => { if (w.id !== id) ["data", "br", "ts"].forEach(k => localStorage.removeItem(cacheKey(w.id, k))); });
+        WEEKS.forEach(w => { if (w.id !== id) ["data", "br", "ts", "led"].forEach(k => localStorage.removeItem(cacheKey(w.id, k))); });
         try { put(); } catch (e2) { console.warn("Local cache is full — this week is not cached.", e2); }
     }
 }
@@ -684,7 +728,7 @@ function clearViews() {
     ["branchesContainer", "deferredContainer", "summaryTableContainer", "recoveryBranchBody", "recoveryTeamBody", "recoveryClusterGrid",
      "clustersGrid", "clusterBody", "clusterHead", "dailySummaryBody", "deferOverviewGrid", "deferTeamBody", "deferBranchBody",
      "deferTimelineBody", "deferTopBody", "unscheduledBody"].forEach(id => { $(id).innerHTML = ""; });
-    ["clusterCard", "dailySummaryCard", "deferTopCard", "unscheduledCard", "summaryRecNote"].forEach(id => { $(id).style.display = "none"; });
+    ["clusterCard", "dailySummaryCard", "deferTopCard", "unscheduledCard"].forEach(id => { $(id).style.display = "none"; });
     currentAllData = []; currentDeferredData = []; currentClusterData = {}; currentRecoveryData = [];
     currentAllMainRaw = []; currentDailySourceRows = [];
     setStandardKPIs(0, 0);
@@ -701,10 +745,12 @@ function selectWeek(id) {
     activeWeek = w;
     try { localStorage.setItem("activeWeekId", w.id); } catch (e) {}
     $("weekSelect").value = w.id;
-    $("weekBadge").textContent = w.label;
+    const wr = getWeekRange(w);
+    $("weekBadge").textContent = w.label + (wr.from || wr.to ? ` (${wr.from ? formatDMY(wr.from) : "…"} – ${wr.to ? formatDMY(wr.to) : "…"})` : "");
+    applyWeekLimits();
     document.title = "Collection Team Dashboard — " + w.label;
 
-    rawDataCache = []; summaryBrCache = [];
+    rawDataCache = []; summaryBrCache = []; ledgerCache = null;
     $("branchFilter").value = "ALL"; $("teamFilter").value = "ALL"; $("searchBox").value = "";
     needAutoPeriod = true;
     $("error").style.display = "none";
@@ -712,7 +758,7 @@ function selectWeek(id) {
     const cached = readWeekCache(w.id);
     if (cached) {
         /* instant paint from this week's own cache, then refresh from the network */
-        rawDataCache = cached.data || []; summaryBrCache = cached.summaryBr || [];
+        rawDataCache = filterByWeekRange(cached.data || []); summaryBrCache = cached.summaryBr || []; ledgerCache = cached.ledger || null;
         $("lastUpdate").innerText = cached.ts ? new Date(cached.ts).toLocaleString("en-KE") : "—";
         $("refreshStatus").textContent = "Cached copy shown — refreshing…";
         applyAutoPeriod();
@@ -735,7 +781,7 @@ function getDataDateRange() {
 function applyAutoPeriod() {
     if (!needAutoPeriod || rawDataCache.length === 0) return;
     needAutoPeriod = false;
-    const { min, max } = getDataDateRange(), today = toISO(new Date());
+    const { min, max } = getEffectiveRange(), today = toISO(new Date());
     const setPeriod = (s, e, preset) => {
         dateFilter = { startDate: s, endDate: e, preset };
         $("startDate").value = s; $("endDate").value = e;
@@ -778,10 +824,13 @@ async function loadData(manualRefresh = false, isSwitch = false) {
         if (seq !== loadSeq) return;                            /* user already switched week */
         if (result.status !== "success") throw new Error(result.message || "Unknown API Error");
 
-        rawDataCache = result.data || [];
+        const rawFull = result.data || [];
+        rawDataCache = filterByWeekRange(rawFull);               /* only the week's from–to window is used */
         summaryBrCache = result.summaryBr || [];
+        ledgerCache = result.ledger || null;
         if (result.summaryBrNote) console.warn("SUMMARY-BR:", result.summaryBrNote);
-        writeWeekCache(week.id, rawDataCache, summaryBrCache);
+        if (ledgerCache && ledgerCache.note) console.warn("LEDGER:", ledgerCache.note);
+        writeWeekCache(week.id, rawFull, summaryBrCache, ledgerCache);        /* cache stays unfiltered so editing from/to needs no re-download */
 
         $("lastUpdate").innerText = new Date().toLocaleString("en-KE");
         $("refreshStatus").textContent = "Live data • cached locally";
@@ -793,7 +842,7 @@ async function loadData(manualRefresh = false, isSwitch = false) {
         if (err.name === "AbortError" || seq !== loadSeq) return;
         const cached = readWeekCache(week.id);
         if (cached) {
-            rawDataCache = cached.data || []; summaryBrCache = cached.summaryBr || [];
+            rawDataCache = filterByWeekRange(cached.data || []); summaryBrCache = cached.summaryBr || []; ledgerCache = cached.ledger || null;
             $("lastUpdate").innerText = cached.ts ? new Date(cached.ts).toLocaleString("en-KE") : "—";
             $("refreshStatus").textContent = "Offline — showing cached copy";
             showToast("API failed. Loaded " + week.label + " from local cache.", "error");
@@ -878,7 +927,7 @@ function switchView(view) {
         $(v + "Container").style.display = v === view ? "block" : "none";
     });
     const desc = {
-        summary: "Summary — ON TARGET + OFF TARGET = SUMMARY-BR (recovery collections included)",
+        summary: "Summary — ON TARGET = collections on planned dates; OFF TARGET = difference from SUMMARY-BR (recovery included)",
         branches: "Detailed daily collection performance (25 Branches)",
         deferred: "Marshal Portfolio — Total target and collection",
         recovery: "Recovery Accounts — Branch, Team & Cluster",
@@ -944,9 +993,9 @@ function renderSummaryView(data, dailyRaw, clusterData) {
 /* ============================================================
    SUMMARY / ON-OFF TARGET ENGINE
 
-   SUMMARY-BR is the source of truth for the daily TOTAL.
-     ON  = MIN(planned-date collections, SUMMARY-BR)
-     OFF = SUMMARY-BR − ON            (never negative)
+   Planned dates (column U) decide each day's TARGET and ON TARGET collections.
+     ON  = collections made on their planned date (exact)
+     OFF = |SUMMARY-BR − planned-date collections|, per team + branch (always shown as a positive number)
    RECOVERY-branch rows in SUMMARY-BR are added to the team on that row
    (ANDERSON WATHOME / STEVE WILLIAMSON), as ON or OFF per RECOVERY_AS_ON_TARGET.
    ============================================================ */
@@ -967,13 +1016,24 @@ function brDailyValues(r) {
     return raw.map((v, i) => i === 0 ? v : (v === 0 ? 0 : v - raw[i - 1]));
 }
 
+/* ledger rows grouped by date: Map(date -> { rows: [...], frozen }) — marker rows only register that a day is closed/live */
+function getLedgerByDate() {
+    const out = new Map();
+    if (!ledgerCache || !ledgerCache.enabled) return out;
+    (ledgerCache.rows || []).forEach(r => {
+        if (!out.has(r.date)) out.set(r.date, { rows: [], frozen: !!r.frozen });
+        if (r.team !== "~CLOSED~") out.get(r.date).rows.push(r);
+    });
+    return out;
+}
+
 /* Which calendar week do the SUMMARY-BR Sun–Fri columns belong to?
    1) the week's optional weekStart, else
    2) today's week when today falls inside the loaded data's dates (live week), else
    3) the week of the last planned date in the data (archived / upcoming week) */
 function getAnchorDate() {
     if (activeWeek && activeWeek.weekStart) return activeWeek.weekStart;
-    const { min, max } = getDataDateRange(), today = toISO(new Date());
+    const { min, max } = getEffectiveRange(), today = toISO(new Date());
     if (!min || (today >= min && today <= max)) return today;
     return max;
 }
@@ -993,13 +1053,20 @@ function summaryRowPassesFilters(r, branchSel, teamSel, search) {
 }
 
 function renderTable(data) {
-    const c = $("summaryTableContainer"), note = $("summaryRecNote");
+    const c = $("summaryTableContainer");
     const branchSel = $("branchFilter").value, teamSel = $("teamFilter").value;
     const search = $("searchBox").value.toLowerCase().trim();
 
     const weekDates = getSheetWeekDates();
     const active = weekDates.map(d => (!dateFilter.startDate || d >= dateFilter.startDate) && (!dateFilter.endDate || d <= dateFilter.endDate));
     const zeros = () => [0, 0, 0, 0, 0, 0];
+
+    /* Day ledger: closed days are FROZEN figures (never recalculated); today is live; days after today are empty.
+       Days the ledger does not cover (e.g. before it was set up) fall back to the planned-date calculation below. */
+    const ledgerOn = !!(ledgerCache && ledgerCache.enabled);
+    const ledgerToday = (ledgerCache && ledgerCache.today) || toISO(new Date());
+    const ledgerDays = getLedgerByDate();
+    const fromLedger = weekDates.map(d => ledgerOn && (ledgerDays.has(d) || d > ledgerToday));
 
     const teams = new Map();
     const getTeam = name => {
@@ -1008,34 +1075,77 @@ function renderTable(data) {
         return teams.get(k);
     };
 
-    /* 1) planned-date collections (COMBINED AGING) */
+    /* Work per TEAM + BRANCH pair: planned-date collections (COMBINED AGING, column U dates) vs SUMMARY-BR daily collections */
+    const pairs = new Map();
+    const getPair = (team, branch) => {
+        const k = normKey(team) + "||" + normKey(branch);
+        if (!pairs.has(k)) pairs.set(k, { team, planned: zeros(), br: zeros(), hasBr: false });
+        return pairs.get(k);
+    };
+
+    /* 1) TARGET + planned-date collections. Column U (planned date) decides which day a target / collection belongs to. */
     data.forEach(r => {
         const t = getTeam(r.collectionTeam);
         t.target += Number(r.target) || 0;
         t.achieved += Number(r.achieved) || 0;
-        weekDates.forEach((d, i) => { if (active[i]) t.planned[i] += Number(r.byDate && r.byDate[d]) || 0; });
+        const p = getPair(r.collectionTeam, r.branch);
+        weekDates.forEach((d, i) => { if (active[i] && !fromLedger[i]) p.planned[i] += Number(r.byDate && r.byDate[d]) || 0; });
     });
 
-    /* 2) SUMMARY-BR: normal branches -> br, RECOVERY branch -> rec (per team) */
+    /* 2) SUMMARY-BR: normal branches -> pair.br, RECOVERY branch -> team.rec */
     summaryBrCache.forEach(r => {
         if (!summaryRowPassesFilters(r, branchSel, teamSel, search)) return;
         const t = getTeam(r.team), isRec = isRecoveryBranch(r.branch);
+        const p = isRec ? null : getPair(r.team, r.branch);
+        if (p) p.hasBr = true;
         brDailyValues(r).forEach((v, i) => {
-            if (!active[i]) return;
+            if (!active[i] || fromLedger[i]) return;
             const x = Math.max(0, Number(v) || 0);
-            if (isRec) t.rec[i] += x; else t.br[i] += x;
+            if (isRec) t.rec[i] += x; else p.br[i] += x;
         });
     });
 
-    /* 3) reconcile ON / OFF so that ON + OFF = SUMMARY-BR (incl. recovery) */
+    /* 2b) days served by the ledger: ON = collected that day on that day's planned accounts, CASH = SUMMARY-BR of that day */
+    weekDates.forEach((d, i) => {
+        if (!active[i] || !fromLedger[i]) return;
+        const day = ledgerDays.get(d);
+        if (!day) return;
+        day.rows.forEach(r => {
+            if (!summaryRowPassesFilters(r, branchSel, teamSel, search)) return;
+            const t = getTeam(r.team);
+            const cash = (r.cash === null || r.cash === undefined || r.cash === "") ? null : Math.max(0, Number(r.cash) || 0);
+            if (isRecoveryBranch(r.branch)) { t.rec[i] += cash || 0; t.br[i] += cash || 0; return; }
+            const on = Math.max(0, Number(r.on) || 0);
+            t.on[i] += on;
+            if (cash !== null) { t.off[i] += Math.abs(cash - on); t.br[i] += cash; }
+        });
+    });
+
+    /* 3) ON TARGET  = collections made on their planned date (exact, never capped).
+          OFF TARGET = |SUMMARY-BR − planned-date collections| per team+branch (a negative difference is shown as a positive number).
+          A branch with no SUMMARY-BR row has nothing to compare against, so it adds no off-target. */
+    pairs.forEach(p => {
+        const t = getTeam(p.team);
+        for (let i = 0; i < 6; i++) {
+            if (!active[i] || fromLedger[i]) continue;
+            t.planned[i] += p.planned[i];
+            t.br[i] += p.br[i];
+            t.on[i] += p.planned[i];
+            if (p.hasBr) t.off[i] += Math.abs(p.br[i] - p.planned[i]);
+        }
+    });
+
+    /* RECOVERY logic: recovery collections from SUMMARY-BR go to the team on that row (ON/OFF per RECOVERY_AS_ON_TARGET) and also raise that team's TARGET */
     teams.forEach(t => {
+        let recTotal = 0;
         for (let i = 0; i < 6; i++) {
             if (!active[i]) { t.on[i] = 0; t.off[i] = 0; continue; }
-            const main = Math.max(0, t.br[i]), planned = Math.max(0, t.planned[i]), rec = Math.max(0, t.rec[i]);
-            const onMain = Math.min(planned, main);
-            t.on[i] = onMain + (RECOVERY_AS_ON_TARGET ? rec : 0);
-            t.off[i] = (main - onMain) + (RECOVERY_AS_ON_TARGET ? 0 : rec);
+            const rec = Math.max(0, t.rec[i]);
+            recTotal += rec;
+            if (RECOVERY_AS_ON_TARGET) t.on[i] += rec; else t.off[i] += rec;
         }
+        /* the team's recovery collections (SUMMARY-BR, RECOVERY branch) are added to that team's TARGET automatically */
+        t.target += recTotal;
         /* ACHIEVED (Summary) = sum of ON TARGET + OFF TARGET over the filtered range. TARGET stays = planned collections. */
         t.achieved = t.on.reduce((a, v) => a + v, 0) + t.off.reduce((a, v) => a + v, 0);
     });
@@ -1043,7 +1153,6 @@ function renderTable(data) {
     const s = Array.from(teams.values()).filter(t => t.target > 0 || t.achieved > 0 || t.br.some(v => v > 0) || t.rec.some(v => v > 0));
     if (!s.length) {
         c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`;
-        note.style.display = "none";
         setStandardKPIs(0, 0);
         return;
     }
@@ -1053,7 +1162,11 @@ function renderTable(data) {
 
     let h = `<div class="table-container" style="overflow-x:auto"><table class="sum-table"><thead>
         <tr><th rowspan="2">TEAM</th><th rowspan="2">TARGET</th><th rowspan="2">ACHIEVED</th>`
-        + DAY_LABELS.map(d => `<th class="dg" colspan="2">${d}</th>`).join("")
+        + DAY_LABELS.map((d, i) => {
+            const day = fromLedger[i] ? ledgerDays.get(weekDates[i]) : null;
+            const tag = day ? (day.frozen ? ` <span title="Closed — frozen figures">🔒</span>` : ` <span class="mini" title="Today — updates until midnight">LIVE</span>`) : "";
+            return `<th class="dg" colspan="2">${d} <span class="mini">${formatDMY(weekDates[i]).slice(0, 5)}</span>${tag}</th>`;
+        }).join("")
         + `<th rowspan="2">%</th></tr><tr class="sub-row">`
         + DAY_LABELS.map(() => `<th class="dg">ON TARGET</th><th class="off-h">OFF TARGET</th>`).join("")
         + `</tr></thead><tbody>`;
@@ -1091,19 +1204,6 @@ function renderTable(data) {
 
     /* Overhead KPI cards on the Summary switch = the same totals as the table (Achieved = ON + OFF) */
     setStandardKPIs(T.target, T.achieved);
-
-    /* note: recovery collections included, per team */
-    const recParts = s
-        .map(t => ({ team: t.team, total: t.rec.reduce((a, v, i) => a + (active[i] ? v : 0), 0) }))
-        .filter(x => x.total > 0);
-    if (recParts.length) {
-        note.style.display = "block";
-        note.innerHTML = `Includes <strong>RECOVERY</strong> collections from SUMMARY-BR (shown under ${RECOVERY_AS_ON_TARGET ? "ON" : "OFF"} TARGET): ` +
-            recParts.map(x => `${escapeHtml(x.team)} <strong>${formatNumber(x.total)}</strong>`).join(" | ");
-    } else {
-        note.style.display = "none";
-        note.innerHTML = "";
-    }
 }
 
 /* ============ DAILY SUMMARY ============ */
