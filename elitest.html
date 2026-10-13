@@ -336,7 +336,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
                Sun–Fri SUMMARY-BR columns map to the wrong dates for an old week.
    ============================================================ */
 const WEEKS = [
-    { id: "oct-w1", label: "October Week 1",  from: "04/10/2026",to:  "09/10/2026", url: "https://script.google.com/macros/s/AKfycbyYuZQGImMwp_t_fl3dpOYUPeB65MjnIXeRZesxrx3x4-PtYDr7IqwWfKIiMyNnqRo/exec" },
+    { id: "oct-w1", label: "October Week 1",  from: "04/10/2026",to:  "09/10/2026", url: "https://script.google.com/macros/s/AKfycbyx2s5QdexZhpJNMobTo3ASS_zW15R2c4zo2NkbwqjS6BYqM5nzjLbcZFxtBG_NeDAr/exec" },
     { id: "oct-w2", label: "October Week 2",  from: "11/10/2026", to: "16/10/2026", url: "https://script.google.com/macros/s/AKfycby8Pflp3EnCJhi-FQSWpiR_KGFu_zJO708IpZQatQ_IhzXuqX478iwZi0qEr_r50hVT/exec" },
     { id: "oct-w3", label: "October Week 3",  from: "18/10/2026", to: "23/10/2026", url: "" },
     { id: "oct-w4", label: "October Week 4",  from: "25/10/2026", to: "30/10/2026", url: "" },
@@ -408,7 +408,8 @@ function processAndRender() {
 
     const allData = aggregateMain(mainData);
     const deferredData = aggregateMarshal(mainData);
-    const clusterData = buildClusterData(mainData);
+    /* CLUSTERS: read every planned-date row of the sheet as it is (cluster = column AA, target = Q, collection = S, date = U) — no row is left out */
+    const clusterData = buildClusterData(scheduledFiltered);
 
     currentAllData = allData;
     currentDeferredData = deferredData;
@@ -1100,6 +1101,16 @@ function renderTable(data) {
         weekDates.forEach((d, i) => { if (active[i] && !fromLedger[i]) p.planned[i] += Number(r.byDate && r.byDate[d]) || 0; });
     });
 
+    /* 1b) RECOVERY rows: team = column E (r.category), TARGET = column Q read on the planned date (column U), goes to that team */
+    (currentRecoveryData || []).forEach(r => {
+        const recTeam = String(r.category || "").trim();
+        if (!recTeam || normKey(recTeam) === "RECOVERY") return;
+        if (branchSel !== "ALL" && normKey(r.branch) !== normKey(branchSel)) return;
+        if (teamSel !== "ALL" && normKey(recTeam) !== normKey(teamSel)) return;
+        if (search && !recTeam.toLowerCase().includes(search)) return;
+        getTeam(recTeam).target += Number(r.target) || 0;
+    });
+
     /* 2) SUMMARY-BR: normal branches -> pair.br, RECOVERY branch -> team.rec */
     summaryBrCache.forEach(r => {
         if (!summaryRowPassesFilters(r, branchSel, teamSel, search)) return;
@@ -1145,17 +1156,13 @@ function renderTable(data) {
         }
     });
 
-    /* RECOVERY logic: recovery collections from SUMMARY-BR go to the team on that row (ON/OFF per RECOVERY_AS_ON_TARGET) and also raise that team's TARGET */
+    /* RECOVERY logic: recovery collections from SUMMARY-BR go to the team on that row (ON/OFF per RECOVERY_AS_ON_TARGET) */
     teams.forEach(t => {
-        let recTotal = 0;
         for (let i = 0; i < 6; i++) {
             if (!active[i]) { t.on[i] = 0; t.off[i] = 0; t.prior[i] = 0; continue; }
             const rec = Math.max(0, t.rec[i]);
-            recTotal += rec;
             if (RECOVERY_AS_ON_TARGET) t.on[i] += rec; else t.off[i] += rec;
         }
-        /* the team's recovery collections (SUMMARY-BR, RECOVERY branch) are added to that team's TARGET automatically */
-        t.target += recTotal;
         /* ACHIEVED (Summary) = sum of ON TARGET + OFF TARGET over the filtered range. TARGET stays = planned collections.
            PRIOR is deliberately NOT part of this sum. */
         t.achieved = t.on.reduce((a, v) => a + v, 0) + t.off.reduce((a, v) => a + v, 0);
@@ -1217,60 +1224,151 @@ function renderTable(data) {
     setStandardKPIs(T.target, T.achieved);
 }
 
+
 /* ============ DAILY SUMMARY ============ */
 function renderDailySummary(rawRows) {
-    const card = $("dailySummaryCard"), tbody = $("dailySummaryBody"), hint = $("unscheduledHint");
+    const card = $("dailySummaryCard");
+    const tbody = $("dailySummaryBody");
+    const hint = $("unscheduledHint");
 
-    const scoped = (rawRows || []).filter(r => {
+    // Start with the existing rows supplied to the summary.
+    const combinedRows = Array.isArray(rawRows) ? rawRows.slice() : [];
+
+    // Add Recovery rows from the complete API dataset.
+    // Column F is exposed as r.dri; column E is exposed as r.category.
+    const recoveryRows = (Array.isArray(rawDataCache) ? rawDataCache : [])
+        .filter(r =>
+            String(r.dri || "").trim().toUpperCase() === "RECOVERY" ||
+            String(r.category || "").trim().toUpperCase() === "RECOVERY"
+        );
+
+    // Prevent duplicate counting when a Recovery row is already in rawRows.
+    // Prefer the source row identifier if your API provides one; otherwise
+    // compare the relevant fields to identify matching records.
+    const rowKey = r => JSON.stringify([
+        String(r.branch || "").trim().toUpperCase(),
+        String(r.dri || "").trim().toUpperCase(),
+        String(r.category || "").trim().toUpperCase(),
+        String(r.date || ""),
+        Number(r.target) || 0,
+        Number(r.achieved) || 0,
+        String(r.status || "").trim().toUpperCase(),
+        String(r.cluster || "").trim().toUpperCase()
+    ]);
+
+    const existingKeys = new Set(combinedRows.map(rowKey));
+
+    recoveryRows.forEach(r => {
+        const key = rowKey(r);
+        if (!existingKeys.has(key)) {
+            combinedRows.push(r);
+            existingKeys.add(key);
+        }
+    });
+
+    // Apply the existing Daily Summary date range to both main and Recovery.
+    const scoped = combinedRows.filter(r => {
         if (!r.date) return false;
         if (dailyDateFilter.startDate && r.date < dailyDateFilter.startDate) return false;
         if (dailyDateFilter.endDate && r.date > dailyDateFilter.endDate) return false;
         return true;
     });
 
+    // Aggregate targets and collections by date.
     const dailyMap = new Map();
+
     scoped.forEach(r => {
-        if (!dailyMap.has(r.date)) dailyMap.set(r.date, { target: 0, achieved: 0 });
+        if (!dailyMap.has(r.date)) {
+            dailyMap.set(r.date, { target: 0, achieved: 0 });
+        }
+
         const m = dailyMap.get(r.date);
         m.target += Number(r.target) || 0;
         m.achieved += Number(r.achieved) || 0;
     });
-    const days = Array.from(dailyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-    const hasUnscheduled = unscheduledAggregated.target > 0 || unscheduledAggregated.achieved > 0;
-    if (!days.length && !hasUnscheduled) { card.style.display = "none"; return; }
+    const days = Array.from(dailyMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]));
+
+    const hasUnscheduled =
+        unscheduledAggregated.target > 0 ||
+        unscheduledAggregated.achieved > 0;
+
+    if (!days.length && !hasUnscheduled) {
+        card.style.display = "none";
+        return;
+    }
+
     card.style.display = "block";
 
     let h = "";
+
     if (!days.length) {
-        h = `<tr><td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">No scheduled collections in the selected range.</td></tr>`;
+        h = `<tr>
+            <td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">
+                No scheduled collections in the selected range.
+            </td>
+        </tr>`;
     } else {
         const T = { target: 0, achieved: 0 };
         const todayISO = toISO(new Date());
+
         days.forEach(([d, v]) => {
-            T.target += v.target; T.achieved += v.achieved;
-            const rowCls = d === todayISO ? "tl-today" : (d < todayISO ? "tl-past" : "");
-            h += `<tr class="${rowCls}"><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, v.target - v.achieved))}</td></tr>`;
+            T.target += v.target;
+            T.achieved += v.achieved;
+
+            const rowCls = d === todayISO
+                ? "tl-today"
+                : (d < todayISO ? "tl-past" : "");
+
+            h += `<tr class="${rowCls}">
+                <td>${formatDMY(d)}</td>
+                <td>${formatNumber(v.target)}</td>
+                <td>${formatNumber(v.achieved)}</td>
+                <td class="deficit-cell">
+                    ${formatNumber(Math.max(0, v.target - v.achieved))}
+                </td>
+            </tr>`;
         });
-        h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, T.target - T.achieved))}</td></tr>`;
+
+        h += `<tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td>${formatNumber(T.target)}</td>
+            <td>${formatNumber(T.achieved)}</td>
+            <td class="deficit-cell">
+                ${formatNumber(Math.max(0, T.target - T.achieved))}
+            </td>
+        </tr>`;
     }
+
     tbody.innerHTML = h;
 
+    // Preserve the existing unscheduled collections display.
     if (hasUnscheduled) {
         hint.style.display = "block";
-        hint.innerHTML = `Unscheduled Collections — Target: <strong>${formatNumber(unscheduledAggregated.target)}</strong> | Achieved: <strong>${formatNumber(unscheduledAggregated.achieved)}</strong> | Deficit: <strong>${formatNumber(unscheduledAggregated.deficit)}</strong>`;
-    } else { hint.style.display = "none"; hint.innerHTML = ""; }
+        hint.innerHTML = `Unscheduled Collections — Target:
+            <strong>${formatNumber(unscheduledAggregated.target)}</strong> |
+            Achieved: <strong>${formatNumber(unscheduledAggregated.achieved)}</strong> |
+            Deficit: <strong>${formatNumber(unscheduledAggregated.deficit)}</strong>`;
+    } else {
+        hint.style.display = "none";
+        hint.innerHTML = "";
+    }
 }
+
 
 /* ============ BRANCHES ============ */
 function renderBranches(data) {
     const c = $("branchesContainer");
     if (!data.length) { c.innerHTML = `<div class="table-container"><div class="empty-state">No data.</div></div>`; return; }
     data = [...data].sort((a, b) => perfPct(b.target, b.achieved) - perfPct(a.target, a.achieved));
+    const T = { target: 0, achieved: 0, sunday: 0, monday: 0, tuesday: 0, wednesday: 0, thursday: 0, friday: 0 };
     let h = `<div class="table-container"><table><thead><tr><th>TEAM</th><th>BRANCH</th><th>TARGET</th><th>ACHIEVED</th><th>SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>%</th></tr></thead><tbody>`;
     data.forEach(i => {
+        Object.keys(T).forEach(k => { T[k] += Number(i[k]) || 0; });
         h += `<tr><td><strong>${escapeHtml(i.collectionTeam)}</strong></td><td>${escapeHtml(i.branch)}</td><td>${formatNumber(i.target)}</td><td>${formatNumber(i.achieved)}</td><td>${formatNumber(i.sunday)}</td><td>${formatNumber(i.monday)}</td><td>${formatNumber(i.tuesday)}</td><td>${formatNumber(i.wednesday)}</td><td>${formatNumber(i.thursday)}</td><td>${formatNumber(i.friday)}</td>${pctCell(getPercentage(i.target, i.achieved))}</tr>`;
     });
+    h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td>${formatNumber(T.sunday)}</td><td>${formatNumber(T.monday)}</td><td>${formatNumber(T.tuesday)}</td><td>${formatNumber(T.wednesday)}</td><td>${formatNumber(T.thursday)}</td><td>${formatNumber(T.friday)}</td>${pctCell(getPercentage(T.target, T.achieved))}</tr>`;
     c.innerHTML = h + `</tbody></table></div>`;
 }
 
@@ -1317,6 +1415,11 @@ function sortedClusterKeys(cd) {
     return Object.keys(cd).sort((x, y) => perfPct(cd[y].totalTarget, cd[y].totalAchieved) - perfPct(cd[x].totalTarget, cd[x].totalAchieved));
 }
 
+/* clusters listed in their natural name order (CLUSTER 1, CLUSTER 2 … CLUSTER 10), exactly as named in column AA */
+function clusterKeysByName(cd) {
+    return Object.keys(cd).sort((x, y) => x.localeCompare(y, undefined, { numeric: true, sensitivity: "base" }));
+}
+
 function renderRecovery(recoveryData) {
     $("recoveryBranchBody").innerHTML = recoveryRows(groupTA(recoveryData, "branch"));
     $("recoveryTeamBody").innerHTML = recoveryRows(groupTA(recoveryData, "dri"));
@@ -1338,7 +1441,7 @@ function renderClusterView(clusterData) {
 function renderClusterCards(clusterData) {
     const c = $("clustersGrid");
     if (!Object.keys(clusterData).length) { c.innerHTML = `<div class="empty-state">No scheduled cluster data.</div>`; return; }
-    c.innerHTML = sortedClusterKeys(clusterData).map(cl => clusterCardHtml(cl, clusterData[cl])).join("");
+    c.innerHTML = clusterKeysByName(clusterData).map(cl => clusterCardHtml(cl, clusterData[cl])).join("");
 }
 
 function renderClusterTable(clusterData) {
@@ -1361,7 +1464,7 @@ function renderClusterTable(clusterData) {
 
     let body = "";
     const gT = { target: 0, achieved: 0 };
-    sortedClusterKeys(clusterData).forEach(cl => {
+    clusterKeysByName(clusterData).forEach(cl => {
         const c = clusterData[cl], p = c.totalTarget > 0 ? c.totalAchieved / c.totalTarget * 100 : 0;
         body += `<tr><td>${escapeHtml(cl)}</td><td>${formatNumber(c.totalTarget)}</td><td>${formatNumber(c.totalAchieved)}</td><td>${p.toFixed(1)}%</td>`;
         sortedDates.forEach((d, gi) => {
