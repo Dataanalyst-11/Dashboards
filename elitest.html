@@ -347,11 +347,11 @@ const WEEKS = [
     /* , { id: "dec-w1", label: "December Week 1", from: "", to: "", url: "" } */
 ];
 
-/* SUMMARY-BR rows whose BRANCH = "RECOVERY" are added to the team named on that row
-   (ANDERSON WATHOME / STEVE WILLIAMSON) in the Summary table.
-   true  = recovery collections are shown under ON TARGET
-   false = recovery collections are shown under OFF TARGET */
-const RECOVERY_AS_ON_TARGET = false;
+/* RECOVERY is an independent collection marshal (its own team row, "RECOVERY").
+   Its daily collections come from the SUMMARY-BR rows whose BRANCH = "RECOVERY".
+   true  = those collections are shown under ON TARGET
+   false = those collections are shown under OFF TARGET */
+const RECOVERY_AS_ON_TARGET = true;
 
 const $ = id => document.getElementById(id);
 
@@ -367,6 +367,7 @@ let dateFilter = { startDate: null, endDate: null, preset: "today" };
 let dailyDateFilter = { mode: "month", startDate: null, endDate: null };
 let unscheduledAggregated = { target: 0, achieved: 0, deficit: 0 };
 let currentAllMainRaw = [];
+let currentAllCollectionRaw = [];   /* main flow + RECOVERY marshal rows, each row exactly once (Daily Collections Summary source) */
 let currentDailySourceRows = [];
 let currentAllData = [];
 let currentDeferredData = [];
@@ -384,6 +385,27 @@ const isMainFlow = r => {
     if (normKey(r.dri) === "DIANA AKHENDA" && normKey(r.branch) === "PSALMS & COVIGEN") return false;
     return true;
 };
+
+/* a row that belongs to a collection marshal: the normal main flow, or the independent RECOVERY marshal */
+const isCollectionRow = r => isRecoveryRow(r) || isMainFlow(r);
+
+/* ---- RECOVERY NORMALISATION (done ONCE, right after the data is loaded) ----
+   RECOVERY is an independent collection marshal. Every recovery row (column F = RECOVERY, or column E = RECOVERY)
+   gets team = "RECOVERY" and keeps its real branch, planned date, target and collection. No recovery row is attributed
+   to a person any more, so every view reads the same team name and a row can never be counted under two names. */
+function normalizeRows(rows) {
+    (rows || []).forEach(r => { if (isRecoveryRow(r)) { r.dri = "RECOVERY"; r.category = "RECOVERY"; } });
+    return rows || [];
+}
+/* SUMMARY-BR rows whose branch is RECOVERY belong to the same independent marshal */
+function normalizeBrRows(rows) {
+    (rows || []).forEach(r => { if (isRecoveryBranch(r.branch)) r.team = "RECOVERY"; });
+    return rows || [];
+}
+function normalizeLedger(l) {
+    if (l && Array.isArray(l.rows)) l.rows.forEach(r => { if (isRecoveryBranch(r.branch)) r.team = "RECOVERY"; });
+    return l || null;
+}
 
 /* ============ PROCESS AND RENDER ============ */
 function processAndRender() {
@@ -406,7 +428,8 @@ function processAndRender() {
     });
     unscheduledAggregated.deficit = Math.max(0, unscheduledAggregated.target - unscheduledAggregated.achieved);
 
-    const allData = aggregateMain(mainData);
+    /* TEAM / BRANCH rows (Summary + Branches): main flow + the independent RECOVERY marshal, each planned-date row once */
+    const allData = aggregateMain(scheduledFiltered.filter(isCollectionRow));
     const deferredData = aggregateMarshal(mainData);
     /* CLUSTERS: read every planned-date row of the sheet as it is (cluster = column AA, target = Q, collection = S, date = U) — no row is left out */
     const clusterData = buildClusterData(scheduledFiltered);
@@ -416,6 +439,7 @@ function processAndRender() {
     currentClusterData = clusterData;
     currentRecoveryData = recoveryData;
     currentAllMainRaw = rawDataCache.filter(isMainFlow);   /* full main flow, ignores the Period filter */
+    currentAllCollectionRaw = rawDataCache.filter(isCollectionRow);
 
     populateFilters(allData, deferredData);
     applyFilters(allData, deferredData, clusterData, recoveryData);
@@ -732,7 +756,7 @@ function clearViews() {
      "deferTimelineBody", "deferTopBody", "unscheduledBody"].forEach(id => { $(id).innerHTML = ""; });
     ["clusterCard", "dailySummaryCard", "deferTopCard", "unscheduledCard"].forEach(id => { $(id).style.display = "none"; });
     currentAllData = []; currentDeferredData = []; currentClusterData = {}; currentRecoveryData = [];
-    currentAllMainRaw = []; currentDailySourceRows = [];
+    currentAllMainRaw = []; currentAllCollectionRaw = []; currentDailySourceRows = [];
     setStandardKPIs(0, 0);
 }
 
@@ -760,7 +784,7 @@ function selectWeek(id) {
     const cached = readWeekCache(w.id);
     if (cached) {
         /* instant paint from this week's own cache, then refresh from the network */
-        rawDataCache = filterByWeekRange(cached.data || []); summaryBrCache = cached.summaryBr || []; ledgerCache = cached.ledger || null;
+        rawDataCache = normalizeRows(filterByWeekRange(cached.data || [])); summaryBrCache = normalizeBrRows(cached.summaryBr || []); ledgerCache = normalizeLedger(cached.ledger || null);
         $("lastUpdate").innerText = cached.ts ? new Date(cached.ts).toLocaleString("en-KE") : "—";
         $("refreshStatus").textContent = "Cached copy shown — refreshing…";
         applyAutoPeriod();
@@ -827,9 +851,9 @@ async function loadData(manualRefresh = false, isSwitch = false) {
         if (result.status !== "success") throw new Error(result.message || "Unknown API Error");
 
         const rawFull = result.data || [];
-        rawDataCache = filterByWeekRange(rawFull);               /* only the week's from–to window is used */
-        summaryBrCache = result.summaryBr || [];
-        ledgerCache = result.ledger || null;
+        rawDataCache = normalizeRows(filterByWeekRange(rawFull));   /* only the week's from–to window is used; recovery rows normalised once */
+        summaryBrCache = normalizeBrRows(result.summaryBr || []);
+        ledgerCache = normalizeLedger(result.ledger || null);
         if (result.summaryBrNote) console.warn("SUMMARY-BR:", result.summaryBrNote);
         if (ledgerCache && ledgerCache.note) console.warn("LEDGER:", ledgerCache.note);
         writeWeekCache(week.id, rawFull, summaryBrCache, ledgerCache);        /* cache stays unfiltered so editing from/to needs no re-download */
@@ -844,7 +868,7 @@ async function loadData(manualRefresh = false, isSwitch = false) {
         if (err.name === "AbortError" || seq !== loadSeq) return;
         const cached = readWeekCache(week.id);
         if (cached) {
-            rawDataCache = filterByWeekRange(cached.data || []); summaryBrCache = cached.summaryBr || []; ledgerCache = cached.ledger || null;
+            rawDataCache = normalizeRows(filterByWeekRange(cached.data || [])); summaryBrCache = normalizeBrRows(cached.summaryBr || []); ledgerCache = normalizeLedger(cached.ledger || null);
             $("lastUpdate").innerText = cached.ts ? new Date(cached.ts).toLocaleString("en-KE") : "—";
             $("refreshStatus").textContent = "Offline — showing cached copy";
             showToast("API failed. Loaded " + week.label + " from local cache.", "error");
@@ -903,7 +927,8 @@ function applyFilters(allData, deferredData, clusterData, recoveryData) {
         (team === "ALL" || r.dri === team) &&
         (!search || String(r.dri || "").toLowerCase().includes(search));
 
-    currentDailySourceRows = currentAllMainRaw.filter(rawFilter);
+    /* Daily Collections Summary: main flow + the RECOVERY marshal, every row exactly once (recovery rows were normalised at load) */
+    currentDailySourceRows = currentAllCollectionRaw.filter(rawFilter);
 
     let dStats = null;
     if (currentView === "deferments") dStats = buildDefermentStats(currentAllMainRaw.filter(rawFilter));
@@ -929,7 +954,7 @@ function switchView(view) {
         $(v + "Container").style.display = v === view ? "block" : "none";
     });
     const desc = {
-        summary: "Summary — ON TARGET = collections on planned dates; OFF TARGET = difference from SUMMARY-BR (recovery included)",
+        summary: "Summary — ON TARGET = collections on planned dates; OFF TARGET = difference from SUMMARY-BR (RECOVERY marshal included)",
         branches: "Detailed daily collection performance (25 Branches)",
         deferred: "Marshal Portfolio — Total target and collection",
         recovery: "Recovery Accounts — Branch, Team & Cluster",
@@ -998,13 +1023,15 @@ function renderSummaryView(data, dailyRaw, clusterData) {
    Planned dates (column U) decide each day's TARGET and ON TARGET collections.
      ON  = collections made on their planned date (exact)
      OFF = |SUMMARY-BR − planned-date collections|, per team + branch (always shown as a positive number)
-   RECOVERY-branch rows in SUMMARY-BR are added to the team on that row
-   (ANDERSON WATHOME / STEVE WILLIAMSON), as ON or OFF per RECOVERY_AS_ON_TARGET.
+   RECOVERY is an independent marshal: its TARGET is the sum of its planned-date rows; its daily collections are the
+   SUMMARY-BR rows whose branch is RECOVERY (shown as ON or OFF per RECOVERY_AS_ON_TARGET). Its planned-date
+   collections are NOT counted a second time.
    ============================================================ */
 const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
 const DAY_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI"];
 const normKey = s => String(s || "").toUpperCase().replace(/\s+/g, " ").trim();
 const isRecoveryBranch = b => normKey(b) === "RECOVERY";
+const isRecoveryTeam = t => normKey(t) === "RECOVERY";
 const SUMMARY_IS_CUMULATIVE = false;
 
 function isExcludedPair(team, branch) {
@@ -1092,26 +1119,18 @@ function renderTable(data) {
         return pairs.get(k);
     };
 
-    /* 1) TARGET + planned-date collections. Column U (planned date) decides which day a target / collection belongs to. */
+    /* 1) TARGET + planned-date collections. Column U (planned date) decides which day a target / collection belongs to.
+          The RECOVERY marshal contributes its TARGET only: its collections come from SUMMARY-BR (step 2), so they are never counted twice. */
     data.forEach(r => {
         const t = getTeam(r.collectionTeam);
         t.target += Number(r.target) || 0;
         t.achieved += Number(r.achieved) || 0;
+        if (isRecoveryTeam(r.collectionTeam)) return;
         const p = getPair(r.collectionTeam, r.branch);
         weekDates.forEach((d, i) => { if (active[i] && !fromLedger[i]) p.planned[i] += Number(r.byDate && r.byDate[d]) || 0; });
     });
 
-    /* 1b) RECOVERY rows: team = column E (r.category), TARGET = column Q read on the planned date (column U), goes to that team */
-    (currentRecoveryData || []).forEach(r => {
-        const recTeam = String(r.category || "").trim();
-        if (!recTeam || normKey(recTeam) === "RECOVERY") return;
-        if (branchSel !== "ALL" && normKey(r.branch) !== normKey(branchSel)) return;
-        if (teamSel !== "ALL" && normKey(recTeam) !== normKey(teamSel)) return;
-        if (search && !recTeam.toLowerCase().includes(search)) return;
-        getTeam(recTeam).target += Number(r.target) || 0;
-    });
-
-    /* 2) SUMMARY-BR: normal branches -> pair.br, RECOVERY branch -> team.rec */
+    /* 2) SUMMARY-BR: normal branches -> pair.br, RECOVERY branch -> the RECOVERY marshal (team.rec) */
     summaryBrCache.forEach(r => {
         if (!summaryRowPassesFilters(r, branchSel, teamSel, search)) return;
         const t = getTeam(r.team), isRec = isRecoveryBranch(r.branch);
@@ -1156,16 +1175,16 @@ function renderTable(data) {
         }
     });
 
-    /* RECOVERY logic: recovery collections from SUMMARY-BR go to the team on that row (ON/OFF per RECOVERY_AS_ON_TARGET) */
+    /* RECOVERY marshal: its SUMMARY-BR collections are shown as ON or OFF TARGET (RECOVERY_AS_ON_TARGET) */
     teams.forEach(t => {
         for (let i = 0; i < 6; i++) {
             if (!active[i]) { t.on[i] = 0; t.off[i] = 0; t.prior[i] = 0; continue; }
             const rec = Math.max(0, t.rec[i]);
             if (RECOVERY_AS_ON_TARGET) t.on[i] += rec; else t.off[i] += rec;
         }
-        /* ACHIEVED (Summary) = sum of ON TARGET + OFF TARGET over the filtered range. TARGET stays = planned collections.
-           PRIOR is deliberately NOT part of this sum. */
-        t.achieved = t.on.reduce((a, v) => a + v, 0) + t.off.reduce((a, v) => a + v, 0);
+        /* ACHIEVED (Summary) = sum of ON TARGET + prior over the filtered range. TARGET stays = planned collections.
+           OFF TARGET is deliberately NOT part of this sum. */
+        t.achieved = t.on.reduce((a, v) => a + v, 0) + t.prior.reduce((a, v) => a + v, 0);
     });
 
     const s = Array.from(teams.values()).filter(t => t.target > 0 || t.achieved > 0 || t.br.some(v => v > 0) || t.rec.some(v => v > 0));
@@ -1220,142 +1239,55 @@ function renderTable(data) {
     h += `<td></td></tr></tbody></table></div>`;
     c.innerHTML = h;
 
-    /* Overhead KPI cards on the Summary switch = the same totals as the table (Achieved = ON + OFF; "earlier" is never included) */
+    /* Overhead KPI cards on the Summary switch = the same totals as the table */
     setStandardKPIs(T.target, T.achieved);
 }
 
-
 /* ============ DAILY SUMMARY ============ */
+/* rawRows = main flow + the RECOVERY marshal, already normalised and each row present exactly once (see applyFilters) */
 function renderDailySummary(rawRows) {
-    const card = $("dailySummaryCard");
-    const tbody = $("dailySummaryBody");
-    const hint = $("unscheduledHint");
+    const card = $("dailySummaryCard"), tbody = $("dailySummaryBody"), hint = $("unscheduledHint");
 
-    // Start with the existing rows supplied to the summary.
-    const combinedRows = Array.isArray(rawRows) ? rawRows.slice() : [];
-
-    // Add Recovery rows from the complete API dataset.
-    // Column F is exposed as r.dri; column E is exposed as r.category.
-    const recoveryRows = (Array.isArray(rawDataCache) ? rawDataCache : [])
-        .filter(r =>
-            String(r.dri || "").trim().toUpperCase() === "RECOVERY" ||
-            String(r.category || "").trim().toUpperCase() === "RECOVERY"
-        );
-
-    // Prevent duplicate counting when a Recovery row is already in rawRows.
-    // Prefer the source row identifier if your API provides one; otherwise
-    // compare the relevant fields to identify matching records.
-    const rowKey = r => JSON.stringify([
-        String(r.branch || "").trim().toUpperCase(),
-        String(r.dri || "").trim().toUpperCase(),
-        String(r.category || "").trim().toUpperCase(),
-        String(r.date || ""),
-        Number(r.target) || 0,
-        Number(r.achieved) || 0,
-        String(r.status || "").trim().toUpperCase(),
-        String(r.cluster || "").trim().toUpperCase()
-    ]);
-
-    const existingKeys = new Set(combinedRows.map(rowKey));
-
-    recoveryRows.forEach(r => {
-        const key = rowKey(r);
-        if (!existingKeys.has(key)) {
-            combinedRows.push(r);
-            existingKeys.add(key);
-        }
-    });
-
-    // Apply the existing Daily Summary date range to both main and Recovery.
-    const scoped = combinedRows.filter(r => {
+    const scoped = (rawRows || []).filter(r => {
         if (!r.date) return false;
         if (dailyDateFilter.startDate && r.date < dailyDateFilter.startDate) return false;
         if (dailyDateFilter.endDate && r.date > dailyDateFilter.endDate) return false;
         return true;
     });
 
-    // Aggregate targets and collections by date.
     const dailyMap = new Map();
-
     scoped.forEach(r => {
-        if (!dailyMap.has(r.date)) {
-            dailyMap.set(r.date, { target: 0, achieved: 0 });
-        }
-
+        if (!dailyMap.has(r.date)) dailyMap.set(r.date, { target: 0, achieved: 0 });
         const m = dailyMap.get(r.date);
         m.target += Number(r.target) || 0;
         m.achieved += Number(r.achieved) || 0;
     });
+    const days = Array.from(dailyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-    const days = Array.from(dailyMap.entries())
-        .sort((a, b) => a[0].localeCompare(b[0]));
-
-    const hasUnscheduled =
-        unscheduledAggregated.target > 0 ||
-        unscheduledAggregated.achieved > 0;
-
-    if (!days.length && !hasUnscheduled) {
-        card.style.display = "none";
-        return;
-    }
-
+    const hasUnscheduled = unscheduledAggregated.target > 0 || unscheduledAggregated.achieved > 0;
+    if (!days.length && !hasUnscheduled) { card.style.display = "none"; return; }
     card.style.display = "block";
 
     let h = "";
-
     if (!days.length) {
-        h = `<tr>
-            <td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">
-                No scheduled collections in the selected range.
-            </td>
-        </tr>`;
+        h = `<tr><td colspan="4" style="text-align:center;color:#64748b;font-style:italic;">No scheduled collections in the selected range.</td></tr>`;
     } else {
         const T = { target: 0, achieved: 0 };
         const todayISO = toISO(new Date());
-
         days.forEach(([d, v]) => {
-            T.target += v.target;
-            T.achieved += v.achieved;
-
-            const rowCls = d === todayISO
-                ? "tl-today"
-                : (d < todayISO ? "tl-past" : "");
-
-            h += `<tr class="${rowCls}">
-                <td>${formatDMY(d)}</td>
-                <td>${formatNumber(v.target)}</td>
-                <td>${formatNumber(v.achieved)}</td>
-                <td class="deficit-cell">
-                    ${formatNumber(Math.max(0, v.target - v.achieved))}
-                </td>
-            </tr>`;
+            T.target += v.target; T.achieved += v.achieved;
+            const rowCls = d === todayISO ? "tl-today" : (d < todayISO ? "tl-past" : "");
+            h += `<tr class="${rowCls}"><td>${formatDMY(d)}</td><td>${formatNumber(v.target)}</td><td>${formatNumber(v.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, v.target - v.achieved))}</td></tr>`;
         });
-
-        h += `<tr class="total-row">
-            <td><strong>TOTAL</strong></td>
-            <td>${formatNumber(T.target)}</td>
-            <td>${formatNumber(T.achieved)}</td>
-            <td class="deficit-cell">
-                ${formatNumber(Math.max(0, T.target - T.achieved))}
-            </td>
-        </tr>`;
+        h += `<tr class="total-row"><td><strong>TOTAL</strong></td><td>${formatNumber(T.target)}</td><td>${formatNumber(T.achieved)}</td><td class="deficit-cell">${formatNumber(Math.max(0, T.target - T.achieved))}</td></tr>`;
     }
-
     tbody.innerHTML = h;
 
-    // Preserve the existing unscheduled collections display.
     if (hasUnscheduled) {
         hint.style.display = "block";
-        hint.innerHTML = `Unscheduled Collections — Target:
-            <strong>${formatNumber(unscheduledAggregated.target)}</strong> |
-            Achieved: <strong>${formatNumber(unscheduledAggregated.achieved)}</strong> |
-            Deficit: <strong>${formatNumber(unscheduledAggregated.deficit)}</strong>`;
-    } else {
-        hint.style.display = "none";
-        hint.innerHTML = "";
-    }
+        hint.innerHTML = `Unscheduled Collections — Target: <strong>${formatNumber(unscheduledAggregated.target)}</strong> | Achieved: <strong>${formatNumber(unscheduledAggregated.achieved)}</strong> | Deficit: <strong>${formatNumber(unscheduledAggregated.deficit)}</strong>`;
+    } else { hint.style.display = "none"; hint.innerHTML = ""; }
 }
-
 
 /* ============ BRANCHES ============ */
 function renderBranches(data) {
