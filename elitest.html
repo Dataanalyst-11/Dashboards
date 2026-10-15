@@ -30,6 +30,10 @@ body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; background: linear
 .card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border-radius: 10px; padding: 18px 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, .35); position: relative; overflow: hidden; border: 1px solid #2a3a55; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
 .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, .45); border-color: #3b555f; }
 .card::before { content: ""; position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: var(--accent, #2563eb); }
+.kpis.five { grid-template-columns: repeat(5, 1fr); }
+@media(max-width:1100px){ .kpis.five { grid-template-columns: repeat(3, 1fr); } }
+.card:nth-child(5) { --accent: #14b8a6; }
+.card .kpi-note { font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 600; }
 .card:nth-child(1) { --accent: #3b82f6; } .card:nth-child(2) { --accent: #10b981; } .card:nth-child(3) { --accent: #f59e0b; } .card:nth-child(4) { --accent: #a855f7; }
 .card-label { color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
 .card-value { font-size: 28px; font-weight: 800; color: #f1f5f9; margin-top: 8px; font-feature-settings: "tnum"; }
@@ -218,11 +222,12 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
 
 <div class="dashboard">
 <div id="error"></div>
-<div class="kpis">
+<div class="kpis" id="kpiGrid">
     <div class="card"><div class="card-label" id="kpiLabel1">Total Target</div><div class="card-value" id="totalTarget">0</div></div>
     <div class="card"><div class="card-label" id="kpiLabel2">Total Achieved</div><div class="card-value" id="totalAchieved">0</div></div>
     <div class="card"><div class="card-label" id="kpiLabel3">Balance</div><div class="card-value" id="balance">0</div></div>
-    <div class="card"><div class="card-label" id="kpiLabel4">Overall Achievement</div><div class="card-value" id="overallPercentage">0%</div></div>
+    <div class="card"><div class="card-label" id="kpiLabel4">On Target Achievement</div><div class="card-value" id="overallPercentage">0%</div></div>
+    <div class="card" id="kpiCard5" style="display:none"><div class="card-label" id="kpiLabel5">Overall Target Achievement</div><div class="card-value" id="overallTargetAch">0%</div><div class="kpi-note">(ON TARGET + OFF TARGET) ÷ Planned Target</div></div>
 </div>
 
 <div class="date-filter-bar">
@@ -284,7 +289,7 @@ tbody tr.total-row td { font-weight: 800; color: #f1f5f9; border-top: 2px solid 
         </div>
         <div class="report-table-wrapper">
             <table class="report-table">
-                <thead><tr><th>DATE</th><th>TARGET</th><th>ACHIEVED</th><th>DEFICIT</th></tr></thead>
+                <thead><tr><th>DATE</th><th>TARGET</th><th title="ON TARGET + EARLIER collections — the same measure as the Summary table">ACHIEVED</th><th>DEFICIT</th></tr></thead>
                 <tbody id="dailySummaryBody"></tbody>
             </table>
         </div>
@@ -373,6 +378,7 @@ let currentAllData = [];
 let currentDeferredData = [];
 let currentClusterData = {};
 let currentRecoveryData = [];
+let syntheticRows = [];            /* collections the ledger / SUMMARY-BR report that no sheet row carries (RECOVERY cash, unmatched pairs) — used by Daily + Cluster only */
 
 /* ============ RECOVERY / MAIN FLOW DETECTION ============ */
 const isRecoveryRow = r =>
@@ -394,7 +400,10 @@ const isCollectionRow = r => isRecoveryRow(r) || isMainFlow(r);
    gets team = "RECOVERY" and keeps its real branch, planned date, target and collection. No recovery row is attributed
    to a person any more, so every view reads the same team name and a row can never be counted under two names. */
 function normalizeRows(rows) {
-    (rows || []).forEach(r => { if (isRecoveryRow(r)) { r.dri = "RECOVERY"; r.category = "RECOVERY"; } });
+    (rows || []).forEach(r => {
+        if (isRecoveryRow(r)) { r.dri = "RECOVERY"; r.category = "RECOVERY"; }
+        r.cluster = String(r.cluster || "").toUpperCase().replace(/\s+/g, " ").trim() || "UNKNOWN";   /* same cluster name = same cluster row, recovery or not */
+    });
     return rows || [];
 }
 /* SUMMARY-BR rows whose branch is RECOVERY belong to the same independent marshal */
@@ -410,6 +419,7 @@ function normalizeLedger(l) {
 /* ============ PROCESS AND RENDER ============ */
 function processAndRender() {
     if (rawDataCache.length === 0) return;
+    computeTally();   /* one measure of "achieved" for Daily + Cluster = the Summary measure (ON TARGET + EARLIER) */
 
     const scheduledFiltered = rawDataCache.filter(r => {
         if (!r.date) return false;
@@ -432,17 +442,104 @@ function processAndRender() {
     const allData = aggregateMain(scheduledFiltered.filter(isCollectionRow));
     const deferredData = aggregateMarshal(mainData);
     /* CLUSTERS: read every planned-date row of the sheet as it is (cluster = column AA, target = Q, collection = S, date = U) — no row is left out */
-    const clusterData = buildClusterData(scheduledFiltered);
+    const syntheticInPeriod = syntheticRows.filter(r => (!dateFilter.startDate || r.date >= dateFilter.startDate) && (!dateFilter.endDate || r.date <= dateFilter.endDate));
+    const clusterData = buildClusterData(scheduledFiltered.concat(syntheticInPeriod), true);
 
     currentAllData = allData;
     currentDeferredData = deferredData;
     currentClusterData = clusterData;
     currentRecoveryData = recoveryData;
     currentAllMainRaw = rawDataCache.filter(isMainFlow);   /* full main flow, ignores the Period filter */
-    currentAllCollectionRaw = rawDataCache.filter(isCollectionRow);
+    currentAllCollectionRaw = rawDataCache.filter(isCollectionRow).concat(syntheticRows);
 
     populateFilters(allData, deferredData);
     applyFilters(allData, deferredData, clusterData, recoveryData);
+}
+
+/* ============ ONE MEASURE OF "ACHIEVED" FOR DAILY + CLUSTER ============
+   The Summary table reports, for every planned date:  ACHIEVED = ON TARGET (collected that day) + EARLIER (collected before that day).
+   Column S of the sheet is a running total, so it also contains LATER collections (paid after the planned date — they are OFF TARGET on
+   the day they came in) and, for RECOVERY, it is not the SUMMARY-BR cash the Summary uses. To make Daily Collections Summary and
+   Cluster Performance say the same thing, each sheet row gets r.tally = its share of the Summary's (ON + EARLIER) for its
+   team + branch + planned date. Days the ledger does not cover keep column S, exactly like the Summary's own fallback.
+   RECOVERY: the SUMMARY-BR recovery cash of each day is placed on that day and spread over the recovery clusters. */
+function computeTally() {
+    syntheticRows = [];
+    rawDataCache.forEach(r => { r.tally = Number(r.achieved) || 0; });
+    const weekDates = getSheetWeekDates(), inWeek = new Set(weekDates);
+    const ledgerOn = !!(ledgerCache && ledgerCache.enabled);
+    const ledgerToday = (ledgerCache && ledgerCache.today) || toISO(new Date());
+    const ledgerDays = getLedgerByDate();
+    const covered = new Set(weekDates.filter(d => ledgerOn && (ledgerDays.has(d) || d > ledgerToday)));   /* same rule as the Summary table */
+
+    /* ---- main flow: scale each team+branch+date group to the Summary's ON + EARLIER ---- */
+    if (covered.size) {
+        const L = new Map();
+        covered.forEach(d => {
+            const day = ledgerDays.get(d);
+            if (!day) return;
+            day.rows.forEach(lr => {
+                if (isRecoveryBranch(lr.branch) || isExcludedPair(lr.team, lr.branch)) return;
+                const k = d + "||" + normKey(lr.team) + "||" + normKey(lr.branch);
+                L.set(k, (L.get(k) || 0) + Math.max(0, Number(lr.on) || 0) + Math.max(0, Number(lr.prior) || 0));
+            });
+        });
+        const groups = new Map();
+        rawDataCache.forEach(r => {
+            if (!r.date || !covered.has(r.date) || !isMainFlow(r)) return;
+            const k = r.date + "||" + normKey(r.dri) + "||" + normKey(r.branch);
+            if (!groups.has(k)) groups.set(k, []);
+            groups.get(k).push(r);
+        });
+        groups.forEach((rows, k) => {
+            const want = L.get(k) || 0;
+            const sumS = rows.reduce((a, r) => a + (Number(r.achieved) || 0), 0);
+            const sumT = rows.reduce((a, r) => a + (Number(r.target) || 0), 0);
+            rows.forEach(r => {
+                r.tally = sumS > 0 ? want * (Number(r.achieved) || 0) / sumS
+                        : sumT > 0 ? want * (Number(r.target) || 0) / sumT
+                        : want / rows.length;
+            });
+            L.delete(k);
+        });
+        L.forEach((amount, k) => {   /* the Summary counts these, but no sheet row carries them (e.g. a name written differently) */
+            if (amount <= 0) return;
+            const [d, tk, bk] = k.split("||");
+            const ref = rawDataCache.find(r => isMainFlow(r) && normKey(r.dri) === tk && normKey(r.branch) === bk);
+            syntheticRows.push({ date: d, dri: ref ? ref.dri : tk, branch: ref ? ref.branch : bk, cluster: ref ? ref.cluster : "UNKNOWN", category: "", status: "", target: 0, achieved: amount, tally: amount });
+        });
+    }
+
+    /* ---- RECOVERY marshal: its collections = the SUMMARY-BR recovery cash of each day (what the Summary shows) ---- */
+    const brRec = summaryBrCache.filter(r => isRecoveryBranch(r.branch));
+    const ledgerHasRec = ledgerOn && Array.from(ledgerDays.values()).some(day => day.rows.some(lr => isRecoveryBranch(lr.branch)));
+    if (!brRec.length && !ledgerHasRec) return;                  /* no recovery cash anywhere: recovery keeps column S */
+    const cash = new Map();
+    weekDates.forEach((d, i) => {
+        let v = 0;
+        if (covered.has(d)) { const day = ledgerDays.get(d); if (day) day.rows.forEach(lr => { if (isRecoveryBranch(lr.branch)) v += Math.max(0, Number(lr.cash) || 0); }); }
+        else brRec.forEach(r => { v += Math.max(0, Number(brDailyValues(r)[i]) || 0); });
+        if (v > 0) cash.set(d, v);
+    });
+    const recRows = rawDataCache.filter(r => isRecoveryRow(r));
+    recRows.forEach(r => { if (r.date && inWeek.has(r.date)) r.tally = 0; });   /* replaced by the cash below, so nothing is counted twice */
+    const weightsOf = rows => {
+        const w = new Map(); let tot = 0;
+        rows.forEach(r => { const a = Number(r.achieved) || 0; w.set(r.cluster || "UNKNOWN", (w.get(r.cluster || "UNKNOWN") || 0) + a); tot += a; });
+        if (tot <= 0) { w.clear(); rows.forEach(r => { w.set(r.cluster || "UNKNOWN", (w.get(r.cluster || "UNKNOWN") || 0) + (Number(r.target) || 0)); }); }
+        return w;
+    };
+    const weekRec = recRows.filter(r => r.date && inWeek.has(r.date));
+    cash.forEach((amount, d) => {
+        let w = weightsOf(recRows.filter(r => r.date === d));    /* the clusters whose recovery accounts were planned that day */
+        let tot = Array.from(w.values()).reduce((a, v) => a + v, 0);
+        if (tot <= 0) { w = weightsOf(weekRec); tot = Array.from(w.values()).reduce((a, v) => a + v, 0); }
+        if (tot <= 0) { w = new Map([["UNKNOWN", 1]]); tot = 1; }
+        w.forEach((wt, cl) => {
+            const part = amount * wt / tot;
+            if (part > 0) syntheticRows.push({ date: d, dri: "RECOVERY", branch: "RECOVERY", cluster: cl, category: "RECOVERY", status: "", target: 0, achieved: part, tally: part });
+        });
+    });
 }
 
 /* ============ AGGREGATION ============ */
@@ -481,10 +578,11 @@ function aggregateMarshal(rows) {
     return Array.from(map.values()).sort((a, b) => String(a.dri || "").localeCompare(String(b.dri || "")));
 }
 
-function buildClusterData(rows) {
+function buildClusterData(rows, useTally) {
     const out = {};
     rows.forEach(r => {
-        const cl = r.cluster || "UNKNOWN", tgt = Number(r.target) || 0, amt = Number(r.achieved) || 0;
+        const cl = r.cluster || "UNKNOWN", tgt = Number(r.target) || 0;
+        const amt = (useTally && r.tally !== undefined) ? (Number(r.tally) || 0) : (Number(r.achieved) || 0);
         if (!out[cl]) out[cl] = { totalTarget: 0, totalAchieved: 0, days: {} };
         out[cl].totalTarget += tgt;
         out[cl].totalAchieved += amt;
@@ -776,7 +874,7 @@ function selectWeek(id) {
     applyWeekLimits();
     document.title = "Collection Team Dashboard — " + w.label;
 
-    rawDataCache = []; summaryBrCache = []; ledgerCache = null;
+    rawDataCache = []; summaryBrCache = []; ledgerCache = null; syntheticRows = [];
     $("branchFilter").value = "ALL"; $("teamFilter").value = "ALL"; $("searchBox").value = "";
     needAutoPeriod = true;
     $("error").style.display = "none";
@@ -981,13 +1079,21 @@ function pctCell(p) {
 
 /* ============ KPI ============ */
 function setKPIs(l1, v1, l2, v2, l3, v3, l4, v4) {
+    $("kpiCard5").style.display = "none"; $("kpiGrid").classList.remove("five");   /* only the Summary table shows the 5th card */
     $("kpiLabel1").innerText = l1; $("totalTarget").innerText = v1;
     $("kpiLabel2").innerText = l2; $("totalAchieved").innerText = v2;
     $("kpiLabel3").innerText = l3; $("balance").innerText = v3;
     $("kpiLabel4").innerText = l4; $("overallPercentage").innerText = v4;
 }
 function setStandardKPIs(t, a) {
-    setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t - a), "Overall Achievement", (t > 0 ? a / t * 100 : 0).toFixed(1) + "%");
+    setKPIs("Total Target", formatNumber(t), "Total Achieved", formatNumber(a), "Balance", formatNumber(t - a), "On Target Achievement", (t > 0 ? a / t * 100 : 0).toFixed(1) + "%");
+}
+/* Summary only: Overall Target Achievement = (ON TARGET + OFF TARGET) ÷ Planned Target, same filters as the table */
+function showOverallTargetKPI(target, on, off) {
+    $("overallTargetAch").innerText = (target > 0 ? (on + off) / target * 100 : 0).toFixed(1) + "%";
+    $("overallTargetAch").title = `(ON ${formatNumber(on)} + OFF ${formatNumber(off)}) ÷ Planned Target ${formatNumber(target)}`;
+    $("kpiCard5").style.display = "";
+    $("kpiGrid").classList.add("five");
 }
 function updateKPIs(data, achKey) {
     let t = 0, a = 0;
@@ -1241,6 +1347,7 @@ function renderTable(data) {
 
     /* Overhead KPI cards on the Summary switch = the same totals as the table */
     setStandardKPIs(T.target, T.achieved);
+    showOverallTargetKPI(T.target, T.on.reduce((a, v) => a + v, 0), T.off.reduce((a, v) => a + v, 0));
 }
 
 /* ============ DAILY SUMMARY ============ */
@@ -1260,7 +1367,7 @@ function renderDailySummary(rawRows) {
         if (!dailyMap.has(r.date)) dailyMap.set(r.date, { target: 0, achieved: 0 });
         const m = dailyMap.get(r.date);
         m.target += Number(r.target) || 0;
-        m.achieved += Number(r.achieved) || 0;
+        m.achieved += (r.tally !== undefined) ? (Number(r.tally) || 0) : (Number(r.achieved) || 0);   /* ON TARGET + EARLIER, as in the Summary */
     });
     const days = Array.from(dailyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -1386,7 +1493,7 @@ function renderClusterTable(clusterData) {
     const sortedDates = Array.from(allDates).sort();
     const gcls = gi => gi % 2 === 1 ? ` class="gs galt"` : ` class="gs"`;
 
-    let head1 = `<tr class="date-row"><th rowspan="2">CLUSTER</th><th rowspan="2">TOTAL TARGET</th><th rowspan="2">TOTAL ACHIEVED</th><th rowspan="2">%</th>`;
+    let head1 = `<tr class="date-row"><th rowspan="2">CLUSTER</th><th rowspan="2">TOTAL TARGET</th><th rowspan="2" title="ON TARGET + EARLIER collections — the same measure as the Summary table">TOTAL ACHIEVED</th><th rowspan="2">%</th>`;
     let head2 = `<tr class="sub-row">`;
     sortedDates.forEach((d, gi) => {
         head1 += `<th${gcls(gi)} colspan="2">${formatDisplayDate(d)}</th>`;
