@@ -1870,7 +1870,8 @@
       rawPct: b.rawTarget > 0 ? (b.netSales / b.rawTarget) * 100 : 0
     }));
   }
-  function calculateIncentiveData() {
+
+   function calculateIncentiveData() {
     const lwRange = getLastWeekSundayToFriday();
     const twRange = getThisWeekUpToToday();
     
@@ -1888,9 +1889,7 @@
       const lw = lwAgg.find(b => b.name.toLowerCase().trim() === name);
       const tw = twAgg.find(b => b.name.toLowerCase().trim() === name);
       
-      // Need last week's data to establish the baseline percentage
       if (!lw || lw.target <= 0) return;
-      // Need this week's target to calculate value deficit
       if (!tw || tw.target <= 0) return;
       
       const lwPct = (lw.netSales / lw.target) * 100;
@@ -1908,15 +1907,18 @@
       const twTarget = tw.target;
       const twNetSales = tw.netSales;
       
-      // Calculate the value required to achieve the incentive percentage
       const incentiveTargetValue = (incentivePct / 100) * twTarget;
       const deficit = incentiveTargetValue - twNetSales;
+      
+      // Calculate current week's real-time percentage
+      const thisWeekPct = twTarget > 0 ? (twNetSales / twTarget) * 100 : 0;
       
       incentiveData[name] = {
         lastWeekPct: lwPct,
         incentivePct: incentivePct,
         thisWeekTarget: twTarget,
         thisWeekNetSales: twNetSales,
+        thisWeekPct: thisWeekPct, 
         incentiveTargetValue: incentiveTargetValue,
         deficit: deficit > 0 ? deficit : 0,
         achieved: deficit <= 0
@@ -1925,7 +1927,6 @@
     
     return incentiveData;
   }
-
 
   /* ── Branch performance lookup ──────────────────────────── */
 
@@ -2058,7 +2059,7 @@
 
   /* ── Branch view ─────────────────────────────────────────── */
 
-    function renderBranchView() {
+      function renderBranchView() {
     if (!branchPerfData.length) {
       document.getElementById("branchGrid").innerHTML =
         '<div class="no-branch-data">No branch data available</div>';
@@ -2067,15 +2068,12 @@
 
     const { startDate, endDate } = getDateRange();
     const aggregated = aggregateBranches(startDate, endDate);
-    
-    // Calculate the new incentive data
     const incentiveData = calculateIncentiveData();
 
     const byName = new Map(
       aggregated.map(b => [b.name.toLowerCase().trim(), b])
     );
 
-    // Determine which branch IDs to show based on current group toggle
     const branchIdsToShow =
       currentBranchGroup === "retail" ? RETAIL_BRANCH_IDS :
       currentBranchGroup === "semi" ? SEMI_WHOLESALE_BRANCH_IDS :
@@ -2084,7 +2082,6 @@
     const branches = [];
 
     for (const id in branchNames) {
-      // Skip branches that don't belong to the currently-selected group
       if (!branchIdsToShow.has(id)) continue;
 
       const name = branchNames[id];
@@ -2113,11 +2110,18 @@
       }
     }
 
+    // Sort by the new Incentive Percentage (highest to lowest)
     branches.sort((a, b) => {
+      const aInc = incentiveData[a.name.toLowerCase().trim()];
+      const bInc = incentiveData[b.name.toLowerCase().trim()];
+      
       if (a.hasData && !b.hasData) return -1;
       if (!a.hasData && b.hasData) return 1;
       if (!a.hasData && !b.hasData) return a.name.localeCompare(b.name);
-      return b.pct - a.pct;
+      
+      const aPct = aInc ? aInc.thisWeekPct : a.pct;
+      const bPct = bInc ? bInc.thisWeekPct : b.pct;
+      return bPct - aPct;
     });
 
     const withData = branches.filter(b => b.hasData);
@@ -2127,7 +2131,6 @@
 
     const overallPct = totalTarget > 0 ? (totalNet / totalTarget) * 100 : 0;
     const overallRawPct = totalRawTarget > 0 ? (totalNet / totalRawTarget) * 100 : 0;
-
     const onTrack = withData.filter(b => b.pct >= 80).length;
 
     const overallClass =
@@ -2140,21 +2143,15 @@
       currentBranchGroup === "semi" ? "Semi Wholesale" :
       "Wholesale";
 
-    document.getElementById("bsOverallPct").textContent =
-      overallPct.toFixed(1) + "%";
-    document.getElementById("bsOverallPct").className =
-      "stat-value " + overallClass;
-    document.getElementById("bsOverallPctSub").textContent =
-      `aggregated ${groupLabel.toLowerCase()} branches`;
+    document.getElementById("bsOverallPct").textContent = overallPct.toFixed(1) + "%";
+    document.getElementById("bsOverallPct").className = "stat-value " + overallClass;
+    document.getElementById("bsOverallPctSub").textContent = `aggregated ${groupLabel.toLowerCase()} branches`;
 
-    document.getElementById("bsTotalSales").textContent =
-      "KES " + formatCurrency(totalNet);
-    document.getElementById("bsTotalSalesSub").textContent =
-      `across ${groupLabel.toLowerCase()} branches`;
+    document.getElementById("bsTotalSales").textContent = "KES " + formatCurrency(totalNet);
+    document.getElementById("bsTotalSalesSub").textContent = `across ${groupLabel.toLowerCase()} branches`;
 
     document.getElementById("bsOnTrack").textContent = onTrack;
-    document.getElementById("bsOnTrackSub").textContent =
-      `of ${withData.length} ${groupLabel.toLowerCase()} branches at 80%+`;
+    document.getElementById("bsOnTrackSub").textContent = `of ${withData.length} ${groupLabel.toLowerCase()} branches at 80%+`;
 
     const rawPerfClass =
       overallRawPct >= 80 ? "perf-high" :
@@ -2171,91 +2168,92 @@
       html = `<div class="no-branch-data">No ${groupLabel.toLowerCase()} branches found</div>`;
     } else {
       branches.forEach(b => {
-        const tier =
-          !b.hasData ? "none" :
-          b.pct >= 80 ? "high" :
-          b.pct >= 50 ? "medium" :
-          "low";
-
-        const barWidth =
-          b.hasData ? Math.min(b.pct, 100).toFixed(1) : 0;
-
-        const rawPctColor = !b.hasData ? "#64748b" :
-          b.rawPct >= 80 ? "#22c55e" :
-          b.rawPct >= 50 ? "#facc15" :
-          "#ef4444";
-
-        const isSpecialDay = b.hasData && b.rawTarget > 0 && b.target !== b.rawTarget;
-        const isDouble = b.hasData && b.target > b.rawTarget;
-
-        let deficitHTML = '';
-        if (b.hasData) {
-          const specialDeficit = b.target - b.netSales;
-          const rawDeficit = b.rawTarget - b.netSales;
-
-          deficitHTML = '<div class="branch-deficit-info">';
-
-          if (isSpecialDay) {
-            if (specialDeficit > 0) {
-              deficitHTML += `Deficit (Special): <span class="deficit-val">${formatFullCurrency(specialDeficit)}</span><br>`;
-            } else if (specialDeficit < 0) {
-              deficitHTML += `Surplus (Special): <span class="surplus-val">${formatFullCurrency(Math.abs(specialDeficit))}</span><br>`;
-            }
-            if (rawDeficit > 0) {
-              deficitHTML += `Deficit (Raw): <span class="deficit-val">${formatFullCurrency(rawDeficit)}</span>`;
-            } else if (rawDeficit < 0) {
-              deficitHTML += `Surplus (Raw): <span class="surplus-val">${formatFullCurrency(Math.abs(rawDeficit))}</span>`;
-            }
+        const incData = incentiveData[b.name.toLowerCase().trim()];
+        
+        let mainPct = 0;
+        let mainTier = "none";
+        let perfClass = "";
+        
+        // Determine main tier and percentage based on Incentive Data
+        if (incData) {
+          mainPct = incData.thisWeekPct;
+          if (incData.achieved) {
+            mainTier = "high";
+          } else if (mainPct >= incData.incentivePct * 0.8) {
+            mainTier = "medium";
           } else {
-            if (specialDeficit > 0) {
-              deficitHTML += `Deficit: <span class="deficit-val">${formatFullCurrency(specialDeficit)}</span>`;
-            } else if (specialDeficit < 0) {
-              deficitHTML += `Surplus: <span class="surplus-val">${formatFullCurrency(Math.abs(specialDeficit))}</span>`;
-            }
+            mainTier = "low";
           }
-
-          deficitHTML += '</div>';
+          perfClass = "perf-" + mainTier;
+        } else if (b.hasData) {
+          mainPct = b.pct;
+          mainTier = b.pct >= 80 ? "high" : b.pct >= 50 ? "medium" : "low";
+          perfClass = "perf-" + mainTier;
+        } else {
+          mainTier = "none";
         }
 
-        // --- NEW: Incentive Target HTML Generation ---
+        const barWidth = Math.min(mainPct, 100).toFixed(1);
+
+        // --- PRIMARY: Weekly Incentive Target HTML ---
         let incentiveHTML = '';
-        const incData = incentiveData[b.name.toLowerCase().trim()];
         if (incData) {
           incentiveHTML = `
-            <div style="margin-top:10px; border-top:1px dashed #334155; padding-top:8px;">
-              <div style="font-size:10px; color:#ba9305; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Weekly Incentive Target</div>
-              <div style="font-size:12px; color:#94a3b8; line-height:1.6;">
-                Last Wk Avg: <span style="color:#e2e8f0; font-weight:700;">${incData.lastWeekPct.toFixed(1)}%</span><br>
-                Required %: <span style="color:${incData.achieved ? '#22c55e' : '#facc15'}; font-weight:700;">${incData.incentivePct.toFixed(1)}%</span><br>
-                ${incData.achieved 
-                  ? `<span style="color:#22c55e; font-weight:700;">✓ Incentive Achieved!</span>` 
-                  : `Deficit: <span style="color:#ef4444; font-weight:700;">${formatFullCurrency(incData.deficit)}</span>`
-                }
-              </div>
+            <div style="font-size:12px; color:#94a3b8; line-height:1.6; margin-bottom:8px;">
+              Target Required: <span style="color:${incData.achieved ? '#22c55e' : '#facc15'}; font-weight:700;">${incData.incentivePct.toFixed(1)}%</span><br>
+              Last Wk Avg: <span style="color:#e2e8f0; font-weight:700;">${incData.lastWeekPct.toFixed(1)}%</span><br>
+              ${incData.achieved 
+                ? `<span style="color:#22c55e; font-weight:700; font-size:13px;">✓ Incentive Achieved!</span>` 
+                : `Incentive Deficit: <span style="color:#ef4444; font-weight:700;">${formatFullCurrency(incData.deficit)}</span>`
+              }
             </div>
           `;
+        } else if (b.hasData) {
+          incentiveHTML = `<div class="b-card-detail" style="margin-bottom: 8px;">No incentive data available for this period</div>`;
         }
-        // -------------------------------------------
+
+        // --- SECONDARY: Actual Daily Special Target HTML ---
+        let actualHTML = '';
+        if (b.hasData) {
+          const rawPctColor = b.rawPct >= 80 ? "#22c55e" : b.rawPct >= 50 ? "#facc15" : "#ef4444";
+          const isSpecialDay = b.rawTarget > 0 && b.target !== b.rawTarget;
+          const isDouble = b.target > b.rawTarget;
+          const specialDeficit = b.target - b.netSales;
+          const rawDeficit = b.rawTarget - b.netSales;
+          
+          actualHTML = `
+            <div style="margin-top:10px; border-top:1px dashed #334155; padding-top:8px;">
+              <div style="font-size:10px; color:#38bdf8; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Daily Special Target</div>
+              <div style="font-size:12px; color:#94a3b8; line-height:1.6;">
+                ${formatFullCurrency(b.netSales)} of ${formatFullCurrency(b.target)}<br>
+                ${isSpecialDay ? `<span style="color:${isDouble ? '#ba9305' : '#38bdf8'}; font-weight:700;">${isDouble ? 'DOUBLE GIFTING' : 'SPECIAL TARGET'} ACTIVE</span><br>` : ''}
+                <span style="font-size: 15px; font-weight: bold; color: ${rawPctColor};">Actual Score: ${b.rawPct.toFixed(1)}%</span><br>
+          `;
+          
+          if (isSpecialDay) {
+            if (specialDeficit > 0) actualHTML += `Deficit (Special): <span style="color:#ef4444; font-weight:700;">${formatFullCurrency(specialDeficit)}</span><br>`;
+            else if (specialDeficit < 0) actualHTML += `Surplus (Special): <span style="color:#22c55e; font-weight:700;">${formatFullCurrency(Math.abs(specialDeficit))}</span><br>`;
+            
+            if (rawDeficit > 0) actualHTML += `Deficit (Raw): <span style="color:#ef4444; font-weight:700;">${formatFullCurrency(rawDeficit)}</span>`;
+            else if (rawDeficit < 0) actualHTML += `Surplus (Raw): <span style="color:#22c55e; font-weight:700;">${formatFullCurrency(Math.abs(rawDeficit))}</span>`;
+          } else {
+            if (specialDeficit > 0) actualHTML += `Deficit: <span style="color:#ef4444; font-weight:700;">${formatFullCurrency(specialDeficit)}</span>`;
+            else if (specialDeficit < 0) actualHTML += `Surplus: <span style="color:#22c55e; font-weight:700;">${formatFullCurrency(Math.abs(specialDeficit))}</span>`;
+          }
+          
+          actualHTML += `</div></div>`;
+        }
 
         html += `
-          <div class="b-card tier-${tier}" data-name="${b.name.toLowerCase()}">
+          <div class="b-card tier-${mainTier}" data-name="${b.name.toLowerCase()}">
             <div class="b-card-name">${b.name}</div>
-            <div class="b-card-pct ${b.hasData ? "perf-" + tier : ""}">
-              ${b.hasData ? b.pct.toFixed(1) + "%" : "—"}
+            <div class="b-card-pct ${perfClass}">
+              ${mainPct.toFixed(1)}%
             </div>
-            <div class="b-card-detail">
-              ${b.hasData
-                ? formatFullCurrency(b.netSales) + " of " + formatFullCurrency(b.target)
-                : "No data available"}
-            </div>
-            ${b.hasData && isSpecialDay ? 
-              `<div class="b-card-detail" style="margin-top: 4px; font-size: 11px; color: ${isDouble ? '#ba9305' : '#38bdf8'}; font-weight:700;">${isDouble ? 'DOUBLE GIFTING' : 'SPECIAL TARGET'} ACTIVE</div>
-               <div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 2px;">Actual Score: ${b.rawPct.toFixed(1)}% (Raw: ${formatFullCurrency(b.rawTarget)})</div>` : 
-               (b.hasData ? `<div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 4px;">Actual Score: ${b.rawPct.toFixed(1)}%</div>` : "")}
-            ${deficitHTML}
             ${incentiveHTML}
+            ${actualHTML}
             <div class="b-card-bar">
-              <div class="b-card-bar-fill bar-${tier}" style="width:${barWidth}%"></div>
+              <div class="b-card-bar-fill bar-${mainTier}" style="width:${barWidth}%"></div>
             </div>
           </div>
         `;
