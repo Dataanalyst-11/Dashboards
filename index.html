@@ -157,6 +157,23 @@
             height: auto;
             margin-bottom: 10px;
         }
+
+        /* Session notice (shown when a session was ended remotely, e.g. password reset) */
+        .notice-msg {
+            color: #fcd34d;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .notice-msg.show {
+            opacity: 1;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-8px); }
@@ -345,6 +362,7 @@
             
             <button id="loginBtn">Unlock Dashboards</button>
             <p id="errorMessage" class="error-msg">Incorrect password. Please try again.</p>
+            <p id="sessionNotice" class="notice-msg"></p>
         </div>
     </div>
 
@@ -425,47 +443,125 @@
 
     <!-- JavaScript for Password Protection -->
     <script>
+        // ================================================================
+        //  PASSWORD & SESSION CONTROL  —  EDIT ONLY THIS BLOCK
+        // ----------------------------------------------------------------
+        //  TO RESET THE PASSWORD:
+        //    1. Change CURRENT_PASSWORD below.
+        //    2. Save and re-publish this file.
+        //
+        //    That's it. The moment the password changes, EVERY signed-in
+        //    user on EVERY device/browser is automatically logged out on
+        //    their next visit to this page, and any "Remember Password"
+        //    saved in their browser is wiped. They must use the NEW
+        //    password to get back in.
+        //
+        //  TO LOG EVERYONE OUT WITHOUT CHANGING THE PASSWORD:
+        //    - Simply increase SESSION_VERSION by 1 (e.g. 1 -> 2).
+        //
+        //  TO LOG OUT A SINGLE DEVICE:
+        //    - Open this page with  ?logout=1  at the end of the URL.
+        //
+        //  HOW IT WORKS:
+        //    On every successful login, the browser stores a hidden
+        //    "session stamp" derived from the CURRENT password +
+        //    SESSION_VERSION inside this file. On every page load the
+        //    stamp is re-checked against the settings below. If the
+        //    password was reset (or the version bumped), every stored
+        //    stamp in every browser stops matching -> forced logout.
+        // ================================================================
+        var CURRENT_PASSWORD = '@AdMiN#1MIS12';
+        var SESSION_VERSION  = 1;
+
+        // Builds the session stamp from the current password + version
+        function sessionStamp() {
+            var raw = 'philmed-session-salt::' + SESSION_VERSION + '::' + CURRENT_PASSWORD;
+            var hash = 5381;
+            for (var i = 0; i < raw.length; i++) {
+                hash = ((hash << 5) + hash + raw.charCodeAt(i)) >>> 0;
+            }
+            return hash.toString(36);
+        }
+
         // Run this script as soon as the page loads
         window.onload = function() {
             var loginOverlay = document.getElementById('loginOverlay');
             var loginBtn = document.getElementById('loginBtn');
             var passwordInput = document.getElementById('passwordInput');
             var errorMessage = document.getElementById('errorMessage');
+            var sessionNotice = document.getElementById('sessionNotice');
             var loginBox = document.querySelector('.login-box');
             var rememberMeCheckbox = document.getElementById('rememberMe');
 
             // 5 Days in milliseconds (5 days * 24 hours * 60 minutes * 60 seconds * 1000 ms)
             var FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
-            // 1. Check if user is already authenticated (5-Day Session)
-            var loginTime = localStorage.getItem('loginTime');
-            if (loginTime) {
-                var timeElapsed = Date.now() - parseInt(loginTime);
-                if (timeElapsed < FIVE_DAYS_MS) {
+            var urlParams = new URLSearchParams(window.location.search);
+
+            // 0. Manual logout switch for a single device: thisPage.html?logout=1
+            if (urlParams.get('logout') === '1') {
+                localStorage.removeItem('loginTime');
+                localStorage.removeItem('authStamp');
+                localStorage.removeItem('savedPhilmedPassword');
+                urlParams.delete('logout');
+                var cleanedQs = urlParams.toString();
+                try {
+                    history.replaceState(null, '', window.location.pathname + (cleanedQs ? '?' + cleanedQs : ''));
+                } catch (e) { /* ignore (some environments restrict replaceState) */ }
+            }
+
+            // 1. SESSION VALIDATION — the global logout lives here
+            var storedStamp = localStorage.getItem('authStamp');
+            var hadSession = !!storedStamp;
+            var stampStillValid = (storedStamp === sessionStamp());
+
+            if (hadSession && !stampStillValid) {
+                // The password was reset (or SESSION_VERSION was bumped):
+                // destroy the session AND the saved password on this device.
+                localStorage.removeItem('loginTime');
+                localStorage.removeItem('authStamp');
+                localStorage.removeItem('savedPhilmedPassword');
+                sessionNotice.textContent = 'The password was reset. Please sign in with the new password.';
+                sessionNotice.classList.add('show');
+            } else if (hadSession && stampStillValid) {
+                var loginTime = localStorage.getItem('loginTime');
+                if (loginTime && (Date.now() - parseInt(loginTime, 10)) < FIVE_DAYS_MS) {
                     // Session is still valid, hide login screen instantly
-                    loginOverlay.classList.add('hidden'); 
+                    loginOverlay.classList.add('hidden');
                 } else {
-                    // 5 days have passed, clear the session
+                    // 5 days have passed -> normal session expiry
                     localStorage.removeItem('loginTime');
+                    localStorage.removeItem('authStamp');
+                    sessionNotice.textContent = 'Your session has ended. Please sign in again.';
+                    sessionNotice.classList.add('show');
                 }
             }
 
-            // 2. Check if user previously saved their password
+            // 2. Check if user previously saved their password (validated too)
             var savedPassword = localStorage.getItem('savedPhilmedPassword');
             if (savedPassword) {
-                passwordInput.value = savedPassword;
-                rememberMeCheckbox.checked = true;
+                if (savedPassword !== CURRENT_PASSWORD) {
+                    // Saved password belongs to an OLD password -> discard it
+                    localStorage.removeItem('savedPhilmedPassword');
+                } else {
+                    passwordInput.value = savedPassword;
+                    rememberMeCheckbox.checked = true;
+                }
             }
 
             // 3. The core function that checks the password
             function checkPassword() {
                 var password = passwordInput.value;
 
-                if (password === '@AdMiN#1MIS12') {
+                if (password === CURRENT_PASSWORD) {
                     // Correct password
-                    
+
                     // Save Login Time for 5-day auto-login
                     localStorage.setItem('loginTime', Date.now().toString());
+
+                    // Store the session stamp tied to the CURRENT password,
+                    // so any future password reset invalidates this session.
+                    localStorage.setItem('authStamp', sessionStamp());
 
                     // Handle Remember Password
                     if (rememberMeCheckbox.checked) {
@@ -474,27 +570,28 @@
                         localStorage.removeItem('savedPhilmedPassword');
                     }
 
+                    sessionNotice.classList.remove('show');
+                    errorMessage.classList.remove('show');
                     loginOverlay.classList.add('hidden'); // Hide overlay
-                    
-                    // --- NEW: Check if user was redirected from a specific dashboard ---
-                    var urlParams = new URLSearchParams(window.location.search);
+
+                    // --- Check if user was redirected from a specific dashboard ---
                     var redirectPath = urlParams.get('redirect');
-                    
+
                     if (redirectPath) {
                         // If they came from a dashboard, send them back to it immediately
                         window.location.href = redirectPath;
                     }
-                    
+
                 } else {
                     // Wrong password
                     errorMessage.classList.add('show'); // Show error text
                     loginBox.classList.add('shake'); // Shake the box
-                    
+
                     // Remove shake class after 500ms so it can shake again next time
                     setTimeout(function() {
                         loginBox.classList.remove('shake');
                     }, 500);
-                    
+
                     passwordInput.value = ''; // Clear the input field
                     rememberMeCheckbox.checked = false; // Uncheck remember me on fail
                 }
