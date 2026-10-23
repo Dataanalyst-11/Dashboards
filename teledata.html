@@ -2292,6 +2292,18 @@
       withData.length + (withData.length === 1 ? " branch" : " branches");
   }
 
+  document.getElementById("branchSearchBox").addEventListener("input", e => {
+    const q = e.target.value.toLowerCase().trim();
+
+    document.querySelectorAll(".b-card").forEach(card => {
+      const name = card.dataset.name;
+      card.classList.toggle(
+        "hidden",
+        q.length > 0 && !name.includes(q)
+      );
+    });
+  });
+
   /* ── Telesales processing ───────────────────────────────── */
 
   function processAndRender() {
