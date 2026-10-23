@@ -3,31 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Beibora Performance Dashboard</title>
- <!-- Authentication Guard Script -->
-<script>
-    (function() {
-        var FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
-        var loginTime = localStorage.getItem('loginTime');
-        var isAuthenticated = false;
 
-        if (loginTime) {
-            var timeElapsed = Date.now() - parseInt(loginTime);
-            if (timeElapsed < FIVE_DAYS_MS) {
-                isAuthenticated = true;
-            } else {
-                localStorage.removeItem('loginTime');
-            }
-        }
-
-        // If they aren't authenticated, kick them to the login portal
-        if (!isAuthenticated) {
-            // Get the path of the current page they tried to access (e.g., /Dashboards/Route.html)
-            var currentPath = window.location.pathname + window.location.search;
-            // Redirect to the main hub, adding a "?redirect=" parameter
-            window.location.href = 'https://dataanalyst-11.github.io/?redirect=' + encodeURIComponent(currentPath);
-        }
-    })();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -1047,6 +1023,99 @@
     });
   }
 
+  // Incentive comparison windows: previous Sunday-Friday and current Sunday-today.
+  function getLastWeekSundayToFriday() {
+    const today = getToday();
+    const thisSunday = new Date(today);
+    thisSunday.setDate(today.getDate() - today.getDay());
+    const lastSunday = new Date(thisSunday);
+    lastSunday.setDate(thisSunday.getDate() - 7);
+    const lastFriday = new Date(lastSunday);
+    lastFriday.setDate(lastSunday.getDate() + 5);
+    return { startDate: formatDate(lastSunday), endDate: formatDate(lastFriday) };
+  }
+
+  function getThisWeekUpToToday() {
+    const today = getToday();
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - today.getDay());
+    return { startDate: formatDate(sunday), endDate: formatDate(today) };
+  }
+
+  // Use the same API-backed branch aggregation as the branch cards.
+  function aggregateBranches(startDate, endDate) {
+    return aggregateBranchesFromAPI(startDate, endDate);
+  }
+
+    function calculateIncentiveData() {
+    const lwRange = getLastWeekSundayToFriday();
+    const twRange = getThisWeekUpToToday();
+    
+    const lwAgg = aggregateBranches(lwRange.startDate, lwRange.endDate);
+    const twAgg = aggregateBranches(twRange.startDate, twRange.endDate);
+    
+    const incentiveData = {};
+    
+    const allNames = new Set([
+      ...lwAgg.map(b => b.name.toLowerCase().trim()),
+      ...twAgg.map(b => b.name.toLowerCase().trim())
+    ]);
+    
+    allNames.forEach(name => {
+      const lw = lwAgg.find(b => b.name.toLowerCase().trim() === name);
+      const tw = twAgg.find(b => b.name.toLowerCase().trim() === name);
+      
+      // Need last week's data to establish the baseline percentage
+      if (!lw || lw.target <= 0) return;
+      // Need this week's target to calculate value deficit
+      if (!tw || tw.target <= 0) return;
+      
+      const lwPct = (lw.netSales / lw.target) * 100;
+      let increment = 0;
+      
+      if (lwPct > 50) {
+        increment = 10;
+      } else if (lwPct >= 40) {
+        increment = 15;
+      } else {
+        increment = 20;
+      }
+      
+      const incentivePct = lwPct + increment;
+      const twTarget = tw.target;
+      const twNetSales = tw.netSales;
+      
+      // Calculate the value required to achieve the incentive percentage
+      const incentiveTargetValue = (incentivePct / 100) * twTarget;
+      const deficit = incentiveTargetValue - twNetSales;
+      
+      incentiveData[name] = {
+        lastWeekPct: lwPct,
+        incentivePct: incentivePct,
+        thisWeekTarget: twTarget,
+        thisWeekNetSales: twNetSales,
+        incentiveTargetValue: incentiveTargetValue,
+        deficit: deficit > 0 ? deficit : 0,
+        achieved: deficit <= 0
+      };
+    });
+    
+    return incentiveData;
+  }
+
+
+  /* ── Branch performance lookup ──────────────────────────── */
+
+  function getBranchPerfByName(branchName, startDate, endDate) {
+    const branches = aggregateBranches(startDate, endDate);
+    const normalized = String(branchName || "").toLowerCase().trim();
+
+    return branches.find(
+      b => b.name.toLowerCase().trim() === normalized
+    ) || null;
+  }
+
+
   /* ── Main Data Load ─────────────────────────── */
   async function loadAllData() {
     if (isLoading) return;
@@ -1253,6 +1322,9 @@
     const { startDate, endDate } = getDateRange();
     let branches = aggregateBranchesFromAPI(startDate, endDate);
 
+    // Calculate the new incentive data
+    const incentiveData = calculateIncentiveData();
+
     // Search filter
     const q = document.getElementById("branchSearchBox").value.toLowerCase().trim();
     if (q) branches = branches.filter(b => b.name.toLowerCase().includes(q));
@@ -1310,6 +1382,25 @@
           }
         }
 
+        // --- NEW: Incentive Target HTML Generation ---
+        let incentiveHTML = '';
+        const incData = incentiveData[b.name.toLowerCase().trim()];
+        if (incData) {
+          incentiveHTML = `
+            <div style="margin-top:10px; border-top:1px dashed #334155; padding-top:8px;">
+              <div style="font-size:10px; color:#ba9305; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Weekly Incentive Target</div>
+              <div style="font-size:12px; color:#94a3b8; line-height:1.6;">
+                Last Wk Avg: <span style="color:#e2e8f0; font-weight:700;">${incData.lastWeekPct.toFixed(1)}%</span><br>
+                Required %: <span style="color:${incData.achieved ? '#22c55e' : '#facc15'}; font-weight:700;">${incData.incentivePct.toFixed(1)}%</span><br>
+                ${incData.achieved 
+                  ? `<span style="color:#22c55e; font-weight:700;">✓ Incentive Achieved!</span>` 
+                  : `Deficit: <span style="color:#ef4444; font-weight:700;">${formatFullCurrency(incData.deficit)}</span>`
+                }
+              </div>
+            </div>
+          `;
+        }
+
         html += `
           <div class="b-card tier-${tier}" data-name="${b.name.toLowerCase()}">
             <div class="b-card-name">${b.name}</div>
@@ -1320,6 +1411,7 @@
               ${b.hasData ? formatFullCurrency(b.netSales) + " of " + formatFullCurrency(b.target) : "No data available"}
             </div>
             ${deficitHTML}
+            ${incentiveHTML}
             <div class="b-card-bar">
               <div class="b-card-bar-fill bar-${tier}" style="width:${barWidth}%"></div>
             </div>
