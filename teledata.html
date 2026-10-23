@@ -1285,15 +1285,21 @@
 
   function getThisWeekUpToToday() {
     const today = getToday();
-    const dayOfWeek = today.getDay();
-    
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+
     const thisSunday = new Date(today);
     thisSunday.setDate(today.getDate() - dayOfWeek);
     thisSunday.setHours(0, 0, 0, 0);
-    
+
+    // Incentive weeks count Sunday-Friday (six days). If today is Saturday,
+    // keep the incentive period ending on Friday rather than counting Saturday.
+    const incentiveEnd = new Date(today);
+    if (dayOfWeek === 6) incentiveEnd.setDate(today.getDate() - 1);
+    incentiveEnd.setHours(0, 0, 0, 0);
+
     return {
       startDate: formatDate(thisSunday),
-      endDate: formatDate(today)
+      endDate: formatDate(incentiveEnd)
     };
   }
 
@@ -1913,14 +1919,19 @@
       const lw = lwAgg.find(b => b.name.toLowerCase().trim() === name);
       const tw = twAgg.find(b => b.name.toLowerCase().trim() === name);
       
-      // Need last week's data to establish the baseline percentage
-      if (!lw || lw.target <= 0) return;
-      // Need this week's target to calculate value deficit
-      if (!tw || tw.target <= 0) return;
-      
-      const lwPct = (lw.netSales / lw.target) * 100;
+      // Incentives must use the summed DAILY RAW targets, not special/multiplied
+      // targets. Weekly performance = total net sales across the period divided
+      // by total raw target across the same period.
+      if (!lw || Number(lw.rawTarget) <= 0) return;
+      if (!tw || Number(tw.rawTarget) <= 0) return;
+
+      const lwRawTarget = Number(lw.rawTarget) || 0;
+      const lwNetSales = Number(lw.netSales) || 0;
+      const twRawTarget = Number(tw.rawTarget) || 0;
+      const twNetSales = Number(tw.netSales) || 0;
+      const lwPct = (lwNetSales / lwRawTarget) * 100;
+
       let increment = 0;
-      
       if (lwPct > 50) {
         increment = 10;
       } else if (lwPct >= 40) {
@@ -1928,21 +1939,18 @@
       } else {
         increment = 20;
       }
-      
+
+      // Example: last week 60% => this week's required performance is 70%.
       const incentivePct = lwPct + increment;
-      const twTarget = tw.target;
-      const twNetSales = tw.netSales;
-      
-      // Calculate the value required to achieve the incentive percentage
-      const incentiveTargetValue = (incentivePct / 100) * twTarget;
+      const incentiveTargetValue = (incentivePct / 100) * twRawTarget;
       const deficit = incentiveTargetValue - twNetSales;
-      
+
       incentiveData[name] = {
         lastWeekPct: lwPct,
-        incentivePct: incentivePct,
-        thisWeekTarget: twTarget,
+        incentivePct,
+        thisWeekTarget: twRawTarget,
         thisWeekNetSales: twNetSales,
-        incentiveTargetValue: incentiveTargetValue,
+        incentiveTargetValue,
         deficit: deficit > 0 ? deficit : 0,
         achieved: deficit <= 0
       };
