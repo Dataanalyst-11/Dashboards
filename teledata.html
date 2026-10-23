@@ -29,6 +29,7 @@
         }
     })();
 </script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
  
@@ -1142,14 +1143,13 @@
     };
   }
 
-  function getDateRange() {
+    function getDateRange() {
     const preset = document.getElementById("dateSelect").value;
     const today = getToday();
-    const endDate = formatDate(today);
 
     if (preset === "custom") {
-      let startDate = document.getElementById("dateFrom").value || endDate;
-      let customEnd = document.getElementById("dateTo").value || endDate;
+      let startDate = document.getElementById("dateFrom").value || formatDate(today);
+      let customEnd = document.getElementById("dateTo").value || formatDate(today);
 
       if (startDate > customEnd) {
         [startDate, customEnd] = [customEnd, startDate];
@@ -1158,31 +1158,41 @@
       return { startDate, endDate: customEnd };
     }
 
+    if (preset === "today") {
+      const todayStr = formatDate(today);
+      return { startDate: todayStr, endDate: todayStr };
+    }
+
     if (preset === "yesterday") {
-      const d = new Date(today);
-      d.setDate(d.getDate() - 1);
-      const day = formatDate(d);
+      const y = new Date(today);
+      y.setDate(y.getDate() - 1);
+      const day = formatDate(y);
       return { startDate: day, endDate: day };
     }
 
     const daysMap = {
-      today: 1,
       "7days": 7,
       "30days": 30,
       "90days": 90
     };
 
-    const days = daysMap[preset] || 1;
-    const start = new Date(today);
-    start.setDate(start.getDate() - days + 1);
+    const days = daysMap[preset] || 7;
+    
+    // End date should be yesterday
+    const endDateObj = new Date(today);
+    endDateObj.setDate(endDateObj.getDate() - 1);
+    
+    // Start date should be yesterday minus (days - 1)
+    const startDateObj = new Date(endDateObj);
+    startDateObj.setDate(startDateObj.getDate() - (days - 1));
 
     return {
-      startDate: formatDate(start),
-      endDate
+      startDate: formatDate(startDateObj),
+      endDate: formatDate(endDateObj)
     };
   }
 
-  function syncDateInputsFromPreset(preset) {
+    function syncDateInputsFromPreset(preset) {
     const today = getToday();
     const todayStr = formatDate(today);
     let fromStr = todayStr;
@@ -1199,24 +1209,21 @@
         break;
       }
 
-      case "7days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 6);
-        fromStr = formatDate(d);
-        break;
-      }
-
-      case "30days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 29);
-        fromStr = formatDate(d);
-        break;
-      }
-
+      case "7days":
+      case "30days":
       case "90days": {
-        const d = new Date(today);
-        d.setDate(d.getDate() - 89);
-        fromStr = formatDate(d);
+        const daysMap = { "7days": 7, "30days": 30, "90days": 90 };
+        const days = daysMap[preset] || 7;
+        
+        // End date is yesterday
+        const end = new Date(today);
+        end.setDate(end.getDate() - 1);
+        toStr = formatDate(end);
+        
+        // Start date is yesterday minus (days - 1)
+        const start = new Date(end);
+        start.setDate(start.getDate() - (days - 1));
+        fromStr = formatDate(start);
         break;
       }
 
@@ -1251,6 +1258,43 @@
     }
     
     return count;
+  }
+
+    function getLastWeekSundayToFriday() {
+    const today = getToday();
+    const dayOfWeek = today.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+    
+    // This week's Sunday
+    const thisSunday = new Date(today);
+    thisSunday.setDate(today.getDate() - dayOfWeek);
+    thisSunday.setHours(0, 0, 0, 0);
+    
+    // Last week's Sunday
+    const lastSunday = new Date(thisSunday);
+    lastSunday.setDate(thisSunday.getDate() - 7);
+    
+    // Last week's Friday (Sunday + 5 days)
+    const lastFriday = new Date(lastSunday);
+    lastFriday.setDate(lastSunday.getDate() + 5);
+    
+    return {
+      startDate: formatDate(lastSunday),
+      endDate: formatDate(lastFriday)
+    };
+  }
+
+  function getThisWeekUpToToday() {
+    const today = getToday();
+    const dayOfWeek = today.getDay();
+    
+    const thisSunday = new Date(today);
+    thisSunday.setDate(today.getDate() - dayOfWeek);
+    thisSunday.setHours(0, 0, 0, 0);
+    
+    return {
+      startDate: formatDate(thisSunday),
+      endDate: formatDate(today)
+    };
   }
 
   /* ── Branch names & IDs ────────────────────────────────────── */
@@ -1851,6 +1895,62 @@
       rawPct: b.rawTarget > 0 ? (b.netSales / b.rawTarget) * 100 : 0
     }));
   }
+  function calculateIncentiveData() {
+    const lwRange = getLastWeekSundayToFriday();
+    const twRange = getThisWeekUpToToday();
+    
+    const lwAgg = aggregateBranches(lwRange.startDate, lwRange.endDate);
+    const twAgg = aggregateBranches(twRange.startDate, twRange.endDate);
+    
+    const incentiveData = {};
+    
+    const allNames = new Set([
+      ...lwAgg.map(b => b.name.toLowerCase().trim()),
+      ...twAgg.map(b => b.name.toLowerCase().trim())
+    ]);
+    
+    allNames.forEach(name => {
+      const lw = lwAgg.find(b => b.name.toLowerCase().trim() === name);
+      const tw = twAgg.find(b => b.name.toLowerCase().trim() === name);
+      
+      // Need last week's data to establish the baseline percentage
+      if (!lw || lw.target <= 0) return;
+      // Need this week's target to calculate value deficit
+      if (!tw || tw.target <= 0) return;
+      
+      const lwPct = (lw.netSales / lw.target) * 100;
+      let increment = 0;
+      
+      if (lwPct > 50) {
+        increment = 10;
+      } else if (lwPct >= 40) {
+        increment = 15;
+      } else {
+        increment = 20;
+      }
+      
+      const incentivePct = lwPct + increment;
+      const twTarget = tw.target;
+      const twNetSales = tw.netSales;
+      
+      // Calculate the value required to achieve the incentive percentage
+      const incentiveTargetValue = (incentivePct / 100) * twTarget;
+      const deficit = incentiveTargetValue - twNetSales;
+      
+      incentiveData[name] = {
+        lastWeekPct: lwPct,
+        incentivePct: incentivePct,
+        thisWeekTarget: twTarget,
+        thisWeekNetSales: twNetSales,
+        incentiveTargetValue: incentiveTargetValue,
+        deficit: deficit > 0 ? deficit : 0,
+        achieved: deficit <= 0
+      };
+    });
+    
+    return incentiveData;
+  }
+
 
   /* ── Branch performance lookup ──────────────────────────── */
 
@@ -1983,7 +2083,7 @@
 
   /* ── Branch view ─────────────────────────────────────────── */
 
-  function renderBranchView() {
+    function renderBranchView() {
     if (!branchPerfData.length) {
       document.getElementById("branchGrid").innerHTML =
         '<div class="no-branch-data">No branch data available</div>';
@@ -1992,6 +2092,9 @@
 
     const { startDate, endDate } = getDateRange();
     const aggregated = aggregateBranches(startDate, endDate);
+    
+    // Calculate the new incentive data
+    const incentiveData = calculateIncentiveData();
 
     const byName = new Map(
       aggregated.map(b => [b.name.toLowerCase().trim(), b])
@@ -2139,6 +2242,26 @@
           deficitHTML += '</div>';
         }
 
+        // --- NEW: Incentive Target HTML Generation ---
+        let incentiveHTML = '';
+        const incData = incentiveData[b.name.toLowerCase().trim()];
+        if (incData) {
+          incentiveHTML = `
+            <div style="margin-top:10px; border-top:1px dashed #334155; padding-top:8px;">
+              <div style="font-size:10px; color:#ba9305; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Weekly Incentive Target</div>
+              <div style="font-size:12px; color:#94a3b8; line-height:1.6;">
+                Last Wk Avg: <span style="color:#e2e8f0; font-weight:700;">${incData.lastWeekPct.toFixed(1)}%</span><br>
+                Required %: <span style="color:${incData.achieved ? '#22c55e' : '#facc15'}; font-weight:700;">${incData.incentivePct.toFixed(1)}%</span><br>
+                ${incData.achieved 
+                  ? `<span style="color:#22c55e; font-weight:700;">✓ Incentive Achieved!</span>` 
+                  : `Deficit: <span style="color:#ef4444; font-weight:700;">${formatFullCurrency(incData.deficit)}</span>`
+                }
+              </div>
+            </div>
+          `;
+        }
+        // -------------------------------------------
+
         html += `
           <div class="b-card tier-${tier}" data-name="${b.name.toLowerCase()}">
             <div class="b-card-name">${b.name}</div>
@@ -2155,6 +2278,7 @@
                <div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 2px;">Actual Score: ${b.rawPct.toFixed(1)}% (Raw: ${formatFullCurrency(b.rawTarget)})</div>` : 
                (b.hasData ? `<div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 4px;">Actual Score: ${b.rawPct.toFixed(1)}%</div>` : "")}
             ${deficitHTML}
+            ${incentiveHTML}
             <div class="b-card-bar">
               <div class="b-card-bar-fill bar-${tier}" style="width:${barWidth}%"></div>
             </div>
@@ -2167,18 +2291,6 @@
     document.getElementById("branchCount").textContent =
       withData.length + (withData.length === 1 ? " branch" : " branches");
   }
-
-  document.getElementById("branchSearchBox").addEventListener("input", e => {
-    const q = e.target.value.toLowerCase().trim();
-
-    document.querySelectorAll(".b-card").forEach(card => {
-      const name = card.dataset.name;
-      card.classList.toggle(
-        "hidden",
-        q.length > 0 && !name.includes(q)
-      );
-    });
-  });
 
   /* ── Telesales processing ───────────────────────────────── */
 
