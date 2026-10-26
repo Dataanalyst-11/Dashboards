@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Telesales Performance Dashboard</title>
-
+ 
  <!-- Authentication Guard Script -->
 <script>
     (function() {
@@ -29,7 +29,7 @@
         }
     })();
 </script>
-    
+ 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
  
@@ -1581,10 +1581,11 @@
 
     const branchEffectiveTarget = relevantBranches.reduce((s, b) => s + b.effectiveTarget, 0);
     const branchBaseTarget = relevantBranches.reduce((s, b) => s + b.baseTarget, 0);
+    const branchOriginalApiTarget = relevantBranches.reduce((s, b) => s + b.originalApiTarget, 0);
     const branchNetSales = relevantBranches.reduce((s, b) => s + b.netSales, 0);
 
     const branchPerfPct = branchEffectiveTarget > 0 ? (branchNetSales / branchEffectiveTarget) * 100 : 0;
-    const branchRawPct = branchBaseTarget > 0 ? (branchNetSales / branchBaseTarget) * 100 : 0;
+    const branchRawPct = branchOriginalApiTarget  > 0 ? (branchNetSales / branchOriginalApiTarget ) * 100 : 0;
 
     const deficit = branchEffectiveTarget - branchNetSales;
     const eightyPctTarget = branchEffectiveTarget * 0.8;
@@ -1631,12 +1632,12 @@
        const isDouble = displayMultiplier === 1.5;
 
       detailHTML += `<div style="margin-top:8px; font-size:11px; font-weight:700; color:${isDouble ? '#ba9305' : '#38bdf8'}; text-transform:uppercase; letter-spacing:0.5px;">${isDouble ? 'DOUBLE GIFTING' : 'SPECIAL TARGET'} ACTIVE</div>`;
-      detailHTML += `<div style="font-size:20px; font-weight:bold; color:${rawPctColor}; margin-top:4px;">Actual Score: ${branchRawPct.toFixed(1)}% (Raw: ${formatFullCurrency(branchBaseTarget)})</div><br>`;
+      detailHTML += `<div style="font-size:20px; font-weight:bold; color:${rawPctColor}; margin-top:4px;">Actual Score: ${branchRawPct.toFixed(1)}% (Raw: ${formatFullCurrency(branchOriginalApiTarget)})</div><br>`;
     } else {
-      detailHTML += `<div style="font-size:20px; font-weight:bold; color:${rawPctColor}; margin-top:4px;">Actual Score: ${branchRawPct.toFixed(1)}% (Raw: ${formatFullCurrency(branchBaseTarget)})</div><br>`;
+      detailHTML += `<div style="font-size:20px; font-weight:bold; color:${rawPctColor}; margin-top:4px;">Actual Score: ${branchRawPct.toFixed(1)}% (Raw: ${formatFullCurrency(branchOriginalApiTarget)})</div><br>`;
     }
 
-    const baseDeficit = branchEffectiveTarget - branchNetSales;
+    const baseDeficit = branchOriginalApiTarget  - branchNetSales;
 
     if (deficit > 0) detailHTML += `Deficit on Special Target: <span class="deficit">${formatFullCurrency(deficit)}</span>`;
     else if (deficit < 0) detailHTML += `Surplus on Special Target: <span class="surplus">${formatFullCurrency(Math.abs(deficit))}</span>`;
