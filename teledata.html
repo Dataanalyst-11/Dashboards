@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Telesales Performance Dashboard</title>
 
-<!-- Authentication Guard Script -->
+ <!-- Authentication Guard Script -->
 <script>
     (function() {
         var FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
@@ -29,8 +29,7 @@
         }
     })();
 </script>
-
- 
+    
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
  
@@ -956,8 +955,15 @@
 
       // Increase the accumulated raw target by the applicable increment, then
       // divide across the six days in the Week 1 range to get the increased daily target.
-      const newWeeklyTarget = s.totalTarget * (1 + increment);
-      const newDailyTarget = newWeeklyTarget / 6;
+      //const newWeeklyTarget = s.totalTarget * (1 + increment);
+      //const newDailyTarget = newWeeklyTarget / 6;
+      // Calculate the increment from the accumulated original target,
+      // then add it to actual net sales before dividing by six days.
+      const additionalTarget = s.totalTarget * increment;
+      const adjustedTarget = s.totalNetSales + additionalTarget;
+      const newDailyTarget = adjustedTarget / 6;
+
+
 
       increments[key] = {
         increment,
@@ -1201,7 +1207,7 @@
             RETAIL_BRANCH_IDS.has(branchId)) {
           d.effectiveTarget += newDailyTarget;
         } else {
-          d.effectiveTarget += newDailyTarget * multiplier;
+          d.effectiveTarget += (Number(originalApiTarget) || 0) * multiplier;
         }
       } else {
         if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId)) {
@@ -1465,14 +1471,23 @@
           apiScore >= 50 ? "#facc15" :
           "#ef4444";
 
-        const isSpecialDay = b.hasData && b.baseTarget > 0 && b.effectiveTarget !== b.baseTarget;
-        const isDouble = b.hasData && b.effectiveTarget > b.baseTarget;
+        //const isSpecialDay = b.hasData && b.baseTarget > 0 && b.effectiveTarget !== b.baseTarget;
+        //const isDouble = b.hasData && b.effectiveTarget > b.baseTarget;
+        const displayMultiplier = getTargetMultiplier(
+           formatDate(getToday()),
+           getBranchIdByName(b.name)
+        );
+
+        const isSpecialDay = b.hasData && displayMultiplier !== 1;
+        const isDouble = b.hasData && displayMultiplier === 1.5;
+
 
         // ── Deficit Info ──
         let deficitHTML = '';
         if (b.hasData) {
           const effectiveDeficit = b.effectiveTarget - b.netSales; // Deficit against Special Target
-          const baseDeficit = b.baseTarget - b.netSales;           // Deficit against Base Target (Raw)
+          //const baseDeficit = b.baseTarget - b.netSales;           // Deficit against Base Target (Raw)
+          const baseDeficit = b.originalApiTarget - b.netSales;
 
           deficitHTML = '<div class="branch-deficit-info">';
 
@@ -1506,7 +1521,7 @@
           <div class="b-card tier-${tier}" data-name="${b.name.toLowerCase()}">
             <div class="b-card-name">${b.name}</div>
             
-            <div style="font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:#ba9305; margin-bottom:4px;">Special Target Score</div>
+            
             <div class="b-card-pct ${b.hasData ? "perf-" + tier : ""}">
               ${b.hasData ? b.pct.toFixed(1) + "%" : "—"}
             </div>
@@ -1605,8 +1620,16 @@
 
     let detailHTML = `${formatFullCurrency(branchNetSales)} of ${formatFullCurrency(branchEffectiveTarget)} target<br>`;
 
-    if (branchBaseTarget > 0 && branchEffectiveTarget !== branchBaseTarget) {
-      const isDouble = branchEffectiveTarget > branchBaseTarget;
+    //if (branchBaseTarget > 0 && branchEffectiveTarget !== branchBaseTarget) {
+    //  const isDouble = branchEffectiveTarget > branchBaseTarget;
+    const displayMultiplier = getTargetMultiplier(
+       formatDate(getToday()),
+       getBranchIdByName(selectedBranchName)
+    );
+
+    if (displayMultiplier !== 1) {
+       const isDouble = displayMultiplier === 1.5;
+
       detailHTML += `<div style="margin-top:8px; font-size:11px; font-weight:700; color:${isDouble ? '#ba9305' : '#38bdf8'}; text-transform:uppercase; letter-spacing:0.5px;">${isDouble ? 'DOUBLE GIFTING' : 'SPECIAL TARGET'} ACTIVE</div>`;
       detailHTML += `<div style="font-size:20px; font-weight:bold; color:${rawPctColor}; margin-top:4px;">Actual Score: ${branchRawPct.toFixed(1)}% (Raw: ${formatFullCurrency(branchBaseTarget)})</div><br>`;
     } else {
