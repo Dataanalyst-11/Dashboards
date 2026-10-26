@@ -614,7 +614,7 @@
     }
   }
 
-  async function speakBranchPerformance() {
+    async function speakBranchPerformance() {
     if (!('speechSynthesis' in window)) return;
     if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
 
@@ -638,20 +638,17 @@
         announcedAny = true;
         const speakName = phoneticNames[b.name] || b.name;
         text += `${speakName}. `;
-        text += `${formatPctForSpeech(b.pct)} percent. `;
+        
+        // Use rawPct (actual performance from API) instead of pct (special target)
+        text += `${formatPctForSpeech(b.rawPct)} percent. `;
 
-        const isSpecialDay = b.rawTarget > 0 && b.target !== b.rawTarget;
-        const specialDeficit = b.target - b.netSales;
+        // Use rawDeficit (against original API target) instead of specialDeficit
+        const rawDeficit = b.rawTarget - b.netSales;
 
-        if (isSpecialDay) {
-          if (specialDeficit > 0) text += `Deficit on special target: ${speakCurrency(specialDeficit)}. `;
-          else if (specialDeficit < 0) text += `Surplus on special target: ${speakCurrency(Math.abs(specialDeficit))}. `;
-          else text += `Deficit on special target: zero shillings. `;
-        } else {
-          if (specialDeficit > 0) text += `Deficit: ${speakCurrency(specialDeficit)}. `;
-          else if (specialDeficit < 0) text += `Surplus: ${speakCurrency(Math.abs(specialDeficit))}. `;
-          else text += `Deficit: zero shillings. `;
-        }
+        if (rawDeficit > 0) text += `Deficit: ${speakCurrency(rawDeficit)}. `;
+        else if (rawDeficit < 0) text += `Surplus: ${speakCurrency(Math.abs(rawDeficit))}. `;
+        else text += `Deficit: zero shillings. `;
+        
         text += " ";
       }
     }
@@ -679,7 +676,6 @@
       utterance.onstart = () => {
         btn.classList.add("speaking");
         
-        // Record the exact time TTS starts speaking
         const now = new Date();
         const timeStr = now.toLocaleTimeString();
         const today = new Date();
@@ -690,7 +686,6 @@
           lastSpokenEl.textContent = "Last TTS: " + timeStr + (isToday ? " (Today)" : "");
         }
         
-        // Save to localStorage so it survives page reloads
         try { localStorage.setItem('lastTTS', now.toISOString()); } catch(e) {}
       };
       utterance.onend = () => btn.classList.remove("speaking");
@@ -699,7 +694,7 @@
 
     window.speechSynthesis.speak(utterance);
   }
-
+  
   // Restore last spoken time from localStorage on page load
   try {
     const lastTTS = localStorage.getItem('lastTTS');
