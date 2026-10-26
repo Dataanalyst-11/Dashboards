@@ -582,7 +582,7 @@
     try {
       const now = new Date();
       const hour = now.getHours();
-      const ANNOUNCE_HOURS = [11, 13, 15, 17,1830];
+      const ANNOUNCE_HOURS = [9, 11, 13, 15, 17, 19];
       
       // Reset schedule outside of business hours
       if (hour < 8 || hour > 20) {
@@ -614,7 +614,7 @@
     }
   }
 
-    async function speakBranchPerformance() {
+  async function speakBranchPerformance() {
     if (!('speechSynthesis' in window)) return;
     if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
 
@@ -638,17 +638,20 @@
         announcedAny = true;
         const speakName = phoneticNames[b.name] || b.name;
         text += `${speakName}. `;
-        
-        // Use rawPct (actual performance from API) instead of pct (special target)
-        text += `${formatPctForSpeech(b.rawPct)} percent. `;
+        text += `${formatPctForSpeech(b.pct)} percent. `;
 
-        // Use rawDeficit (against original API target) instead of specialDeficit
-        const rawDeficit = b.rawTarget - b.netSales;
+        const isSpecialDay = b.rawTarget > 0 && b.target !== b.rawTarget;
+        const specialDeficit = b.target - b.netSales;
 
-        if (rawDeficit > 0) text += `Deficit: ${speakCurrency(rawDeficit)}. `;
-        else if (rawDeficit < 0) text += `Surplus: ${speakCurrency(Math.abs(rawDeficit))}. `;
-        else text += `Deficit: zero shillings. `;
-        
+        if (isSpecialDay) {
+          if (specialDeficit > 0) text += `Deficit on special target: ${speakCurrency(specialDeficit)}. `;
+          else if (specialDeficit < 0) text += `Surplus on special target: ${speakCurrency(Math.abs(specialDeficit))}. `;
+          else text += `Deficit on special target: zero shillings. `;
+        } else {
+          if (specialDeficit > 0) text += `Deficit: ${speakCurrency(specialDeficit)}. `;
+          else if (specialDeficit < 0) text += `Surplus: ${speakCurrency(Math.abs(specialDeficit))}. `;
+          else text += `Deficit: zero shillings. `;
+        }
         text += " ";
       }
     }
@@ -676,6 +679,7 @@
       utterance.onstart = () => {
         btn.classList.add("speaking");
         
+        // Record the exact time TTS starts speaking
         const now = new Date();
         const timeStr = now.toLocaleTimeString();
         const today = new Date();
@@ -686,6 +690,7 @@
           lastSpokenEl.textContent = "Last TTS: " + timeStr + (isToday ? " (Today)" : "");
         }
         
+        // Save to localStorage so it survives page reloads
         try { localStorage.setItem('lastTTS', now.toISOString()); } catch(e) {}
       };
       utterance.onend = () => btn.classList.remove("speaking");
@@ -694,7 +699,7 @@
 
     window.speechSynthesis.speak(utterance);
   }
-  
+
   // Restore last spoken time from localStorage on page load
   try {
     const lastTTS = localStorage.getItem('lastTTS');
