@@ -1636,7 +1636,7 @@
       detailHTML += `<div style="font-size:20px; font-weight:bold; color:${rawPctColor}; margin-top:4px;">Actual Score: ${branchRawPct.toFixed(1)}% (Raw: ${formatFullCurrency(branchBaseTarget)})</div><br>`;
     }
 
-    const baseDeficit = branchBaseTarget - branchNetSales;
+    const baseDeficit = branchOriginalApiTarget - branchNetSales;
 
     if (deficit > 0) detailHTML += `Deficit on Special Target: <span class="deficit">${formatFullCurrency(deficit)}</span>`;
     else if (deficit < 0) detailHTML += `Surplus on Special Target: <span class="surplus">${formatFullCurrency(Math.abs(deficit))}</span>`;
