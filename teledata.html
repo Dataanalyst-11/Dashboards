@@ -30,7 +30,7 @@
     })();
 </script>
 
-
+ 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
  
@@ -823,8 +823,6 @@
   const ID_KITUI = "orgbranch-6850015d7d3c6f75c8c1d680";
 
   function getTargetMultiplier(dateStr, branchId) {
-    // Normal Special Target day multipliers (50%, 60%, 70%, 80%) are disabled.
-    // Keep only the existing 150% Double Gifting rules.
     const dateSelectVal = document.getElementById("dateSelect").value;
     const todayStr = formatDate(getToday());
     if (dateSelectVal !== "today" || dateStr !== todayStr) return 1;
@@ -840,12 +838,24 @@
 
     if (dayOfWeek === 2 && isLastWeekdayOfMonth(dateObj, 2) && branchId === ID_KITUI) return 1.5;
     if (dayOfWeek === 3 && isLastWeekdayOfMonth(dateObj, 3) && branchId === ID_KAWANGWARE) return 1.5;
-    if (dayOfWeek === 5 && isLastWeekdayOfMonth(dateObj, 5) && (branchId === ID_KITENGEELA || branchId === ID_RONGAI)) return 1.5;
+    if (dayOfWeek === 5 && isLastWeekdayOfMonth(dateObj, 5) && (branchId === ID_KITENGEELA || branchId === ID_RONGAI) ) return 1.5;
     if (dayOfWeek === 4 && isLastWeekdayOfMonth(dateObj, 4)) {
       if (![ID_KITUI, ID_KAWANGWARE, ID_KITENGEELA, ID_RONGAI].includes(branchId)) return 1.5;
     }
 
-    return 1;
+    if (dayOfWeek === 1) return 0.7;
+    if (dayOfWeek === 2) return (branchId === ID_KAWANGWARE || branchId === ID_RONGAI) ? 0.6 : 0.8;
+    if (dayOfWeek === 3) return (branchId === ID_KAWANGWARE || branchId === ID_RONGAI) ? 0.8 : 0.6;
+    if (dayOfWeek === 4) {
+      if (branchId === ID_KITENGEELA || branchId === ID_KAWANGWARE || branchId === ID_RONGAI) return 0.6;
+      return 0.8;
+    }
+    if (dayOfWeek === 5) {
+      if (branchId === ID_KAWANGWARE || branchId === ID_RONGAI || branchId === ID_KITENGEELA) return 0.8;
+      return 0.6;
+    }
+    if (dayOfWeek === 0) return 0.5;
+    return 1.0;
   }
 
   /* ── Week 1 Incentive Target Calculation ─────────────────── */
@@ -1185,9 +1195,14 @@
 
       if (useNewTarget) {
         d.baseTarget += newDailyTarget;
-        // Special Target percentage is measured against the newly calculated daily target.
-        // Only Double Gifting can increase that target, to 150%; all other days use 100%.
-        d.effectiveTarget += newDailyTarget * multiplier;
+
+        if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId) ||
+            HIGH_VALUE_RETAIL_IDS.has(branchId) ||
+            RETAIL_BRANCH_IDS.has(branchId)) {
+          d.effectiveTarget += newDailyTarget;
+        } else {
+          d.effectiveTarget += newDailyTarget * multiplier;
+        }
       } else {
         if (SEMI_WHOLESALE_BRANCH_IDS.has(branchId)) {
           d.baseTarget += 150000;
