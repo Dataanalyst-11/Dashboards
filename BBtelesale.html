@@ -116,16 +116,11 @@
   .date-icon svg { width: 100%; height: 100%; fill: #0d9488; }
 
   /* ── Views & Layout ─────────────────────────── */
-  #telesalesView, #branchView { flex: 1; display: flex; flex-direction: column; }
-  #branchView { display: none; }
+  #telesalesView, #branchView, #individualView { flex: 1; display: flex; flex-direction: column; }
+  #branchView, #individualView { display: none; }
 
-  .stats-row {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 24px 32px 0;
-  }
-  
-  .branch-summary-row {
-    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; padding: 24px 32px 0;
-  }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 24px 32px 0; }
+  .branch-summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; padding: 24px 32px 0; }
 
   .stat-card {
     background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 22px 24px;
@@ -226,6 +221,16 @@
   #telesalesView th:nth-child(7), #telesalesView td:nth-child(7) { width: 14%; text-align: right; }
   #telesalesView th:nth-child(8), #telesalesView td:nth-child(8) { width: 13%; text-align: center; }
 
+  #individualView th:nth-child(1), #individualView td:nth-child(1) { width: 40px; text-align: center; }
+  #individualView th:nth-child(2), #individualView td:nth-child(2) { width: 16%; }
+  #individualView th:nth-child(3), #individualView td:nth-child(3) { width: 12%; }
+  #individualView th:nth-child(4), #individualView td:nth-child(4) { width: 12%; text-align: right; }
+  #individualView th:nth-child(5), #individualView td:nth-child(5) { width: 8%; text-align: center; }
+  #individualView th:nth-child(6), #individualView td:nth-child(6) { width: 10%; text-align: center; }
+  #individualView th:nth-child(7), #individualView td:nth-child(7) { width: 12%; text-align: right; }
+  #individualView th:nth-child(8), #individualView td:nth-child(8) { width: 12%; text-align: right; }
+  #individualView th:nth-child(9), #individualView td:nth-child(9) { width: 18%; text-align: right; }
+
   td { padding: 13px 20px; border-bottom: 1px solid #334155; vertical-align: middle; color: #cbd5e1; }
   tbody tr { transition: background 0.15s; }
   tbody tr:hover { background: #334155; }
@@ -268,18 +273,9 @@
   .days-worked-info { font-size: 10px; color: #64748b; margin-top: 4px; font-weight: 500; line-height: 1.2; white-space: nowrap; }
 
   /* ── Branch Grid Layout ─────────────────────── */
-  .branch-grid-wrap {
-    flex: 1; padding: 20px 32px 24px; overflow-y: auto;
-  }
-  .branch-grid-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
-  }
-  .branch-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 16px;
-  }
+  .branch-grid-wrap { flex: 1; padding: 20px 32px 24px; overflow-y: auto; }
+  .branch-grid-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .branch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
   .b-card {
     background: #1e293b; border: 1px solid #334155; border-radius: 20px;
     padding: 20px 22px 26px; position: relative; overflow: hidden;
@@ -323,9 +319,7 @@
   .toast.toast-retry { border-left-color: #0284c7; }
 
   /* ── Responsive ──────────────────────────────── */
-  @media (max-width: 1100px) {
-    .branch-summary-row { grid-template-columns: 1fr 1fr; }
-  }
+  @media (max-width: 1100px) { .branch-summary-row { grid-template-columns: 1fr 1fr; } }
 
   @media (max-width: 900px) {
     #telesalesView th:nth-child(7), #telesalesView td:nth-child(7) { display: none; }
@@ -336,6 +330,10 @@
     #telesalesView th:nth-child(6), #telesalesView td:nth-child(6) { width: 22%; text-align: center; }
     #telesalesView th:nth-child(8), #telesalesView td:nth-child(8) { width: 18%; text-align: center; }
     .value-cell { text-align: center; }
+
+    #individualView th:nth-child(4), #individualView td:nth-child(4) { display: none; } 
+    #individualView th:nth-child(5), #individualView td:nth-child(5) { display: none; } 
+    #individualView th:nth-child(8), #individualView td:nth-child(8) { display: none; } 
   }
 
   @media (max-width: 600px) {
@@ -351,13 +349,19 @@
     .header-right { width: 100%; }
     .filter-select { flex: 1; min-width: 0; }
     .filter-select select { width: 100%; }
+    .view-toggle { flex: 1; }
+    .view-toggle button { flex: 1; text-align: center; padding: 8px 10px; font-size: 11px; }
     .search-box { width: 100%; }
+    
     #telesalesView th:nth-child(7), #telesalesView td:nth-child(7) { display: none; }
     #telesalesView th:nth-child(6), #telesalesView td:nth-child(6) { display: none; }
     #telesalesView th:nth-child(2), #telesalesView td:nth-child(2) { width: 40%; }
     #telesalesView th:nth-child(4), #telesalesView td:nth-child(4) { width: 22%; }
     #telesalesView th:nth-child(5), #telesalesView td:nth-child(5) { width: 20%; }
     #telesalesView th:nth-child(8), #telesalesView td:nth-child(8) { width: 18%; text-align: center; }
+
+    #individualView th:nth-child(3), #individualView td:nth-child(3) { display: none; } 
+    #individualView th:nth-child(6), #individualView td:nth-child(6) { display: none; } 
     .custom-date-range.visible { max-width: 100%; flex-direction: column; border-radius: 10px; }
     .date-range-group + .date-range-group { border-left: none; border-top: 1px solid #ccfbf1; }
     .date-range-input-wrap input[type="date"] { width: 100%; }
@@ -410,10 +414,10 @@
       </div>
     </div>
     
-    <!-- View Toggle Switch -->
     <div class="view-toggle">
       <button id="btnTelesales" class="active" onclick="switchView('telesales')">Telesales</button>
       <button id="btnBranches" onclick="switchView('branches')">Branches</button>
+      <button id="btnIndividual" onclick="switchView('individual')">Individual</button>
     </div>
 
     <div class="filter-select branch-selector" id="branchSelectorWrap">
@@ -426,7 +430,6 @@
 
 <!-- ═══════════════ TELESALES VIEW ═══════════════ -->
 <div id="telesalesView">
-
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">Total Customer Orders</div>
@@ -490,22 +493,15 @@
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr class="loading-row">
-            <td colspan="8">
-              <span class="loading-spinner"></span>
-              Loading sales data...
-            </td>
-          </tr>
+          <tr class="loading-row"><td colspan="8"><span class="loading-spinner"></span> Loading sales data...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
-
 </div>
 
 <!-- ═══════════════ BRANCH VIEW ═══════════════ -->
 <div id="branchView">
-
   <div class="branch-summary-row">
     <div class="stat-card">
       <div class="stat-label">Overall Performance</div>
@@ -541,7 +537,58 @@
       <div class="no-branch-data">Loading branch data...</div>
     </div>
   </div>
+</div>
 
+<!-- ═══════════════ INDIVIDUAL VIEW ═══════════════ -->
+<div id="individualView">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Active Telesales</div>
+      <div class="stat-value" id="indActive">—</div>
+      <div class="stat-sub" id="indActiveSub">with recorded sales</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Calculated Target</div>
+      <div class="stat-value" id="indTarget">—</div>
+      <div class="stat-sub" id="indTargetSub">distributed raw target</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Deficit</div>
+      <div class="stat-value" id="indDeficit">—</div>
+      <div class="stat-sub" id="indDeficitSub">vs calculated target</div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-header">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <span class="table-title">Individual Performance Ranking</span>
+        <span class="table-count" id="indTableCount">0 people</span>
+        <span class="sort-hint" id="indSortHint">Click column headers to sort</span>
+      </div>
+      <input type="text" class="search-box" id="indSearchBox" placeholder="Search by name or branch...">
+    </div>
+    <div class="table-wrap" id="indTableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th class="sortable" data-sort="name">Telesale Name <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="branch">Branch <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="histSales" style="text-align:right;">Last Month Sales <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="ratio" style="text-align:center;">Ratio <span class="sort-icon">▲</span></th>
+            <th class="sortable active-sort sort-desc" data-sort="score" style="text-align:center;">Achievement % <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="value" style="text-align:right;">Today's Sales <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="calculatedTarget" style="text-align:right;">Calc. Target <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="deficit" style="text-align:right;">Deficit <span class="sort-icon">▲</span></th>
+          </tr>
+        </thead>
+        <tbody id="indTableBody">
+          <tr class="loading-row"><td colspan="9"><span class="loading-spinner"></span> Loading individual data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <footer>
@@ -563,18 +610,19 @@
   const DATA_LOOKBACK_DAYS = 365; 
 
   let currentSort = { key: "score", dir: "desc" };
+  let indCurrentSort = { key: "score", dir: "desc" };
   let currentView = "telesales";
   let isLoading = false;
   let currentAbortCtrl = null;
 
   let allRawData = [];
-  let allBranchData = []; // Holds data from the branch performance endpoint
+  let allBranchData = [];
   let filteredData = [];
   let displayedData = [];
+  let indFilteredData = [];
+  let indDisplayedData = [];
   let lastDataFetchAt = null;
   let currentDaysInRange = 0;
-
-  // Removed hardcoded BRANCH_DAILY_TARGETS
 
   /* ── Date Helpers ───────────────────────────── */
   function formatDate(d) {
@@ -661,7 +709,7 @@
     let currentDate = new Date(startDate + "T00:00:00");
     const end = new Date(endDate + "T00:00:00");
     while (currentDate <= end) {
-      if (currentDate.getDay() !== 6) count++; // Skip Saturdays
+      if (currentDate.getDay() !== 6) count++;
       currentDate.setDate(currentDate.getDate() + 1);
     }
     return count;
@@ -709,30 +757,12 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  function getSalesTarget(row) {
-    return toNumber(row.dailySalesTarget ?? row.salesTarget ?? row.target ?? row.dailyTarget ?? row.targetSales);
-  }
-
-  function getNetSales(row) {
-    return toNumber(row.netDailySales ?? row.netSales ?? row.dailyNetSales ?? row.branchNetSales);
-  }
-
-  function getCustomerOrders(row) {
-    return toNumber(row.totalDaysCustomers ?? row.dailyCustomers ?? row.customerOrders ?? row.totalCustomers);
-  }
-
-  function getSalesDeficit(row) {
-    return toNumber(row.dailySalesDeficit ?? row.salesDeficit ?? row.deficit);
-  }
-
-  function getBranchNameFromSalesRow(row) {
-    return String(row.branchName || row.orgBranchName || branchNames[row.orgBranchId] || "").trim();
-  }
-
-  function getBranchIdFromRow(row) {
-    return row.orgBranchId || row.branchId || "";
-  }
-
+  function getSalesTarget(row) { return toNumber(row.dailySalesTarget ?? row.salesTarget ?? row.target ?? row.dailyTarget ?? row.targetSales); }
+  function getNetSales(row) { return toNumber(row.netDailySales ?? row.netSales ?? row.dailyNetSales ?? row.branchNetSales); }
+  function getCustomerOrders(row) { return toNumber(row.totalDaysCustomers ?? row.dailyCustomers ?? row.customerOrders ?? row.totalCustomers); }
+  function getSalesDeficit(row) { return toNumber(row.dailySalesDeficit ?? row.salesDeficit ?? row.deficit); }
+  function getBranchNameFromSalesRow(row) { return String(row.branchName || row.orgBranchName || branchNames[row.orgBranchId] || "").trim(); }
+  function getBranchIdFromRow(row) { return row.orgBranchId || row.branchId || ""; }
   function getBranchIdByName(name) {
     const normalized = String(name || "").trim().toLowerCase();
     for (const [id, branchName] of Object.entries(branchNames)) {
@@ -754,10 +784,7 @@
   }
 
   function abortPreviousRequests() {
-    if (currentAbortCtrl) {
-      currentAbortCtrl.abort();
-      currentAbortCtrl = null;
-    }
+    if (currentAbortCtrl) { currentAbortCtrl.abort(); currentAbortCtrl = null; }
     currentAbortCtrl = new AbortController();
     return currentAbortCtrl.signal;
   }
@@ -790,7 +817,6 @@
   async function fetchSalesData(signal) {
     const { startDate, endDate } = getFetchRange();
     const url = `${window.API_CONFIG.API_URL}sales-person/performance-reports?pageSize=10000&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-    console.log("[API 1/2] Sales:", url);
     const json = await fetchWithRetry(url, { signal, headers: { "Content-Type": "application/json" } });
     return Array.isArray(json) ? json : (json.data || []);
   }
@@ -798,7 +824,6 @@
   async function fetchBranchPerformanceData(signal) {
     const { startDate, endDate } = getFetchRange();
     const url = `${window.API_CONFIG.API_URL}branch-performance/reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=10000`;
-    console.log("[API 2/2] Branch Performance:", url);
     const json = await fetchWithRetry(url, { signal, headers: { "Content-Type": "application/json" } });
     return Array.isArray(json) ? json : (json.data || []);
   }
@@ -813,22 +838,23 @@
     const branchSel = document.getElementById("branchSelect");
     const btnTelesales = document.getElementById("btnTelesales");
     const btnBranches = document.getElementById("btnBranches");
+    const btnIndividual = document.getElementById("btnIndividual");
 
     if (loading) {
       overlay.classList.add("active");
       dateSelect.disabled = true; dateFrom.disabled = true; dateTo.disabled = true; branchSel.disabled = true;
-      btnTelesales.disabled = true; btnBranches.disabled = true;
+      btnTelesales.disabled = true; btnBranches.disabled = true; btnIndividual.disabled = true;
     } else {
       overlay.classList.remove("active");
       dateSelect.disabled = false; dateFrom.disabled = false; dateTo.disabled = false; branchSel.disabled = false;
-      btnTelesales.disabled = false; btnBranches.disabled = false;
+      btnTelesales.disabled = false; btnBranches.disabled = false; btnIndividual.disabled = false;
     }
   }
 
   function showTableLoading() {
-    document.getElementById("tableBody").innerHTML = `
-      <tr class="loading-row"><td colspan="8"><span class="loading-spinner"></span> Loading sales data...</td></tr>`;
+    document.getElementById("tableBody").innerHTML = `<tr class="loading-row"><td colspan="8"><span class="loading-spinner"></span> Loading sales data...</td></tr>`;
     document.getElementById("branchGrid").innerHTML = `<div class="no-branch-data">Loading branch data...</div>`;
+    document.getElementById("indTableBody").innerHTML = `<tr class="loading-row"><td colspan="9"><span class="loading-spinner"></span> Loading individual data...</td></tr>`;
   }
 
   /* ── View Switching ─────────────────────────── */
@@ -836,27 +862,29 @@
     currentView = view;
     const tv = document.getElementById("telesalesView");
     const bv = document.getElementById("branchView");
+    const iv = document.getElementById("individualView");
     const bt = document.getElementById("btnTelesales");
     const bb = document.getElementById("btnBranches");
+    const bi = document.getElementById("btnIndividual");
     const bsw = document.getElementById("branchSelectorWrap");
     const ht = document.getElementById("headerTitle");
     const hs = document.getElementById("headerSubtitle");
 
+    tv.style.display = "none"; bv.style.display = "none"; iv.style.display = "none";
+    bt.classList.remove("active"); bb.classList.remove("active"); bi.classList.remove("active");
+
     if (view === "branches") {
-      tv.style.display = "none";
-      bv.style.display = "flex";
-      bt.classList.remove("active");
-      bb.classList.add("active");
-      bsw.style.display = "none"; 
+      bv.style.display = "flex"; bb.classList.add("active"); bsw.style.display = "none";
       ht.textContent = "Beibora Branch Performance Dashboard";
       hs.textContent = "All Branches — Real-time Performance Monitoring";
       renderBranchView();
+    } else if (view === "individual") {
+      iv.style.display = "flex"; bi.classList.add("active"); bsw.style.display = "";
+      ht.textContent = "Beibora Individual Performance Dashboard";
+      hs.textContent = "Telesales — Ratio-based Target Tracking";
+      processAndRenderIndividual();
     } else {
-      tv.style.display = "flex";
-      bv.style.display = "none";
-      bt.classList.add("active");
-      bb.classList.remove("active");
-      bsw.style.display = ""; 
+      tv.style.display = "flex"; bt.classList.add("active"); bsw.style.display = "";
       ht.textContent = "Beibora Telesales Performance Dashboard";
       hs.textContent = "Management Overview — Real-time Sales Tracking";
       processAndRender();
@@ -869,76 +897,50 @@
     for (const row of allRawData) {
       const rowDate = getRecordDate(row);
       if (!isDateInRange(rowDate, startDate, endDate)) continue;
-
       const branchId = getBranchIdFromRow(row);
       const branchName = getBranchNameFromSalesRow(row);
-
       if (selectedBranchId) {
         const selectedName = branchNames[selectedBranchId] || "";
         if (branchId && branchId !== selectedBranchId && branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
         if (!branchId && branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
       }
-
       const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
       if (!name) continue;
-
       const rowNetSales = getNetSales(row);
       if (rowNetSales <= 0) continue;
-
       const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
-      if (!dailyMap.has(dailyKey)) {
-        dailyMap.set(dailyKey, { salesPersonName: name, branchName, orgBranchId: branchId || getBranchIdByName(branchName), date: rowDate, netValue: 0, target: 0, orders: 0, deficit: 0 });
-      }
+      if (!dailyMap.has(dailyKey)) dailyMap.set(dailyKey, { salesPersonName: name, branchName, orgBranchId: branchId || getBranchIdByName(branchName), date: rowDate, netValue: 0, target: 0, orders: 0, deficit: 0 });
       const d = dailyMap.get(dailyKey);
-      d.netValue += rowNetSales;
-      d.target += getSalesTarget(row);
-      d.orders += getCustomerOrders(row);
-      d.deficit += getSalesDeficit(row);
+      d.netValue += rowNetSales; d.target += getSalesTarget(row); d.orders += getCustomerOrders(row); d.deficit += getSalesDeficit(row);
     }
-
     const personMap = new Map();
     for (const d of dailyMap.values()) {
       if (d.netValue <= 0) continue;
       const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
-      if (!personMap.has(personKey)) {
-        personMap.set(personKey, { ...d, netValue: 0, target: 0, orders: 0, deficit: 0, daysWorked: 0 });
-      }
+      if (!personMap.has(personKey)) personMap.set(personKey, { ...d, netValue: 0, target: 0, orders: 0, deficit: 0, daysWorked: 0 });
       const p = personMap.get(personKey);
       p.netValue += d.netValue; p.orders += d.orders; p.target += d.target; p.deficit += d.deficit; p.daysWorked += 1;
     }
-
-    return [...personMap.values()]
-      .map(g => ({
-        salesPersonName: g.salesPersonName, branchName: g.branchName, orgBranchId: g.orgBranchId,
-        netValue: g.netValue, target: g.target, orders: g.orders, deficit: g.deficit, days: g.daysWorked,
-        score: g.target > 0 ? (g.netValue / g.target) * 100 : 0, totalDaysCustomers: g.orders
-      }))
-      .filter(g => g.score > 0);
+    return [...personMap.values()].map(g => ({ salesPersonName: g.salesPersonName, branchName: g.branchName, orgBranchId: g.orgBranchId, netValue: g.netValue, target: g.target, orders: g.orders, deficit: g.deficit, days: g.daysWorked, score: g.target > 0 ? (g.netValue / g.target) * 100 : 0, totalDaysCustomers: g.orders })).filter(g => g.score > 0);
   }
 
-  // Calculate Branch Performance directly from API endpoint for Telesales View
   function calculateBranchPerformanceFromAPI(startDate, endDate, selectedBranchId) {
     let totalNetSales = 0;
     let totalTarget = 0;
-
     if (allBranchData && allBranchData.length > 0) {
       for (const row of allBranchData) {
         const rowDate = getRecordDate(row);
         if (!isDateInRange(rowDate, startDate, endDate)) continue;
-
         const branchName = String(row.orgBranchName || "").trim();
         if (selectedBranchId) {
           const selectedName = branchNames[selectedBranchId] || "";
           if (branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
         }
-
         if (!branchName) continue;
-
         totalNetSales += toNumber(row.netDailySales);
         totalTarget += toNumber(row.dailySalesTarget);
       }
     } else {
-      // Fallback to telesales raw data if branch endpoint failed
       const branchMap = new Map();
       for (const row of allRawData) {
         const rowDate = getRecordDate(row);
@@ -963,59 +965,31 @@
         totalTarget += b.repTargetSum;
       }
     }
-
-    return {
-      netSales: totalNetSales,
-      target: totalTarget,
-      pct: totalTarget > 0 ? (totalNetSales / totalTarget) * 100 : 0
-    };
+    return { netSales: totalNetSales, target: totalTarget, pct: totalTarget > 0 ? (totalNetSales / totalTarget) * 100 : 0 };
   }
 
   /* ── Branch View Aggregation ────────────────── */
   function aggregateBranchesFromAPI(startDate, endDate) {
     const branchMap = new Map();
-
     for (const row of allBranchData) {
       const rowDate = getRecordDate(row);
       if (!isDateInRange(rowDate, startDate, endDate)) continue;
-
       const name = String(row.orgBranchName || "").trim();
       if (!name) continue;
-
-      if (!branchMap.has(name)) {
-        branchMap.set(name, { name, netSales: 0, target: 0, days: 0 });
-      }
-
+      if (!branchMap.has(name)) branchMap.set(name, { name, netSales: 0, target: 0, days: 0 });
       const b = branchMap.get(name);
       b.netSales += toNumber(row.netDailySales);
       b.target += toNumber(row.dailySalesTarget);
       b.days += 1;
     }
-
     const result = [];
-    
-    // Map known branches
-    const knownBranches = Object.values(branchNames).map(n => n.toLowerCase());
-    
     for (const [name, b] of branchMap.entries()) {
       const pct = b.target > 0 ? (b.netSales / b.target) * 100 : 0;
-      result.push({
-        name: name,
-        netSales: b.netSales,
-        target: b.target,
-        pct: pct,
-        deficit: b.target - b.netSales,
-        hasData: true
-      });
+      result.push({ name, netSales: b.netSales, target: b.target, pct, deficit: b.target - b.netSales, hasData: true });
     }
-    
-    // Add branches with no data
     for (const name of Object.values(branchNames)) {
-      if (!branchMap.has(name)) {
-        result.push({ name, netSales: 0, target: 0, pct: 0, deficit: 0, hasData: false });
-      }
+      if (!branchMap.has(name)) result.push({ name, netSales: 0, target: 0, pct: 0, deficit: 0, hasData: false });
     }
-
     return result.sort((a, b) => {
       if (a.hasData && !b.hasData) return -1;
       if (!a.hasData && b.hasData) return 1;
@@ -1023,98 +997,110 @@
     });
   }
 
-  // Incentive comparison windows: previous Sunday-Friday and current Sunday-today.
-  function getLastWeekSundayToFriday() {
-    const today = getToday();
-    const thisSunday = new Date(today);
-    thisSunday.setDate(today.getDate() - today.getDay());
-    const lastSunday = new Date(thisSunday);
-    lastSunday.setDate(thisSunday.getDate() - 7);
-    const lastFriday = new Date(lastSunday);
-    lastFriday.setDate(lastSunday.getDate() + 5);
-    return { startDate: formatDate(lastSunday), endDate: formatDate(lastFriday) };
-  }
-
-  function getThisWeekUpToToday() {
-    const today = getToday();
-    const sunday = new Date(today);
-    sunday.setDate(today.getDate() - today.getDay());
-    return { startDate: formatDate(sunday), endDate: formatDate(today) };
-  }
-
-  // Use the same API-backed branch aggregation as the branch cards.
   function aggregateBranches(startDate, endDate) {
     return aggregateBranchesFromAPI(startDate, endDate);
   }
 
-    function calculateIncentiveData() {
-    const lwRange = getLastWeekSundayToFriday();
-    const twRange = getThisWeekUpToToday();
+  /* ── Individual Ratio-Based Aggregation ─────────────────── */
+  function aggregateIndividuals(startDate, endDate, selectedBranchId) {
+    const today = getToday();
+    const firstDayCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayPrevMonth = new Date(firstDayCurrentMonth);
+    lastDayPrevMonth.setDate(lastDayPrevMonth.getDate() - 1);
+    const firstDayPrevMonth = new Date(lastDayPrevMonth.getFullYear(), lastDayPrevMonth.getMonth(), 1);
     
-    const lwAgg = aggregateBranches(lwRange.startDate, lwRange.endDate);
-    const twAgg = aggregateBranches(twRange.startDate, twRange.endDate);
+    const w30Start = formatDate(firstDayPrevMonth);
+    const w30End = formatDate(lastDayPrevMonth);
     
-    const incentiveData = {};
-    
-    const allNames = new Set([
-      ...lwAgg.map(b => b.name.toLowerCase().trim()),
-      ...twAgg.map(b => b.name.toLowerCase().trim())
-    ]);
-    
-    allNames.forEach(name => {
-      const lw = lwAgg.find(b => b.name.toLowerCase().trim() === name);
-      const tw = twAgg.find(b => b.name.toLowerCase().trim() === name);
-      
-      // Need last week's data to establish the baseline percentage
-      if (!lw || lw.target <= 0) return;
-      // Need this week's target to calculate value deficit
-      if (!tw || tw.target <= 0) return;
-      
-      const lwPct = (lw.netSales / lw.target) * 100;
-      let increment = 0;
-      
-      if (lwPct > 50) {
-        increment = 10;
-      } else if (lwPct >= 40) {
-        increment = 15;
-      } else {
-        increment = 20;
+    const dailyMap = new Map();
+    for (const row of allRawData) {
+      const rowDate = getRecordDate(row);
+      if (!isDateInRange(rowDate, startDate, endDate)) continue;
+      const branchId = getBranchIdFromRow(row);
+      const branchName = getBranchNameFromSalesRow(row);
+      if (selectedBranchId) {
+        const selectedName = branchNames[selectedBranchId] || "";
+        if (branchId && branchId !== selectedBranchId && branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
+        if (!branchId && branchName.toLowerCase() !== selectedName.toLowerCase()) continue;
       }
-      
-      const incentivePct = lwPct + increment;
-      const twTarget = tw.target;
-      const twNetSales = tw.netSales;
-      
-      // Calculate the value required to achieve the incentive percentage
-      const incentiveTargetValue = (incentivePct / 100) * twTarget;
-      const deficit = incentiveTargetValue - twNetSales;
-      
-      incentiveData[name] = {
-        lastWeekPct: lwPct,
-        incentivePct: incentivePct,
-        thisWeekTarget: twTarget,
-        thisWeekNetSales: twNetSales,
-        incentiveTargetValue: incentiveTargetValue,
-        deficit: deficit > 0 ? deficit : 0,
-        achieved: deficit <= 0
-      };
-    });
+      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
+      if (!name) continue;
+      const rowNetSales = getNetSales(row);
+      if (rowNetSales <= 0) continue;
+      const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
+      if (!dailyMap.has(dailyKey)) dailyMap.set(dailyKey, { salesPersonName: name, branchName, orgBranchId: branchId || getBranchIdByName(branchName), date: rowDate, netValue: 0, orders: 0 });
+      const d = dailyMap.get(dailyKey);
+      d.netValue += rowNetSales; d.orders += getCustomerOrders(row);
+    }
     
-    return incentiveData;
-  }
+    const personMap = new Map();
+    for (const d of dailyMap.values()) {
+      if (d.netValue <= 0) continue;
+      const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
+      if (!personMap.has(personKey)) personMap.set(personKey, { salesPersonName: d.salesPersonName, branchName: d.branchName, orgBranchId: d.orgBranchId, netValue: 0, orders: 0, daysWorked: 0, histSales: 0, histTarget: 0 });
+      const p = personMap.get(personKey);
+      p.netValue += d.netValue; p.orders += d.orders; p.daysWorked += 1;
+    }
+    
+    for (const row of allRawData) {
+      const rowDate = getRecordDate(row);
+      if (!isDateInRange(rowDate, w30Start, w30End)) continue;
+      const branchName = getBranchNameFromSalesRow(row);
+      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
+      if (!name) continue;
+      const rowNetSales = getNetSales(row);
+      if (rowNetSales <= 0) continue;
+      const personKey = `${name.toLowerCase()}||${branchName.toLowerCase()}`;
+      if (personMap.has(personKey)) {
+        const p = personMap.get(personKey);
+        p.histSales += rowNetSales;
+        p.histTarget += getSalesTarget(row);
+      }
+    }
 
-
-  /* ── Branch performance lookup ──────────────────────────── */
-
-  function getBranchPerfByName(branchName, startDate, endDate) {
     const branches = aggregateBranches(startDate, endDate);
-    const normalized = String(branchName || "").toLowerCase().trim();
-
-    return branches.find(
-      b => b.name.toLowerCase().trim() === normalized
-    ) || null;
+    const branchMap = new Map(branches.map(b => [b.name.toLowerCase().trim(), b]));
+    const branchGroups = new Map();
+    
+    for (const p of personMap.values()) {
+      const bKey = p.branchName.toLowerCase().trim();
+      if (!branchGroups.has(bKey)) {
+        const bData = branchMap.get(bKey);
+        const branchRawTarget = bData ? bData.target : 0;
+        branchGroups.set(bKey, { branchName: p.branchName, branchRawTarget, activeTelesales: [], totalHistScore: 0 });
+      }
+      const bg = branchGroups.get(bKey);
+      p.histScore = p.histTarget > 0 ? (p.histSales / p.histTarget) * 100 : 0;
+      bg.activeTelesales.push(p);
+      bg.totalHistScore += p.histScore;
+    }
+    
+    const result = [];
+    for (const bg of branchGroups.values()) {
+      for (const p of bg.activeTelesales) {
+        let ratio = 0;
+        if (bg.totalHistScore > 0) ratio = p.histScore / bg.totalHistScore;
+        else ratio = 1 / bg.activeTelesales.length;
+        
+        const calculatedTarget = ratio * bg.branchRawTarget;
+        const calculatedDeficit = calculatedTarget - p.netValue;
+        result.push({
+          salesPersonName: p.salesPersonName,
+          branchName: p.branchName,
+          netValue: p.netValue,
+          histSales: p.histSales,
+          histScore: p.histScore,
+          ratio: ratio * 100,
+          calculatedTarget,
+          calculatedDeficit,
+          orders: p.orders,
+          days: p.daysWorked,
+          score: calculatedTarget > 0 ? (p.netValue / calculatedTarget) * 100 : 0
+        });
+      }
+    }
+    return result.filter(g => g.netValue > 0);
   }
-
 
   /* ── Main Data Load ─────────────────────────── */
   async function loadAllData() {
@@ -1146,12 +1132,13 @@
       }
 
       lastDataFetchAt = new Date();
-      console.log(`%c[DATA CACHE] Sales rows: ${allRawData.length} | Branch rows: ${allBranchData.length}`, "color:#0d9488;font-weight:bold");
 
       if (currentView === "telesales") {
         processAndRender();
-      } else {
+      } else if (currentView === "branches") {
         renderBranchView();
+      } else if (currentView === "individual") {
+        processAndRenderIndividual();
       }
 
       document.getElementById("lastUpdated").textContent = lastDataFetchAt.toLocaleTimeString();
@@ -1162,6 +1149,7 @@
       showToast("Failed to load data: " + err.message, "warn");
       document.getElementById("tableBody").innerHTML = `<tr class="no-data-row"><td colspan="8">Failed to load data. Please try again.</td></tr>`;
       document.getElementById("branchGrid").innerHTML = `<div class="no-branch-data">Failed to load data. Please try again.</div>`;
+      document.getElementById("indTableBody").innerHTML = `<tr class="no-data-row"><td colspan="9">Failed to load data. Please try again.</td></tr>`;
     } finally {
       if (!signal.aborted) setLoadingState(false);
     }
@@ -1180,7 +1168,6 @@
     const totalOrders = processed.reduce((s, r) => s + Number(r.totalDaysCustomers || 0), 0);
     const activeCount = processed.length;
 
-    // Now uses API endpoint data directly
     const branchPerf = calculateBranchPerformanceFromAPI(startDate, endDate, selectedBranch);
     const branchTarget = branchPerf.target;
     const branchNetSales = branchPerf.netSales;
@@ -1231,6 +1218,28 @@
     applySearchAndSort();
   }
 
+  /* ── Render Individual View ─────────────────── */
+  function processAndRenderIndividual() {
+    if (!allRawData.length) return;
+    const { startDate, endDate } = getDateRange();
+    const selectedBranch = branchSelect.value;
+    const processed = aggregateIndividuals(startDate, endDate, selectedBranch);
+    processed.sort((a, b) => b.score - a.score);
+
+    const totalActive = processed.length;
+    const totalTarget = processed.reduce((s, r) => s + r.calculatedTarget, 0);
+    const totalSales = processed.reduce((s, r) => s + r.netValue, 0);
+    const totalDeficit = totalTarget - totalSales;
+
+    document.getElementById("indActive").textContent = totalActive;
+    document.getElementById("indTarget").textContent = "KES " + formatCurrency(totalTarget);
+    document.getElementById("indDeficit").textContent = "KES " + formatCurrency(Math.abs(totalDeficit));
+    document.getElementById("indDeficit").className = "stat-value " + (totalDeficit > 0 ? "perf-low" : "perf-high");
+
+    indFilteredData = processed;
+    applySearchAndSortIndividual();
+  }
+
   function getSortValue(item, key) {
     switch (key) {
       case "name": return (item.salesPersonName || "").toLowerCase();
@@ -1247,8 +1256,7 @@
     const { key, dir } = sortState;
     const sorted = [...data];
     sorted.sort((a, b) => {
-      const va = getSortValue(a, key);
-      const vb = getSortValue(b, key);
+      const va = getSortValue(a, key); const vb = getSortValue(b, key);
       if (typeof va === "string") return dir === "asc" ? va.localeCompare(vb) : -va.localeCompare(vb);
       return dir === "asc" ? va - vb : vb - va;
     });
@@ -1266,49 +1274,86 @@
   function renderTable(data) {
     const tbody = document.getElementById("tableBody");
     document.getElementById("tableCount").textContent = data.length + (data.length === 1 ? " person" : " people");
-    if (!data.length) {
-      tbody.innerHTML = `<tr class="no-data-row"><td colspan="8">No telesales data found for the selected range</td></tr>`;
-      return;
-    }
+    if (!data.length) { tbody.innerHTML = `<tr class="no-data-row"><td colspan="8">No telesales data found for the selected range</td></tr>`; return; }
     let html = "";
     const showDaysInfo = currentDaysInRange > 1;
-
     data.forEach((item, i) => {
       const sales = Number(item.score) || 0;
       const orders = Number(item.totalDaysCustomers || 0);
       const value = Number(item.netValue) || 0;
       const deficit = Number(item.deficit || 0);
       const daysWorked = Number(item.days) || 0;
-
       const pctClass = sales >= 80 ? "pct-high" : sales >= 50 ? "pct-medium" : "pct-low";
       const statusClass = sales >= 80 ? "status-on-track" : sales >= 50 ? "status-at-risk" : "status-below";
       const statusText = sales >= 80 ? "ACHIEVED" : sales >= 50 ? "AVERAGE" : "OFF TRACK";
       const rankClass = i < 3 ? "rank top3" : "rank";
-
       let deficitHTML;
       if (deficit > 0) deficitHTML = `<span class="kes">KES</span> <span class="deficit-val">${formatValue(deficit)}</span>`;
       else if (deficit < 0) deficitHTML = `<span class="kes">KES</span> <span class="surplus-val">${formatValue(Math.abs(deficit))}</span>`;
       else deficitHTML = `<span class="surplus-val" style="color:#22c55e;">On Target</span>`;
-
-      html += `
-        <tr>
-          <td class="${rankClass}">${i + 1}</td>
-          <td class="sales-name">${item.salesPersonName}</td>
-          <td class="branch-cell">${item.branchName}</td>
-          <td style="text-align:center;">
-            <span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span>
-            ${showDaysInfo ? `<div class="days-worked-info">on ${daysWorked} of ${currentDaysInRange} days</div>` : ''}
-          </td>
-          <td class="orders-cell" style="text-align:center;">${orders.toLocaleString()}</td>
-          <td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td>
-          <td class="deficit-cell">${deficitHTML}</td>
-          <td style="text-align:center;"><span class="status-dot ${statusClass}">${statusText}</span></td>
-        </tr>`;
+      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span>${showDaysInfo ? `<div class="days-worked-info">on ${daysWorked} of ${currentDaysInRange} days</div>` : ''}</td><td class="orders-cell" style="text-align:center;">${orders.toLocaleString()}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="deficit-cell">${deficitHTML}</td><td style="text-align:center;"><span class="status-dot ${statusClass}">${statusText}</span></td></tr>`;
     });
     tbody.innerHTML = html;
   }
 
-  /* ── Render Branch View (Card Layout) ───────── */
+  /* ── Individual View Sorting & Rendering ────── */
+  function getSortValueIndividual(item, key) {
+    switch (key) {
+      case "name": return (item.salesPersonName || "").toLowerCase();
+      case "branch": return (item.branchName || "").toLowerCase();
+      case "histSales": return item.histSales;
+      case "ratio": return item.ratio;
+      case "score": return item.score;
+      case "value": return item.netValue;
+      case "calculatedTarget": return item.calculatedTarget;
+      case "deficit": return item.calculatedDeficit;
+      default: return 0;
+    }
+  }
+
+  function sortDataIndividual(data) {
+    const { key, dir } = indCurrentSort;
+    const sorted = [...data];
+    sorted.sort((a, b) => {
+      const va = getSortValueIndividual(a, key); const vb = getSortValueIndividual(b, key);
+      if (typeof va === "string") return dir === "asc" ? va.localeCompare(vb) : -va.localeCompare(vb);
+      return dir === "asc" ? va - vb : vb - va;
+    });
+    return sorted;
+  }
+
+  function applySearchAndSortIndividual() {
+    const q = document.getElementById("indSearchBox").value.toLowerCase().trim();
+    let data = indFilteredData;
+    if (q) data = data.filter(d => (d.salesPersonName || "").toLowerCase().includes(q) || (d.branchName || "").toLowerCase().includes(q));
+    indDisplayedData = sortDataIndividual(data);
+    renderTableIndividual(indDisplayedData);
+  }
+
+  function renderTableIndividual(data) {
+    const tbody = document.getElementById("indTableBody");
+    document.getElementById("indTableCount").textContent = data.length + (data.length === 1 ? " person" : " people");
+    if (!data.length) { tbody.innerHTML = `<tr class="no-data-row"><td colspan="9">No individual data found for the selected range</td></tr>`; return; }
+    let html = "";
+    data.forEach((item, i) => {
+      const sales = Number(item.score) || 0;
+      const value = Number(item.netValue) || 0;
+      const target = Number(item.calculatedTarget) || 0;
+      const deficit = Number(item.calculatedDeficit) || 0;
+      const histSales = Number(item.histSales) || 0;
+      const ratio = Number(item.ratio) || 0;
+      const pctClass = sales >= 80 ? "pct-high" : sales >= 50 ? "pct-medium" : "pct-low";
+      const rankClass = i < 3 ? "rank top3" : "rank";
+      let deficitHTML;
+      if (deficit > 0) deficitHTML = `<span class="kes">KES</span> <span class="deficit-val">${formatValue(deficit)}</span>`;
+      else if (deficit < 0) deficitHTML = `<span class="kes">KES</span> <span class="surplus-val">${formatValue(Math.abs(deficit))}</span>`;
+      else deficitHTML = `<span class="surplus-val" style="color:#22c55e;">On Target</span>`;
+      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(target)}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
+    });
+    tbody.innerHTML = html;
+  }
+
+  /* ── Render Branch View ─────────────────────── */
   function renderBranchView() {
     if (!allBranchData.length) {
       document.getElementById("branchGrid").innerHTML = `<div class="no-branch-data">No branch performance data available.</div>`;
@@ -1321,15 +1366,9 @@
 
     const { startDate, endDate } = getDateRange();
     let branches = aggregateBranchesFromAPI(startDate, endDate);
-
-    // Calculate the new incentive data
-    const incentiveData = calculateIncentiveData();
-
-    // Search filter
     const q = document.getElementById("branchSearchBox").value.toLowerCase().trim();
     if (q) branches = branches.filter(b => b.name.toLowerCase().includes(q));
 
-    // Calculate Totals
     const withData = branches.filter(b => b.hasData);
     const totalNet = withData.reduce((s, b) => s + b.netSales, 0);
     const totalTarget = withData.reduce((s, b) => s + b.target, 0);
@@ -1337,7 +1376,6 @@
     const onTrack = withData.filter(b => b.pct >= 80).length;
     const totalDeficit = totalTarget - totalNet;
 
-    // Update Top Stats
     document.getElementById("bsTotalSales").textContent = "KES " + formatCurrency(totalNet);
     document.getElementById("bsTotalSalesSub").textContent = `across ${withData.length} branches`;
 
@@ -1351,76 +1389,55 @@
     document.getElementById("bsOnTrackSub").textContent = `of ${withData.length} branches at 80%+`;
     
     const deficitEl = document.getElementById("bsDeficit");
-    if (totalDeficit > 0) {
-      deficitEl.textContent = "KES " + formatCurrency(totalDeficit);
-      deficitEl.className = "stat-value perf-low";
-    } else if (totalDeficit < 0) {
-      deficitEl.textContent = "KES " + formatCurrency(Math.abs(totalDeficit));
-      deficitEl.className = "stat-value perf-high";
-    } else {
-      deficitEl.textContent = "KES 0";
-      deficitEl.className = "stat-value";
-    }
+    if (totalDeficit > 0) { deficitEl.textContent = "KES " + formatCurrency(totalDeficit); deficitEl.className = "stat-value perf-low"; }
+    else if (totalDeficit < 0) { deficitEl.textContent = "KES " + formatCurrency(Math.abs(totalDeficit)); deficitEl.className = "stat-value perf-high"; }
+    else { deficitEl.textContent = "KES 0"; deficitEl.className = "stat-value"; }
 
-    // Render Cards
     let html = "";
-    if (branches.length === 0) {
-      html = `<div class="no-branch-data">No branches match your search.</div>`;
-    } else {
+    if (branches.length === 0) html = `<div class="no-branch-data">No branches match your search.</div>`;
+    else {
       branches.forEach(b => {
         const tier = !b.hasData ? "none" : b.pct >= 80 ? "high" : b.pct >= 50 ? "medium" : "low";
         const barWidth = b.hasData ? Math.min(b.pct, 100).toFixed(1) : 0;
-        
         let deficitHTML = '';
         if (b.hasData) {
-          if (b.deficit > 0) {
-            deficitHTML = `<div class="branch-deficit-info">Deficit: <span class="deficit-val">${formatFullCurrency(b.deficit)}</span></div>`;
-          } else if (b.deficit < 0) {
-            deficitHTML = `<div class="branch-deficit-info">Surplus: <span class="surplus-val">${formatFullCurrency(Math.abs(b.deficit))}</span></div>`;
-          } else {
-            deficitHTML = `<div class="branch-deficit-info"><span class="surplus-val">Target met exactly</span></div>`;
-          }
+          if (b.deficit > 0) deficitHTML = `<div class="branch-deficit-info">Deficit: <span class="deficit-val">${formatFullCurrency(b.deficit)}</span></div>`;
+          else if (b.deficit < 0) deficitHTML = `<div class="branch-deficit-info">Surplus: <span class="surplus-val">${formatFullCurrency(Math.abs(b.deficit))}</span></div>`;
+          else deficitHTML = `<div class="branch-deficit-info"><span class="surplus-val">Target met exactly</span></div>`;
         }
-
-        // --- NEW: Incentive Target HTML Generation ---
-        let incentiveHTML = '';
-        const incData = incentiveData[b.name.toLowerCase().trim()];
-        if (incData) {
-          incentiveHTML = `
-            <div style="margin-top:10px; border-top:1px dashed #334155; padding-top:8px;">
-              <div style="font-size:10px; color:#ba9305; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Weekly Incentive Target</div>
-              <div style="font-size:12px; color:#94a3b8; line-height:1.6;">
-                Last Wk Avg: <span style="color:#e2e8f0; font-weight:700;">${incData.lastWeekPct.toFixed(1)}%</span><br>
-                Required %: <span style="color:${incData.achieved ? '#22c55e' : '#facc15'}; font-weight:700;">${incData.incentivePct.toFixed(1)}%</span><br>
-                ${incData.achieved 
-                  ? `<span style="color:#22c55e; font-weight:700;">✓ Incentive Achieved!</span>` 
-                  : `Deficit: <span style="color:#ef4444; font-weight:700;">${formatFullCurrency(incData.deficit)}</span>`
-                }
-              </div>
-            </div>
-          `;
-        }
-
-        html += `
-          <div class="b-card tier-${tier}" data-name="${b.name.toLowerCase()}">
-            <div class="b-card-name">${b.name}</div>
-            <div class="b-card-pct ${b.hasData ? "perf-" + tier : ""}">
-              ${b.hasData ? b.pct.toFixed(1) + "%" : "—"}
-            </div>
-            <div class="b-card-detail">
-              ${b.hasData ? formatFullCurrency(b.netSales) + " of " + formatFullCurrency(b.target) : "No data available"}
-            </div>
-            ${deficitHTML}
-            ${incentiveHTML}
-            <div class="b-card-bar">
-              <div class="b-card-bar-fill bar-${tier}" style="width:${barWidth}%"></div>
-            </div>
-          </div>
-        `;
+        html += `<div class="b-card tier-${tier}" data-name="${b.name.toLowerCase()}"><div class="b-card-name">${b.name}</div><div class="b-card-pct ${b.hasData ? "perf-" + tier : ""}">${b.hasData ? b.pct.toFixed(1) + "%" : "—"}</div><div class="b-card-detail">${b.hasData ? formatFullCurrency(b.netSales) + " of " + formatFullCurrency(b.target) : "No data available"}</div>${deficitHTML}<div class="b-card-bar"><div class="b-card-bar-fill bar-${tier}" style="width:${barWidth}%"></div></div></div>`;
       });
     }
     document.getElementById("branchGrid").innerHTML = html;
     document.getElementById("branchCount").textContent = withData.length + (withData.length === 1 ? " branch" : " branches");
+  }
+
+  /* ── Sort Headers & Labels ──────────────────── */
+  const sortLabels = { name: "Name", branch: "Branch", score: "Sales %", orders: "Orders", value: "Order Value", deficit: "Sales Deficit" };
+  const indSortLabels = { name: "Name", branch: "Branch", histSales: "Last Month Sales", ratio: "Ratio", score: "Achievement %", value: "Today's Sales", calculatedTarget: "Calc. Target", deficit: "Deficit" };
+
+  function updateSortHeaders(view) {
+    if (view === "telesales") {
+      const sortState = currentSort;
+      const container = document.getElementById("telesalesView");
+      container.querySelectorAll("thead th.sortable").forEach(th => {
+        const key = th.dataset.sort;
+        th.classList.remove("active-sort", "sort-asc", "sort-desc");
+        if (key === sortState.key) th.classList.add("active-sort", sortState.dir === "asc" ? "sort-asc" : "sort-desc");
+      });
+      const arrow = sortState.dir === "asc" ? "↑" : "↓";
+      document.getElementById("sortHint").textContent = `Sorted by ${sortLabels[sortState.key]} ${arrow}`;
+    } else if (view === "individual") {
+      const sortState = indCurrentSort;
+      const container = document.getElementById("individualView");
+      container.querySelectorAll("thead th.sortable").forEach(th => {
+        const key = th.dataset.sort;
+        th.classList.remove("active-sort", "sort-asc", "sort-desc");
+        if (key === sortState.key) th.classList.add("active-sort", sortState.dir === "asc" ? "sort-asc" : "sort-desc");
+      });
+      const arrow = sortState.dir === "asc" ? "↑" : "↓";
+      document.getElementById("indSortHint").textContent = `Sorted by ${indSortLabels[sortState.key]} ${arrow}`;
+    }
   }
 
   /* ── Event Listeners ────────────────────────── */
@@ -1434,27 +1451,21 @@
     });
   });
 
-  function updateSortHeaders(view) {
-    const sortState = view === "telesales" ? currentSort : null;
-    const container = view === "telesales" ? document.getElementById("telesalesView") : document.getElementById("branchView");
-    container.querySelectorAll("thead th.sortable").forEach(th => {
+  document.querySelectorAll("#individualView thead th.sortable").forEach(th => {
+    th.addEventListener("click", () => {
       const key = th.dataset.sort;
-      th.classList.remove("active-sort", "sort-asc", "sort-desc");
-      if (key === sortState.key) {
-        th.classList.add("active-sort", sortState.dir === "asc" ? "sort-asc" : "sort-desc");
-      }
+      if (indCurrentSort.key === key) indCurrentSort.dir = indCurrentSort.dir === "desc" ? "asc" : "desc";
+      else { indCurrentSort.key = key; indCurrentSort.dir = (key === "score" || key === "value" || key === "calculatedTarget" || key === "deficit" || key === "histSales" || key === "ratio") ? "desc" : "asc"; }
+      updateSortHeaders("individual");
+      applySearchAndSortIndividual();
     });
-    if (view === "telesales") {
-      const labels = { name: "Name", branch: "Branch", score: "Sales %", orders: "Orders", value: "Order Value", deficit: "Sales Deficit" };
-      const arrow = sortState.dir === "asc" ? "↑" : "↓";
-      document.getElementById("sortHint").textContent = `Sorted by ${labels[sortState.key]} ${arrow}`;
-    }
-  }
+  });
 
   function refreshFromCachedData() {
     if (!allRawData.length && !allBranchData.length) return;
     if (currentView === "telesales") processAndRender();
-    else renderBranchView();
+    else if (currentView === "branches") renderBranchView();
+    else if (currentView === "individual") processAndRenderIndividual();
   }
 
   document.getElementById("dateSelect").addEventListener("change", () => {
@@ -1489,7 +1500,9 @@
 
   branchSelect.addEventListener("change", () => {
     currentSort = { key: "score", dir: "desc" };
+    indCurrentSort = { key: "score", dir: "desc" };
     updateSortHeaders("telesales");
+    updateSortHeaders("individual");
     refreshFromCachedData();
   });
 
@@ -1505,16 +1518,19 @@
     branchSearchDebounce = setTimeout(renderBranchView, 150);
   });
 
+  document.getElementById("indSearchBox").addEventListener("input", () => {
+    applySearchAndSortIndividual();
+  });
+
   /* ── Initial Load ───────────────────────────── */
   syncDateInputsFromPreset("today");
   toggleCustomDateRange(false);
   updateSortHeaders("telesales");
+  updateSortHeaders("individual");
 
   loadAllData();
 
-  setInterval(() => {
-    if (!isLoading) loadAllData();
-  }, AUTO_REFRESH_MS);
+  setInterval(() => { if (!isLoading) loadAllData(); }, AUTO_REFRESH_MS);
 </script>
 
 </body>
