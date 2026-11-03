@@ -1226,7 +1226,7 @@
 
   /* ── Individual Ratio-Based Aggregation ─────────────────── */
   function aggregateIndividuals(startDate, endDate, selectedBranchId) {
-    const today = getToday();
+     const today = getToday();
     // Dynamically calculate the first and last day of the previous calendar month
     const firstDayCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayPrevMonth = new Date(firstDayCurrentMonth);
@@ -1262,12 +1262,12 @@
     for (const d of dailyMap.values()) {
       if (d.netValue <= 0) continue;
       const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
-      if (!personMap.has(personKey)) personMap.set(personKey, { salesPersonName: d.salesPersonName, branchName: d.branchName, orgBranchId: d.orgBranchId, netValue: 0, orders: 0, daysWorked: 0, histSales: 0, histTarget: 0 });
+      if (!personMap.has(personKey)) personMap.set(personKey, { salesPersonName: d.salesPersonName, branchName: d.branchName, orgBranchId: d.orgBranchId, netValue: 0, orders: 0, daysWorked: 0, histSales: 0 });
       const p = personMap.get(personKey);
       p.netValue += d.netValue; p.orders += d.orders; p.daysWorked += 1;
     }
     
-    // 2. Get last month's historical sales AND targets for these active telesales
+        // 2. Get 30-day historical sales for these active telesales
     for (const row of allRawData) {
       const rowDate = getRecordDate(row);
       if (!isDateInRange(rowDate, w30Start, w30End)) continue;
@@ -1275,41 +1275,33 @@
       const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
       if (!name) continue;
       const rowNetSales = getNetSales(row);
-      if (rowNetSales <= 0) continue; 
+      if (rowNetSales <= 0) continue; // Skip zero/negative sales to match aggregateSalesPeople logic
       const personKey = `${name.toLowerCase()}||${branchName.toLowerCase()}`;
-      if (personMap.has(personKey)) {
-        const p = personMap.get(personKey);
-        p.histSales += rowNetSales;
-        p.histTarget += getSalesTarget(row);
-      }
+      if (personMap.has(personKey)) personMap.get(personKey).histSales += rowNetSales;
     }
 
-    // 3. Group by branch to calculate branch raw target and sum of historical % scores
+    // 3. Group by branch to calculate branch raw target and sum of hist sales
     const branches = aggregateBranches(startDate, endDate);
     const branchMap = new Map(branches.map(b => [b.name.toLowerCase().trim(), b]));
     const branchGroups = new Map();
-    
     for (const p of personMap.values()) {
       const bKey = p.branchName.toLowerCase().trim();
       if (!branchGroups.has(bKey)) {
         const bData = branchMap.get(bKey);
         const branchRawTarget = bData ? bData.originalApiTarget : 0;
-        branchGroups.set(bKey, { branchName: p.branchName, branchRawTarget, activeTelesales: [], totalHistScore: 0 });
+        branchGroups.set(bKey, { branchName: p.branchName, branchRawTarget, activeTelesales: [], totalHistSales: 0 });
       }
       const bg = branchGroups.get(bKey);
-      
-      // Calculate individual historical % score
-      p.histScore = p.histTarget > 0 ? (p.histSales / p.histTarget) * 100 : 0;
       bg.activeTelesales.push(p);
-      bg.totalHistScore += p.histScore;
+      bg.totalHistSales += p.histSales;
     }
     
-    // 4. Calculate ratio based on % score and final target
+    // 4. Calculate ratio and final target
     const result = [];
     for (const bg of branchGroups.values()) {
       for (const p of bg.activeTelesales) {
         let ratio = 0;
-        if (bg.totalHistScore > 0) ratio = p.histScore / bg.totalHistScore;
+        if (bg.totalHistSales > 0) ratio = p.histSales / bg.totalHistSales;
         else ratio = 1 / bg.activeTelesales.length; // Fallback to equal distribution
         
         const calculatedTarget = ratio * bg.branchRawTarget;
@@ -1319,7 +1311,6 @@
           branchName: p.branchName,
           netValue: p.netValue,
           histSales: p.histSales,
-          histScore: p.histScore,
           ratio: ratio * 100,
           calculatedTarget,
           calculatedDeficit,
