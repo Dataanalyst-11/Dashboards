@@ -1304,7 +1304,8 @@
         if (bg.totalHistSales > 0) ratio = p.histSales / bg.totalHistSales;
         else ratio = 1 / bg.activeTelesales.length; // Fallback to equal distribution
         
-        const calculatedTarget = ratio * bg.branchRawTarget;
+        // Minimum target floor: 100K — any calculated value below 100K is replaced with 100K
+        const calculatedTarget = Math.max(100000, ratio * bg.branchRawTarget);
         const calculatedDeficit = calculatedTarget - p.netValue;
         result.push({
           salesPersonName: p.salesPersonName,
