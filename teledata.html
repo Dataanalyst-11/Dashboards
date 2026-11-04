@@ -1759,20 +1759,13 @@
       const deficit = Number(item.calculatedDeficit) || 0;
       const histSales = Number(item.histSales) || 0;
       const ratio = Number(item.ratio) || 0;
-      const minApplied = !!item.minTargetApplied;
-      const rawCalc = Number(item.rawCalculatedTarget) || 0;
       const pctClass = sales >= 80 ? "pct-high" : sales >= 50 ? "pct-medium" : "pct-low";
       const rankClass = i < 3 ? "rank top3" : "rank";
       let deficitHTML;
       if (deficit > 0) deficitHTML = `<span class="kes">KES</span> <span class="deficit-val">${formatValue(deficit)}</span>`;
       else if (deficit < 0) deficitHTML = `<span class="kes">KES</span> <span class="surplus-val">${formatValue(Math.abs(deficit))}</span>`;
       else deficitHTML = `<span class="surplus-val" style="color:#22c55e;">On Target</span>`;
-      // Calc. Target cell: show a small "MIN" badge when the 100K floor was applied,
-      // with a tooltip showing the original raw calculation that was overwritten.
-      const minBadge = minApplied
-        ? `<span style="display:inline-block; margin-left:6px; padding:1px 6px; border-radius:6px; font-size:9px; font-weight:800; letter-spacing:0.5px; background:rgba(186,147,5,0.15); color:#ba9305; vertical-align:middle;" title="Raw calc was KES ${Math.round(rawCalc).toLocaleString()} — bumped to 100K minimum">MIN 100K</span>`
-        : "";
-      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(target)}${minBadge}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
+      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(target)}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
     });
     tbody.innerHTML = html;
   }
