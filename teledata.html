@@ -1225,18 +1225,65 @@
   }
 
   /* ── Individual Ratio-Based Aggregation ─────────────────── */
+  /*
+   * Rules implemented per spec:
+   *  1. "Last month sales" = each telesale's total net sales over the FULL
+   *     previous calendar month (1st -> last day), never a rolling window.
+   *  2. "Ratio" = telesale's last-month sales / branch's last-month TOTAL
+   *     sales, where the branch total is computed across EVERY telesale who
+   *     sold in that branch last month (not just currently active ones).
+   *     This makes the ratio STATIC — it does not change when the date or
+   *     branch filter changes.
+   *  3. "Calc. Target" = ratio * branch raw target for the currently
+   *     selected period, with a HARD MINIMUM of KES 100,000 — any value
+   *     below 100K is overwritten to 100K.
+   *  4. "Achievement %" = current period sales / calc. target * 100.
+   *  5. "Deficit" = calc. target - current period sales.
+   *  This function is ONLY used by the Individual tab — Telesales and
+   *  Branches tabs remain untouched.
+   */
+  const INDIVIDUAL_MIN_TARGET = 100000; // KES 100K hard floor on calc. target
+
   function aggregateIndividuals(startDate, endDate, selectedBranchId) {
-     const today = getToday();
+    const today = getToday();
     // Dynamically calculate the first and last day of the previous calendar month
     const firstDayCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayPrevMonth = new Date(firstDayCurrentMonth);
     lastDayPrevMonth.setDate(lastDayPrevMonth.getDate() - 1);
     const firstDayPrevMonth = new Date(lastDayPrevMonth.getFullYear(), lastDayPrevMonth.getMonth(), 1);
-    
+
     const w30Start = formatDate(firstDayPrevMonth);
     const w30End = formatDate(lastDayPrevMonth);
-    
-    // 1. Get active telesales for the selected date range
+
+    /* -- Step 1: STATIC ratio source -----------------------------------
+     * Walk every raw sales row inside last month and accumulate:
+     *   - per-telesale last-month sales  (lastMonthPersonSales)
+     *   - per-branch last-month TOTAL   (lastMonthBranchTotals)
+     * The branch total deliberately includes telesales who are NOT active
+     * in the current period, so John's 10% contribution stays 10% even if
+     * some of last month's telesales are idle today.  This is what makes
+     * the ratio static.
+     */
+    const lastMonthBranchTotals = new Map(); // branchKey(lower) -> total sales
+    const lastMonthPersonSales  = new Map();  // "name||branch"(lower) -> sales
+
+    for (const row of allRawData) {
+      const rowDate = getRecordDate(row);
+      if (!isDateInRange(rowDate, w30Start, w30End)) continue;
+      const branchName = getBranchNameFromSalesRow(row);
+      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
+      if (!name) continue;
+      const rowNetSales = getNetSales(row);
+      if (rowNetSales <= 0) continue;
+      const bKey = branchName.toLowerCase().trim();
+      const personKey = `${name.toLowerCase()}||${branchName.toLowerCase()}`;
+      lastMonthBranchTotals.set(bKey, (lastMonthBranchTotals.get(bKey) || 0) + rowNetSales);
+      lastMonthPersonSales.set(personKey, (lastMonthPersonSales.get(personKey) || 0) + rowNetSales);
+    }
+
+    /* -- Step 2: Active telesales for the selected date range ----------
+     * These are the people we will actually display in the Individual tab.
+     */
     const dailyMap = new Map();
     for (const row of allRawData) {
       const rowDate = getRecordDate(row);
@@ -1257,7 +1304,7 @@
       const d = dailyMap.get(dailyKey);
       d.netValue += rowNetSales; d.orders += getCustomerOrders(row);
     }
-    
+
     const personMap = new Map();
     for (const d of dailyMap.values()) {
       if (d.netValue <= 0) continue;
@@ -1266,21 +1313,14 @@
       const p = personMap.get(personKey);
       p.netValue += d.netValue; p.orders += d.orders; p.daysWorked += 1;
     }
-    
-        // 2. Get 30-day historical sales for these active telesales
-    for (const row of allRawData) {
-      const rowDate = getRecordDate(row);
-      if (!isDateInRange(rowDate, w30Start, w30End)) continue;
-      const branchName = getBranchNameFromSalesRow(row);
-      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
-      if (!name) continue;
-      const rowNetSales = getNetSales(row);
-      if (rowNetSales <= 0) continue; // Skip zero/negative sales to match aggregateSalesPeople logic
-      const personKey = `${name.toLowerCase()}||${branchName.toLowerCase()}`;
-      if (personMap.has(personKey)) personMap.get(personKey).histSales += rowNetSales;
+
+    // Attach each active telesale's STATIC last-month sales (0 if they
+    // didn't sell last month).
+    for (const [personKey, histSales] of lastMonthPersonSales.entries()) {
+      if (personMap.has(personKey)) personMap.get(personKey).histSales = histSales;
     }
 
-    // 3. Group by branch to calculate branch raw target and sum of hist sales
+    /* -- Step 3: Group active telesales by branch & pull branch raw target */
     const branches = aggregateBranches(startDate, endDate);
     const branchMap = new Map(branches.map(b => [b.name.toLowerCase().trim(), b]));
     const branchGroups = new Map();
@@ -1289,22 +1329,44 @@
       if (!branchGroups.has(bKey)) {
         const bData = branchMap.get(bKey);
         const branchRawTarget = bData ? bData.originalApiTarget : 0;
-        branchGroups.set(bKey, { branchName: p.branchName, branchRawTarget, activeTelesales: [], totalHistSales: 0 });
+        const branchHistTotal = lastMonthBranchTotals.get(bKey) || 0; // STATIC denominator
+        branchGroups.set(bKey, { branchName: p.branchName, branchRawTarget, branchHistTotal, activeTelesales: [] });
       }
       const bg = branchGroups.get(bKey);
       bg.activeTelesales.push(p);
-      bg.totalHistSales += p.histSales;
     }
-    
-    // 4. Calculate ratio and final target
+
+    /* -- Step 4: Build the result rows ---------------------------------
+     * For each active telesale:
+     *   ratio       = histSales / branchHistTotal       (STATIC, last month)
+     *   rawTarget   = ratio * branchRawTarget          (the "calculated target")
+     *   finalTarget = max(rawTarget, 100,000)           (100K minimum, overwrites)
+     *   score       = netValue / finalTarget * 100      (achievement %)
+     *   deficit     = finalTarget - netValue
+     */
     const result = [];
     for (const bg of branchGroups.values()) {
       for (const p of bg.activeTelesales) {
         let ratio = 0;
-        if (bg.totalHistSales > 0) ratio = p.histSales / bg.totalHistSales;
-        else ratio = 1 / bg.activeTelesales.length; // Fallback to equal distribution
-        
-        const calculatedTarget = ratio * bg.branchRawTarget;
+        if (bg.branchHistTotal > 0) {
+          // Static ratio from last month — denominator is the FULL branch
+          // last-month total (every telesale who sold in that branch last
+          // month, including those idle in the current period).
+          ratio = p.histSales / bg.branchHistTotal;
+        } else {
+          // No branch sales last month -> fall back to equal split among
+          // currently active telesales.
+          ratio = 1 / bg.activeTelesales.length;
+        }
+
+        const rawCalculatedTarget = ratio * bg.branchRawTarget;
+        let calculatedTarget = rawCalculatedTarget;
+        let minTargetApplied = false;
+        if (calculatedTarget < INDIVIDUAL_MIN_TARGET) {
+          calculatedTarget = INDIVIDUAL_MIN_TARGET; // 100K hard floor — overwrite
+          minTargetApplied = true;
+        }
+
         const calculatedDeficit = calculatedTarget - p.netValue;
         result.push({
           salesPersonName: p.salesPersonName,
@@ -1312,7 +1374,9 @@
           netValue: p.netValue,
           histSales: p.histSales,
           ratio: ratio * 100,
+          rawCalculatedTarget,
           calculatedTarget,
+          minTargetApplied,
           calculatedDeficit,
           orders: p.orders,
           days: p.daysWorked,
@@ -1695,13 +1759,20 @@
       const deficit = Number(item.calculatedDeficit) || 0;
       const histSales = Number(item.histSales) || 0;
       const ratio = Number(item.ratio) || 0;
+      const minApplied = !!item.minTargetApplied;
+      const rawCalc = Number(item.rawCalculatedTarget) || 0;
       const pctClass = sales >= 80 ? "pct-high" : sales >= 50 ? "pct-medium" : "pct-low";
       const rankClass = i < 3 ? "rank top3" : "rank";
       let deficitHTML;
       if (deficit > 0) deficitHTML = `<span class="kes">KES</span> <span class="deficit-val">${formatValue(deficit)}</span>`;
       else if (deficit < 0) deficitHTML = `<span class="kes">KES</span> <span class="surplus-val">${formatValue(Math.abs(deficit))}</span>`;
       else deficitHTML = `<span class="surplus-val" style="color:#22c55e;">On Target</span>`;
-      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(target)}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
+      // Calc. Target cell: show a small "MIN" badge when the 100K floor was applied,
+      // with a tooltip showing the original raw calculation that was overwritten.
+      const minBadge = minApplied
+        ? `<span style="display:inline-block; margin-left:6px; padding:1px 6px; border-radius:6px; font-size:9px; font-weight:800; letter-spacing:0.5px; background:rgba(186,147,5,0.15); color:#ba9305; vertical-align:middle;" title="Raw calc was KES ${Math.round(rawCalc).toLocaleString()} — bumped to 100K minimum">MIN 100K</span>`
+        : "";
+      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(target)}${minBadge}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
     });
     tbody.innerHTML = html;
   }
