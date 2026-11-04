@@ -575,8 +575,8 @@
             <th>#</th>
             <th class="sortable" data-sort="name">Telesale Name <span class="sort-icon">▲</span></th>
             <th class="sortable" data-sort="branch">Branch <span class="sort-icon">▲</span></th>
-            <th class="sortable" data-sort="histSales" style="text-align:right;">Last Month Sales <span class="sort-icon">▲</span></th>
-            <th class="sortable" data-sort="ratio" style="text-align:center;">Ratio <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="histSales" style="text-align:right;" title="Telesale total sales for the full previous month">Last Month Sales <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-sort="ratio" style="text-align:center;" title="Static share of branch sales — fixed from last month (1st to last day), all telesales included">Ratio <span class="sort-icon">▲</span></th>
             <th class="sortable active-sort sort-desc" data-sort="score" style="text-align:center;">Achievement % <span class="sort-icon">▲</span></th>
             <th class="sortable" data-sort="value" style="text-align:right;">Today's Sales <span class="sort-icon">▲</span></th>
             <th class="sortable" data-sort="calculatedTarget" style="text-align:right;">Calc. Target <span class="sort-icon">▲</span></th>
@@ -1002,16 +1002,104 @@
   }
 
   /* ── Individual Ratio-Based Aggregation ─────────────────── */
-  function aggregateIndividuals(startDate, endDate, selectedBranchId) {
+  /* Individual tab logic (self-contained, other tabs unaffected):
+     1. Contribution ratios are STATIC: built once per data load strictly from
+        the FULL previous month (1st → last day). ratio = telesale's last-month
+        sales ÷ total last-month sales of ALL telesales in their branch, so the
+        ratios of a branch always sum to 100%. They never change with the
+        selected date range or branch filter.
+     2. Calc. Target = static ratio × branch RAW target for the selected range
+        (branch reports first; telesales reports as fallback when branch
+        reports carry no target for the branch).
+     3. Any calculated target below KES 100,000 is overwritten with 100,000. */
+  const INDIVIDUAL_MIN_TARGET = 100000;
+
+  function getLastMonthRange() {
     const today = getToday();
     const firstDayCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayPrevMonth = new Date(firstDayCurrentMonth);
     lastDayPrevMonth.setDate(lastDayPrevMonth.getDate() - 1);
     const firstDayPrevMonth = new Date(lastDayPrevMonth.getFullYear(), lastDayPrevMonth.getMonth(), 1);
-    
-    const w30Start = formatDate(firstDayPrevMonth);
-    const w30End = formatDate(lastDayPrevMonth);
-    
+    return { startDate: formatDate(firstDayPrevMonth), endDate: formatDate(lastDayPrevMonth) };
+  }
+
+  function getMonthLabel(dateStr) {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleString("en-GB", { month: "long", year: "numeric" });
+  }
+
+  let individualRatioCache = null;      // { ratios: Map, monthLabel: string }
+  let individualRatioCacheStamp = null; // lastDataFetchAt the cache was built from
+
+  function ensureIndividualRatioCache() {
+    if (individualRatioCache && individualRatioCacheStamp === lastDataFetchAt) return;
+    const { startDate, endDate } = getLastMonthRange();
+    const dailyMap = new Map();
+    for (const row of allRawData) {
+      const rowDate = getRecordDate(row);
+      if (!isDateInRange(rowDate, startDate, endDate)) continue;
+      const branchName = getBranchNameFromSalesRow(row);
+      if (!branchName) continue;
+      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
+      if (!name) continue;
+      const rowNetSales = getNetSales(row);
+      if (rowNetSales <= 0) continue;
+      const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
+      if (!dailyMap.has(dailyKey)) dailyMap.set(dailyKey, { name, branchName, netValue: 0 });
+      dailyMap.get(dailyKey).netValue += rowNetSales;
+    }
+    const personTotals = new Map();
+    const branchTotals = new Map();
+    for (const d of dailyMap.values()) {
+      const personKey = `${d.name.toLowerCase()}||${d.branchName.toLowerCase()}`;
+      const branchKey = d.branchName.toLowerCase();
+      if (!personTotals.has(personKey)) personTotals.set(personKey, { branchKey, histSales: 0 });
+      const pt = personTotals.get(personKey);
+      pt.histSales += d.netValue;
+      branchTotals.set(branchKey, (branchTotals.get(branchKey) || 0) + d.netValue);
+    }
+    const ratios = new Map();
+    for (const [personKey, info] of personTotals.entries()) {
+      const branchTotal = branchTotals.get(info.branchKey) || 0;
+      ratios.set(personKey, { histSales: info.histSales, ratio: branchTotal > 0 ? info.histSales / branchTotal : 0 });
+    }
+    individualRatioCache = { ratios, monthLabel: getMonthLabel(startDate) };
+    individualRatioCacheStamp = lastDataFetchAt;
+  }
+
+  function getBranchRawTargetMap(startDate, endDate) {
+    const targetMap = new Map();    // from branch performance reports
+    const fallbackMap = new Map();  // from telesales reports (per person-day)
+    if (allBranchData && allBranchData.length > 0) {
+      for (const row of allBranchData) {
+        const rowDate = getRecordDate(row);
+        if (!isDateInRange(rowDate, startDate, endDate)) continue;
+        const branchName = String(row.orgBranchName || "").trim();
+        if (!branchName) continue;
+        const key = branchName.toLowerCase();
+        targetMap.set(key, (targetMap.get(key) || 0) + toNumber(row.dailySalesTarget));
+      }
+    }
+    const dailyMap = new Map();
+    for (const row of allRawData) {
+      const rowDate = getRecordDate(row);
+      if (!isDateInRange(rowDate, startDate, endDate)) continue;
+      const branchName = getBranchNameFromSalesRow(row);
+      if (!branchName) continue;
+      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
+      if (!name) continue;
+      const dailyKey = `${name.toLowerCase()}||${branchName.toLowerCase()}||${rowDate}`;
+      if (!dailyMap.has(dailyKey)) dailyMap.set(dailyKey, { branchKey: branchName.toLowerCase(), target: 0 });
+      dailyMap.get(dailyKey).target += getSalesTarget(row);
+    }
+    for (const d of dailyMap.values()) fallbackMap.set(d.branchKey, (fallbackMap.get(d.branchKey) || 0) + d.target);
+    return { targetMap, fallbackMap };
+  }
+
+  function aggregateIndividuals(startDate, endDate, selectedBranchId) {
+    ensureIndividualRatioCache();
+    const { ratios } = individualRatioCache;
+
     const dailyMap = new Map();
     for (const row of allRawData) {
       const rowDate = getRecordDate(row);
@@ -1032,72 +1120,43 @@
       const d = dailyMap.get(dailyKey);
       d.netValue += rowNetSales; d.orders += getCustomerOrders(row);
     }
-    
+
     const personMap = new Map();
     for (const d of dailyMap.values()) {
       if (d.netValue <= 0) continue;
       const personKey = `${d.salesPersonName.toLowerCase()}||${d.branchName.toLowerCase()}`;
-      if (!personMap.has(personKey)) personMap.set(personKey, { salesPersonName: d.salesPersonName, branchName: d.branchName, orgBranchId: d.orgBranchId, netValue: 0, orders: 0, daysWorked: 0, histSales: 0, histTarget: 0 });
+      if (!personMap.has(personKey)) personMap.set(personKey, { salesPersonName: d.salesPersonName, branchName: d.branchName, orgBranchId: d.orgBranchId, netValue: 0, orders: 0, daysWorked: 0 });
       const p = personMap.get(personKey);
       p.netValue += d.netValue; p.orders += d.orders; p.daysWorked += 1;
     }
-    
-    for (const row of allRawData) {
-      const rowDate = getRecordDate(row);
-      if (!isDateInRange(rowDate, w30Start, w30End)) continue;
-      const branchName = getBranchNameFromSalesRow(row);
-      const name = String(row.salesPersonName || row.salespersonName || row.salesPerson || row.name || "").trim();
-      if (!name) continue;
-      const rowNetSales = getNetSales(row);
-      if (rowNetSales <= 0) continue;
-      const personKey = `${name.toLowerCase()}||${branchName.toLowerCase()}`;
-      if (personMap.has(personKey)) {
-        const p = personMap.get(personKey);
-        p.histSales += rowNetSales;
-        p.histTarget += getSalesTarget(row);
-      }
-    }
 
-    const branches = aggregateBranches(startDate, endDate);
-    const branchMap = new Map(branches.map(b => [b.name.toLowerCase().trim(), b]));
-    const branchGroups = new Map();
-    
-    for (const p of personMap.values()) {
-      const bKey = p.branchName.toLowerCase().trim();
-      if (!branchGroups.has(bKey)) {
-        const bData = branchMap.get(bKey);
-        const branchRawTarget = bData ? bData.target : 0;
-        branchGroups.set(bKey, { branchName: p.branchName, branchRawTarget, activeTelesales: [], totalHistScore: 0 });
-      }
-      const bg = branchGroups.get(bKey);
-      p.histScore = p.histTarget > 0 ? (p.histSales / p.histTarget) * 100 : 0;
-      bg.activeTelesales.push(p);
-      bg.totalHistScore += p.histScore;
-    }
-    
+    const { targetMap, fallbackMap } = getBranchRawTargetMap(startDate, endDate);
+
     const result = [];
-    for (const bg of branchGroups.values()) {
-      for (const p of bg.activeTelesales) {
-        let ratio = 0;
-        if (bg.totalHistScore > 0) ratio = p.histScore / bg.totalHistScore;
-        else ratio = 1 / bg.activeTelesales.length;
-        
-        const calculatedTarget = ratio * bg.branchRawTarget;
-        const calculatedDeficit = calculatedTarget - p.netValue;
-        result.push({
-          salesPersonName: p.salesPersonName,
-          branchName: p.branchName,
-          netValue: p.netValue,
-          histSales: p.histSales,
-          histScore: p.histScore,
-          ratio: ratio * 100,
-          calculatedTarget,
-          calculatedDeficit,
-          orders: p.orders,
-          days: p.daysWorked,
-          score: calculatedTarget > 0 ? (p.netValue / calculatedTarget) * 100 : 0
-        });
-      }
+    for (const p of personMap.values()) {
+      const personKey = `${p.salesPersonName.toLowerCase()}||${p.branchName.toLowerCase()}`;
+      const stat = ratios.get(personKey);
+      const histSales = stat ? stat.histSales : 0;
+      const ratio = stat ? stat.ratio : 0; // static last-month contribution share
+      const branchKey = p.branchName.toLowerCase();
+      const branchRawTarget = targetMap.has(branchKey) ? (targetMap.get(branchKey) || 0) : (fallbackMap.get(branchKey) || 0);
+      let calculatedTarget = ratio * branchRawTarget;
+      const targetFloored = calculatedTarget < INDIVIDUAL_MIN_TARGET;
+      if (targetFloored) calculatedTarget = INDIVIDUAL_MIN_TARGET;
+      const calculatedDeficit = calculatedTarget - p.netValue;
+      result.push({
+        salesPersonName: p.salesPersonName,
+        branchName: p.branchName,
+        netValue: p.netValue,
+        histSales,
+        ratio: ratio * 100,
+        calculatedTarget,
+        targetFloored,
+        calculatedDeficit,
+        orders: p.orders,
+        days: p.daysWorked,
+        score: calculatedTarget > 0 ? (p.netValue / calculatedTarget) * 100 : 0
+      });
     }
     return result.filter(g => g.netValue > 0);
   }
@@ -1235,6 +1294,7 @@
     document.getElementById("indTarget").textContent = "KES " + formatCurrency(totalTarget);
     document.getElementById("indDeficit").textContent = "KES " + formatCurrency(Math.abs(totalDeficit));
     document.getElementById("indDeficit").className = "stat-value " + (totalDeficit > 0 ? "perf-low" : "perf-high");
+    if (individualRatioCache) document.getElementById("indTargetSub").textContent = `last-month ratios (${individualRatioCache.monthLabel}) × branch raw target`;
 
     indFilteredData = processed;
     applySearchAndSortIndividual();
@@ -1348,7 +1408,7 @@
       if (deficit > 0) deficitHTML = `<span class="kes">KES</span> <span class="deficit-val">${formatValue(deficit)}</span>`;
       else if (deficit < 0) deficitHTML = `<span class="kes">KES</span> <span class="surplus-val">${formatValue(Math.abs(deficit))}</span>`;
       else deficitHTML = `<span class="surplus-val" style="color:#22c55e;">On Target</span>`;
-      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(target)}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
+      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"${item.targetFloored ? ' title="Minimum target of KES 100,000 applied"' : ""}><span class="kes">KES</span> ${formatValue(target)}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
     });
     tbody.innerHTML = html;
   }
