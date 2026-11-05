@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Branch Sales Trend Dashboard</title>
+<!-- Authentication Guard Script -->
+<script>
+    (function() {
+        var FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+        var loginTime = localStorage.getItem('loginTime');
+        var isAuthenticated = false;
+
+        if (loginTime) {
+            var timeElapsed = Date.now() - parseInt(loginTime);
+            if (timeElapsed < FIVE_DAYS_MS) {
+                isAuthenticated = true;
+            } else {
+                localStorage.removeItem('loginTime');
+            }
+        }
+
+        // If they aren't authenticated, kick them to the login portal
+        if (!isAuthenticated) {
+            // Get the path of the current page they tried to access (e.g., /Dashboards/Route.html)
+            var currentPath = window.location.pathname + window.location.search;
+            // Redirect to the main hub, adding a "?redirect=" parameter
+            window.location.href = 'https://dataanalyst-11.github.io/?redirect=' + encodeURIComponent(currentPath);
+        }
+    })();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    /* Brand tokens — Pharma gold by default, Bei Bora green via body.brand-beibora */
+    --brand: #ba9305;
+    --brand-rgb: 186, 147, 5;
+    --brand-ink: #020617;
+  }
+  body.brand-beibora {
+    --brand: #14b8a6;
+    --brand-rgb: 20, 184, 166;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 50;   /* stay pinned while the page scrolls */
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-bottom: 3px solid var(--brand);
+    box-shadow: 0 10px 30px rgba(2, 6, 23, 0.5);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 20px; }
+
+  .header-logo {
+    width: 44px; height: 44px; background: var(--brand); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 20px; color: #020617; flex-shrink: 0;
+  }
+
+  .header-title { font-size: 22px; font-weight: 700; color: #f8fafc; letter-spacing: -0.3px; }
+  .header-subtitle { font-size: 12px; color: #64748b; font-weight: 400; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: relative; }
+
+  .header-loading-overlay {
+    position: absolute; inset: 0; background: rgba(15, 23, 42, 0.6);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .header-loading-overlay.active { opacity: 1; pointer-events: all; }
+  .header-loading-overlay .mini-spinner {
+    width: 22px; height: 22px; border: 3px solid #334155; border-top-color: var(--brand);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+
+  .filter-select { position: relative; }
+  .filter-select select {
+    padding: 12px 42px 12px 16px; border-radius: 10px;
+    border: 2px solid #334155; background: #1e293b; color: #f1f5f9;
+    font-size: 14px; font-weight: 600; cursor: pointer; appearance: none; -webkit-appearance: none;
+    transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s; outline: none;
+  }
+  .filter-select select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .filter-select select:hover:not(:disabled) { border-color: var(--brand); }
+  .filter-select select:focus:not(:disabled) { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15); }
+  .filter-select::after {
+    content: "\25BE"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    color: var(--brand); font-size: 16px; pointer-events: none;
+  }
+  .branch-selector select { min-width: 250px; }
+
+  .company-toggle { display: flex; background: #0f172a; border-radius: 10px; padding: 3px; border: 2px solid #334155; }
+  .company-toggle button {
+    padding: 10px 26px; border: none; background: transparent; color: #64748b;
+    font-weight: 800; font-size: 13px; border-radius: 8px; cursor: pointer;
+    transition: all 0.25s; white-space: nowrap; letter-spacing: 0.5px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .company-toggle button:hover:not(:disabled) { color: #94a3b8; }
+  .company-toggle button.active { background: var(--brand); color: var(--brand-ink); }
+  .company-toggle button .co-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+  .company-toggle button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #pharmaView, #beiboraView { flex: 1; display: flex; flex-direction: column; }
+  #beiboraView { display: none; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px 32px 0; }
+
+  .stat-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 22px 24px;
+    position: relative; overflow: hidden; transition: border-color 0.2s, transform 0.15s;
+  }
+  .stat-card:hover { border-color: #475569; transform: translateY(-2px); }
+  .stat-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 4px 0 0 4px; }
+  .stat-card:nth-child(1)::before { background: #22c55e; }
+  .stat-card:nth-child(2)::before { background: #38bdf8; }
+  .stat-card:nth-child(3)::before { background: #ef4444; }
+  .stat-card:nth-child(4)::before { background: #f97316; }
+
+  .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: #64748b; font-weight: 600; margin-bottom: 10px; }
+  .stat-value { font-size: 26px; font-weight: 800; color: #f8fafc; line-height: 1; }
+  .stat-sub { font-size: 13px; color: #94a3b8; margin-top: 6px; font-weight: 400; }
+
+  .perf-high { color: #22c55e !important; }
+  .perf-medium { color: #facc15 !important; }
+  .perf-low { color: #ef4444 !important; }
+
+  /* ── Matrix section ─────────────────────────────────────── */
+  .table-section { flex: 1; padding: 20px 32px 8px; display: flex; flex-direction: column; min-height: 0; }
+  .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 12px; }
+  .table-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+  .table-count { font-size: 13px; color: #64748b; background: #0f172a; padding: 5px 20px; border-radius: 99px; font-weight: 600; }
+  .sort-hint { font-size: 11px; color: #475569; font-weight: 400; }
+
+  .search-box {
+    padding: 9px 16px 9px 38px; border-radius: 10px; border: 2px solid #334155;
+    background: #0f172a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397,1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 20px center no-repeat;
+    color: #f1f5f9; font-size: 13px; width: 240px; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-box::placeholder { color: #475569; }
+  .search-box:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.12); }
+
+  .export-btn {
+    padding: 9px 18px; border-radius: 10px; border: 2px solid #334155; background: #1e293b;
+    color: var(--brand); font-weight: 800; font-size: 12px; cursor: pointer; letter-spacing: 0.6px;
+    text-transform: uppercase; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .export-btn:hover { border-color: var(--brand); background: var(--brand); color: var(--brand-ink); }
+  .export-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+  .matrix-note {
+    display: none; align-items: center; gap: 8px; margin-bottom: 12px;
+    font-size: 11.5px; color: #94a3b8; background: rgba(var(--brand-rgb), 0.08);
+    border: 1px solid rgba(var(--brand-rgb), 0.3); border-radius: 10px; padding: 8px 14px; width: fit-content;
+  }
+  .matrix-note.visible { display: inline-flex; }
+  .matrix-note .note-ico { color: var(--brand); font-weight: 900; }
+
+  .matrix-wrap {
+    flex: 1; overflow: auto; border-radius: 20px; border: 1px solid #334155;
+    background: #0f172a; max-height: max(420px, calc(100vh - 325px));   /* fill the viewport so row scrolling happens inside, under the pinned headers */
+    scrollbar-width: thin; scrollbar-color: #334155 transparent;
+  }
+  .matrix-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+  .matrix-wrap::-webkit-scrollbar-track { background: transparent; }
+  .matrix-wrap::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+  .matrix-wrap::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+  .matrix-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; }
+  .matrix-table thead th {
+    position: sticky; top: 0; z-index: 2; background: #1e293b; color: #94a3b8;
+    text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-weight: 700;
+    padding: 14px 12px; border-bottom: 2px solid #334155; text-align: right;
+    user-select: none; white-space: nowrap;
+  }
+  .matrix-table thead th.sortable { cursor: pointer; transition: color 0.2s, background 0.2s; }
+  .matrix-table thead th.sortable:hover { color: #f1f5f9; background: #263348; }
+  .matrix-table thead th.sortable.active-sort { color: var(--brand); }
+  .sort-icon { display: inline-block; margin-left: 5px; font-size: 9px; opacity: 0.35; vertical-align: middle; transition: opacity 0.2s, transform 0.25s; }
+  .matrix-table thead th.sortable:hover .sort-icon { opacity: 0.7; }
+  .matrix-table thead th.sortable.active-sort .sort-icon { opacity: 1; }
+  .matrix-table thead th.sortable.active-sort.sort-asc .sort-icon { transform: rotate(0deg); }
+  .matrix-table thead th.sortable.active-sort.sort-desc .sort-icon { transform: rotate(180deg); }
+
+  .matrix-table thead th.sticky-left, .matrix-table td.sticky-left { position: sticky; left: 0; z-index: 5; text-align: left; min-width: 180px; max-width: 180px; }
+  .matrix-table thead th.sticky-right, .matrix-table td.sticky-right { position: sticky; right: 0; z-index: 5; min-width: 128px; }
+  .matrix-table td.sticky-left { z-index: 3; }
+  .matrix-table td.sticky-right { z-index: 3; }
+  .matrix-table thead th.sticky-left { border-right: 1px solid #334155; }
+  .matrix-table td.sticky-left { border-right: 1px solid #334155; }
+  .matrix-table thead th.sticky-right, .matrix-table td.sticky-right { border-left: 2px solid #334155; box-shadow: -8px 0 14px -8px rgba(0, 0, 0, 0.55); }
+  .matrix-table thead th.month-col, .matrix-table td.month-col { min-width: 120px; }
+  .matrix-table thead th.total-col { color: var(--brand); }
+
+  .matrix-table td {
+    padding: 9px 12px; border-bottom: 1px solid #1e293b; text-align: right;
+    color: #cbd5e1; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .matrix-table tbody tr:nth-child(odd) td { background: #0f172a; }
+  .matrix-table tbody tr:nth-child(even) td { background: #101a2e; }
+  .matrix-table tbody tr:hover td { background: #1c2a44; }
+
+  .branch-name { font-weight: 700; color: #f1f5f9; font-size: 12.5px; line-height: 1.3; }
+  .branch-code { font-size: 10px; color: #64748b; margin-top: 2px; letter-spacing: 0.4px; text-transform: uppercase; }
+
+  .month-cell { position: relative; }
+  .month-cell svg.spark { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .cell-val { position: relative; z-index: 1; font-weight: 700; font-size: 12px; color: #e2e8f0; }
+  .cell-days { position: relative; z-index: 1; font-size: 10px; color: #64748b; margin-top: 2px; font-weight: 500; }
+  .cell-val.up { color: #22c55e; }
+  .cell-val.down { color: #ef4444; }
+  .cell-val.no-data { color: #334155; font-weight: 400; }
+  .total-val { font-weight: 800; color: #f8fafc; font-size: 12.5px; }
+  .total-days { font-size: 10px; color: #64748b; margin-top: 2px; font-weight: 500; }
+
+  /* ── Floating header bar — keeps the column headers on screen
+     while the page scroll carries the matrix top out of view.
+     Pixel-cloned from the real header; it is itself a hidden
+     horizontal scroll container driven by the matrix scrollLeft,
+     so the browser's own sticky engine pins Branch (left) and
+     Total (right) exactly like the real table. ── */
+  .matrix-float-head {
+    position: fixed; left: 0; top: 0; z-index: 45; display: none;
+    overflow: hidden; background: #1e293b;
+    border: 1px solid #334155; border-radius: 10px;
+    box-shadow: 0 14px 30px rgba(2, 6, 23, 0.6);
+  }
+
+  /* ── Totals footer row (sticky bottom) ─────────────────── */
+  .matrix-table tfoot td {
+    position: sticky; bottom: 0; z-index: 4; background: #1b2740;
+    border-top: 2px solid var(--brand); text-align: right;
+    padding: 9px 12px; color: #f1f5f9; font-size: 12px;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .matrix-table tfoot td.sticky-left { left: 0; z-index: 6; text-align: left; border-right: 1px solid #334155; }
+  .matrix-table tfoot td.sticky-right { right: 0; z-index: 6; border-left: 2px solid #334155; box-shadow: -8px 0 14px -8px rgba(0, 0, 0, 0.55); }
+  .matrix-table tfoot td.month-col { min-width: 120px; }
+  .matrix-table tfoot .foot-label { font-weight: 800; color: #f8fafc; font-size: 12.5px; letter-spacing: 1px; }
+  .matrix-table tfoot .foot-sub { display: block; font-size: 9.5px; color: #64748b; font-weight: 600; margin-top: 2px; letter-spacing: 0.4px; }
+  .matrix-table tfoot .cell-val { color: #f8fafc; font-weight: 800; }
+  .matrix-table tfoot .cell-val.up { color: #4ade80; }
+  .matrix-table tfoot .cell-val.down { color: #f87171; }
+  .matrix-table tfoot .cell-days { color: #64748b; }
+  .matrix-table tfoot .cell-val.no-activity { color: #475569; font-weight: 400; }
+  .matrix-table tfoot .total-val { font-size: 13px; }
+  .matrix-table tfoot .total-val.up { color: #4ade80; }
+  .matrix-table tfoot .total-val.down { color: #f87171; }
+
+  .no-data-row td { text-align: center; padding: 60px 20px; color: #475569; font-size: 15px; }
+  .loading-row td { text-align: center; padding: 60px 20px; color: #64748b; font-size: 15px; }
+  .loading-spinner {
+    display: inline-block; width: 20px; height: 20px; border: 3px solid #334155; border-top-color: var(--brand);
+    border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Analytics section ──────────────────────────────────── */
+  .analytics-section { padding: 16px 32px 24px; }
+  .analytics-header { display: flex; align-items: center; justify-content: space-between; margin: 12px 0 16px; flex-wrap: wrap; gap: 12px; }
+  .analytics-header .left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .scope-chip {
+    font-size: 12px; color: var(--brand); background: rgba(var(--brand-rgb), 0.1);
+    border: 1px solid rgba(var(--brand-rgb), 0.35); padding: 5px 16px; border-radius: 99px; font-weight: 700;
+  }
+  .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 18px 20px 14px; transition: border-color 0.2s; }
+  .chart-card:hover { border-color: #475569; }
+  .chart-card h3 { font-size: 14px; color: #f1f5f9; font-weight: 700; }
+  .chart-sub { font-size: 11px; color: #64748b; margin-top: 3px; margin-bottom: 12px; }
+  .chart-box { position: relative; height: 280px; }
+  .chart-box canvas { position: absolute; inset: 0; }
+  .chart-fallback { display: flex; align-items: center; justify-content: center; height: 100%; color: #475569; font-size: 12px; }
+
+  .insights-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .insights-grid .stat-card::before { display: none; }
+  .insight-list-card { background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 20px 26px; margin-bottom: 16px; }
+  .insight-list-card h3 { font-size: 14px; color: #f1f5f9; margin-bottom: 10px; }
+  .insight-list-card ul { list-style: none; }
+  .insight-list-card li {
+    font-size: 12.5px; color: #cbd5e1; padding: 7px 0 7px 20px; position: relative; line-height: 1.6;
+    border-bottom: 1px dashed rgba(51, 65, 85, 0.6);
+  }
+  .insight-list-card li:last-child { border-bottom: none; }
+  .insight-list-card li::before { content: "\25C6"; color: var(--brand); position: absolute; left: 0; top: 9px; font-size: 8px; }
+  .insight-list-card li b { color: #f1f5f9; }
+  .insight-list-card li .up { color: #22c55e; font-weight: 700; }
+  .insight-list-card li .down { color: #ef4444; font-weight: 700; }
+
+  /* ── Bei Bora connect card ──────────────────────────────── */
+  .connect-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 50px 32px; }
+  .connect-card { max-width: 660px; background: #1e293b; border: 2px dashed #334155; border-radius: 24px; padding: 42px 44px; text-align: center; }
+  .connect-icon { width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 18px; background: rgba(56, 189, 248, 0.12); display: flex; align-items: center; justify-content: center; }
+  .connect-icon svg { width: 30px; height: 30px; fill: var(--brand); }
+  .connect-card h2 { font-size: 19px; color: #f8fafc; font-weight: 800; margin-bottom: 12px; }
+  .connect-card p { font-size: 13px; color: #94a3b8; line-height: 1.75; margin-bottom: 10px; }
+  .connect-card p b { color: #e2e8f0; }
+  .connect-code {
+    background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px 16px;
+    font-family: Consolas, 'Courier New', monospace; font-size: 11.5px; color: var(--brand);
+    text-align: left; margin-top: 16px; white-space: pre; overflow-x: auto; line-height: 1.6;
+  }
+  .connect-code .cmt { color: #64748b; }
+  .connect-foot { font-size: 11px; color: #475569; margin-top: 16px; }
+
+  footer { text-align: center; padding: 20px; font-size: 12px; background: #0f172a; color: #475569; border-top: 1px solid #1e293b; }
+  footer span.highlight { color: var(--brand); font-weight: 600; }
+
+  .toast {
+    position: fixed; bottom: 30px; right: 30px; background: #1e293b; border: 1px solid #334155;
+    border-left: 4px solid #ef4444; color: #f1f5f9; padding: 16px 24px; border-radius: 12px;
+    font-size: 13px; font-weight: 600; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 999;
+    transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); max-width: 380px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.toast-warn { border-left-color: #f59e0b; }
+  .toast.toast-retry { border-left-color: #38bdf8; }
+
+  @media (max-width: 1250px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .insights-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 1100px) {
+    .analytics-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    header { padding: 16px 18px; }
+    .stats-row { padding: 16px 18px 0; }
+    .table-section, .analytics-section { padding-left: 18px; padding-right: 18px; }
+    .search-box { width: 100%; }
+  }
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: 1fr; }
+    .insights-grid { grid-template-columns: 1fr; }
+    .stat-value { font-size: 20px; }
+    .header-right { width: 100%; }
+    .filter-select { flex: 1; min-width: 0; }
+    .filter-select select { width: 100%; }
+    .company-toggle { flex: 1; }
+    .company-toggle button { flex: 1; justify-content: center; padding: 10px 8px; font-size: 11px; }
+    .connect-card { padding: 28px 22px; }
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-logo" id="headerLogo">BP</div>
+    <div>
+      <div class="header-title" id="headerTitle">Branch Sales Trend Dashboard</div>
+      <div class="header-subtitle" id="headerSubtitle">Pharma</div>
+    </div>
+  </div>
+  <div class="header-right" id="headerRight">
+    <div class="header-loading-overlay" id="headerLoading">
+      <div class="mini-spinner"></div>
+    </div>
+    <div class="company-toggle">
+      <button id="btnPharma" class="active" onclick="switchCompany('pharma')"><span class="co-dot"></span>Pharma</button>
+      <button id="btnBeiBora" onclick="switchCompany('bei-bora')"><span class="co-dot"></span>Bei Bora</button>
+    </div>
+    <div class="filter-select branch-selector" id="branchSelectorWrap">
+      <select id="branchSelect">
+        <option value="">All Branches</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<div id="pharmaView">
+  <div class="stats-row" id="kpiRow">
+    <div class="stat-card">
+      <div class="stat-label">Total Net Sales</div>
+      <div class="stat-value" id="kpiSales">—</div>
+      <div class="stat-sub" id="kpiSalesSub">loading…</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Target</div>
+      <div class="stat-value" id="kpiTarget">—</div>
+      <div class="stat-sub" id="kpiTargetSub">same period</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Target Achievement</div>
+      <div class="stat-value" id="kpiAchv">—</div>
+      <div class="stat-sub" id="kpiAchvSub">sales vs target</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best Month</div>
+      <div class="stat-value" id="kpiBest">—</div>
+      <div class="stat-sub" id="kpiBestSub">in current scope</div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-header">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <span class="table-title">Monthly Sales Matrix</span>
+        <span class="table-count" id="matrixCount">0 branches</span>
+        <span class="sort-hint">Click any header to sort</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <input type="text" class="search-box" id="searchBox" placeholder="Search branch...">
+        <button class="export-btn" id="exportBtn" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+    <div class="matrix-note" id="matrixNote"><span class="note-ico">ⓘ</span><span id="matrixNoteText"></span></div>
+    <div class="matrix-float-head" id="floatHead">
+      <table class="matrix-table"><thead><tr id="floatHeadRow"></tr></thead></table>
+    </div>
+    <div class="matrix-wrap" id="matrixWrap">
+      <table class="matrix-table">
+        <thead id="matrixHead">
+          <tr id="matrixHeadRow"></tr>
+        </thead>
+        <tbody id="matrixBody">
+          <tr class="loading-row">
+            <td colspan="13">
+              <span class="loading-spinner"></span>
+              Loading branch data...
+            </td>
+          </tr>
+        </tbody>
+        <tfoot id="matrixFoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="analytics-section">
+    <div class="analytics-header">
+      <div class="left">
+        <span class="table-title">Management Analytics — Statistical Insights</span>
+        <span class="scope-chip" id="scopeChip">Scope: All Branches</span>
+      </div>
+      <span class="sort-hint">Charts</span>
+    </div>
+
+    <div class="insights-grid">
+      <div class="stat-card">
+        <div class="stat-label">Avg Sales / Month</div>
+        <div class="stat-value" id="insAvg">—</div>
+        <div class="stat-sub" id="insAvgSub">months in scope</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Volatility (CV)</div>
+        <div class="stat-value" id="insCv">—</div>
+        <div class="stat-sub" id="insCvSub">std dev of monthly sales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Monthly Trend</div>
+        <div class="stat-value" id="insTrend">—</div>
+        <div class="stat-sub" id="insTrendSub">linear regression slope</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Next-Month Projection</div>
+        <div class="stat-value" id="insProj">—</div>
+        <div class="stat-sub" id="insProjSub">indicative run-rate</div>
+      </div>
+    </div>
+
+    <div class="insight-list-card">
+      <h3>Key Takeaways for Management</h3>
+      <ul id="insightList">
+        <li>Loading statistical analysis…</li>
+      </ul>
+    </div>
+
+    <div class="analytics-grid">
+      <div class="chart-card">
+        <h3>Overall Monthly Sales vs Target</h3>
+        <div class="chart-sub" id="chartSubST">Company-wide totals · achievement % on right axis</div>
+        <div class="chart-box"><canvas id="chartST"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3 id="chartTrendTitle">Branch Trend Analysis — Top 6</h3>
+        <div class="chart-sub" id="chartSubTrend">Ranked by total sales in current scope</div>
+        <div class="chart-box"><canvas id="chartTrend"></canvas></div>
+      </div>
+      <div class="chart-card" id="cardPareto">
+        <h3>Branch Contribution — Pareto (80 / 20)</h3>
+        <div class="chart-sub">Cumulative % of sales vs branches · red line = 80% threshold</div>
+        <div class="chart-box"><canvas id="chartPareto"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3 id="chartAchvTitle">Target Achievement by Branch</h3>
+        <div class="chart-sub" id="chartSubAchv">Green ≥ 80% · Yellow ≥ 50% · Red below 50%</div>
+        <div class="chart-box"><canvas id="chartAchv"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Month-over-Month Growth &amp; Selling Days</h3>
+        <div class="chart-sub" id="chartSubGrow">Growth % vs previous month · days worked on right axis</div>
+        <div class="chart-box"><canvas id="chartGrow"></canvas></div>
+      </div>
+      <div class="chart-card" id="cardMix">
+        <h3>Sales Mix by Branch</h3>
+        <div class="chart-sub">Share of total sales in current scope · top 8 + others</div>
+        <div class="chart-box"><canvas id="chartMix"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="beiboraView">
+  <div class="connect-wrap">
+    <div class="connect-card">
+      <div class="connect-icon">
+        <svg viewBox="0 0 24 24"><path d="M16 7h1a1 1 0 0 0 0-2h-1V3a1 1 0 1 0-2 0v2h-4V3a1 1 0 1 0-2 0v2H7a3 3 0 0 0-3 3v4a5 5 0 0 0 4 4.9V21a1 1 0 1 0 2 0v-4h4v4a1 1 0 1 0 2 0v-2.1a5 5 0 0 0 4-4.9v-4a3 3 0 0 0-3-3zm1 7a3 3 0 0 1-3 3H10a3 3 0 0 1-3-3v-4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v4z"/></svg>
+      </div>
+      <h2>Bei Bora — Connect Data Source</h2>
+      <p>The Bei Bora endpoint <b>could not be reached</b> on this refresh. The dashboard auto-probes the MIS proxy route on every load — once it responds, the full matrix, KPIs, trends and analytics come alive for Bei Bora with no other change.</p>
+      <p>Wired configuration (already pointing at the live route):</p>
+      <div class="connect-code"><span class="cmt">// COMPANIES config — top of the &lt;script&gt; section</span>
+"bei-bora": {
+  label: "Bei Bora",
+  apiBase: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/beibora/",
+  endpoint: "branch-performance/reports"
+}
+<span class="cmt">// → if MIS moves the route, edit only this block.</span></div>
+      <div class="connect-foot">Everything is already wired: company switch, KPIs, monthly matrix, trend analysis and management analytics render automatically once data flows.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Last updated: <span class="highlight" id="lastUpdated">—</span> &nbsp;|&nbsp;
+  Auto-refreshes every 10 mins &nbsp;|&nbsp;
+  Designed and Managed by <span class="highlight">MIS.DPT</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ════════════════════════════════════════════════════════════
+     COMPANY CONFIG — when MIS publishes the Bei Bora route,
+     change ONLY the apiBase line for "bei-bora" below.
+     ════════════════════════════════════════════════════════════ */
+  const COMPANIES = {
+    "pharma": {
+      label: "Pharma",
+      short: "PH",
+      apiBase: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/",
+      endpoint: "branch-sales-performance-reports",   // live MIS route for Pharma
+      matrixFrom: "january"                           // matrix runs Jan → date; months before records show "—"
+    },
+    "bei-bora": {
+      label: "Bei Bora",
+      short: "BB",
+      apiBase: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/beibora/",
+      endpoint: "branch-performance/reports",         // live MIS route for Bei Bora
+      matrixFrom: "data-start"                        // matrix starts where the API data starts
+    }
+  };
+
+  const AUTO_REFRESH_MS = 600000;
+
+  /* ── State ───────────────────────────────────────────────── */
+  let currentCompany = "pharma";
+  let rawRows = [];              // raw branch-report rows for current company
+  let monthlyRows = [];          // aggregated per-branch rows
+  let monthKeys = [];            // ["2026-01", ...]
+  let monthLabels = [];          // ["Jan", ...]
+  let multiYear = false;
+  let firstDataMonthKey = null;
+  let currentSort = { key: "total", dir: "desc" };
+  let charts = [];
+  let isLoading = false;
+  let currentAbortCtrl = null;
+  let lastDataFetchAt = null;
+  let beiBoraProbe = { probedAt: 0, ok: false };
+  let firstDataDateKey = null;      // earliest "YYYY-MM-DD" with a record (for the note)
+
+  /* ── Formatting helpers ──────────────────────────────────── */
+  function toNumber(value) {
+    if (value === null || value === undefined || value === "") return 0;
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    const cleaned = String(value).replace(/,/g, "").replace(/%/g, "").trim();
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function parseDateKey(value) {
+    if (!value) return null;
+    const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : null;
+  }
+
+  function formatFull(n) { return Math.round(Number(n) || 0).toLocaleString("en-US"); }
+
+  function formatCompact(n) {
+    const v = Number(n) || 0;
+    const abs = Math.abs(v);
+    if (abs >= 1e9) return (v / 1e9).toFixed(2) + "B";
+    if (abs >= 1e6) return (v / 1e6).toFixed(1) + "M";
+    if (abs >= 1e3) return (v / 1e3).toFixed(0) + "K";
+    return Math.round(v).toLocaleString("en-US");
+  }
+
+  const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function monthLabel(mk) {
+    const [y, m] = mk.split("-");
+    return MONTH_NAMES[parseInt(m, 10) - 1] + (multiYear ? " '" + y.slice(2) : "");
+  }
+  function monthLongLabel(mk) {
+    const [y, m] = mk.split("-");
+    return MONTH_NAMES[parseInt(m, 10) - 1] + " " + y;
+  }
+
+  function dateLong(dk) {
+    const [y, m, d] = dk.split("-").map(Number);
+    return d + " " + MONTH_NAMES[m - 1] + " " + y;
+  }
+
+  /* ── Toast / abort / retry (reference pattern) ───────────── */
+  let toastTimer = null;
+  function showToast(msg, type) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast" + (type ? " toast-" + type : "");
+    void t.offsetWidth;
+    t.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 4500);
+  }
+
+  function abortPreviousRequests() {
+    if (currentAbortCtrl) { currentAbortCtrl.abort(); currentAbortCtrl = null; }
+    currentAbortCtrl = new AbortController();
+    return currentAbortCtrl.signal;
+  }
+
+  async function fetchWithRetry(url, options, maxRetries = 3) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (response.status === 409 && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
+          showToast(`Rate limited — retrying in ${Math.round(delay / 1000)}s...`, "retry");
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return await response.json();
+      } catch (err) {
+        if (err.name === "AbortError") throw err;
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 700 + Math.random() * 300;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
+  /* ── Data fetch ──────────────────────────────────────────── */
+  function getFetchRange() {
+    const now = new Date();
+    const startYear = now.getFullYear() - 1;   // covers "January to date" + auto-expands each new year
+    return { startDate: `${startYear}-01-01`, endDate: `${now.getFullYear()}-12-31` };
+  }
+
+  async function fetchBranchReports(apiBase, signal) {
+    const company = COMPANIES[currentCompany];
+    const { startDate, endDate } = getFetchRange();
+    const url = `${apiBase}${company.endpoint}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=50000`;
+    const json = await fetchWithRetry(url, { signal, headers: { "Content-Type": "application/json" } });
+    return Array.isArray(json) ? json : (json.data || []);
+  }
+
+  function setLoadingState(loading) {
+    isLoading = loading;
+    const overlay = document.getElementById("headerLoading");
+    const branchSel = document.getElementById("branchSelect");
+    if (loading) { overlay.classList.add("active"); branchSel.disabled = true; }
+    else { overlay.classList.remove("active"); branchSel.disabled = (currentCompany === "bei-bora" && !beiBoraProbe.ok); }
+  }
+
+  /* ── Aggregation: branch × month ─────────────────────────── */
+  function buildMonthly(rows) {
+    const byBranch = new Map();
+    const now = new Date();
+    const thisYear = now.getFullYear();
+
+    for (const r of rows) {
+      const dateKey = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
+      if (!dateKey) continue;
+      const name = String(r.orgBranchName || "").trim() || String(r.orgBranchCode || "").trim() || "Unknown";
+      const code = String(r.orgBranchCode || "").trim() || "";
+      const k = name.toLowerCase();
+      if (!byBranch.has(k)) byBranch.set(k, { key: k, name, code, m: new Map() });
+      const b = byBranch.get(k);
+      const mk = dateKey.slice(0, 7);
+      if (!b.m.has(mk)) b.m.set(mk, { sales: 0, target: 0, days: new Set() });
+      const c = b.m.get(mk);
+      c.sales += toNumber(r.netDailySales ?? r.netSales ?? r.dailyNetSales);
+      c.target += toNumber(r.dailySalesTarget ?? r.salesTarget ?? r.target);
+      c.days.add(dateKey);
+    }
+
+    // Month axis: Pharma runs January → date (months before records show "—");
+    // Bei Bora starts at the first month the API actually has ("data-start").
+    // Either way the axis auto-expands into 2027+ as new months arrive.
+    let firstMk = null;
+    for (const b of byBranch.values()) {
+      for (const mk of b.m.keys()) {
+        if (!firstMk || mk < firstMk) firstMk = mk;
+      }
+    }
+    multiYear = firstMk ? parseInt(firstMk.slice(0, 4), 10) !== thisYear : false;
+    const startYear = firstMk ? parseInt(firstMk.slice(0, 4), 10) : thisYear;
+    const startMonth = (firstMk && COMPANIES[currentCompany].matrixFrom === "data-start") ? parseInt(firstMk.slice(5, 7), 10) : 1;
+    monthKeys = [];
+    for (let y = startYear; y <= thisYear; y++) {
+      const endMonth = (y === thisYear) ? now.getMonth() + 1 : 12;
+      const m0 = (y === startYear) ? startMonth : 1;
+      for (let m = m0; m <= endMonth; m++) monthKeys.push(y + "-" + String(m).padStart(2, "0"));
+    }
+    monthLabels = monthKeys.map(monthLabel);
+
+    firstDataMonthKey = null;
+    firstDataDateKey = null;
+    const out = [];
+    for (const b of byBranch.values()) {
+      let total = 0, totalDays = 0;
+      for (const mk of monthKeys) {
+        const c = b.m.get(mk);
+        if (!c) continue;
+        total += c.sales;
+        totalDays += c.days.size;
+        if (c.days.size > 0 && (!firstDataMonthKey || mk < firstDataMonthKey)) firstDataMonthKey = mk;
+      }
+      out.push({ key: b.key, name: b.name, code: b.code, m: b.m, total, totalDays });
+    }
+    // earliest full date with a record (for the "records begin" note)
+    for (const r of rows) {
+      const dk = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
+      if (dk && (!firstDataDateKey || dk < firstDataDateKey)) firstDataDateKey = dk;
+    }
+    out.sort((a, b) => b.total - a.total);
+    return out;
+  }
+
+  /* ── Filters ─────────────────────────────────────────────── */
+  function getSelectedBranchKey() { return document.getElementById("branchSelect").value || ""; }
+
+  function getScope() {
+    const sel = getSelectedBranchKey();
+    if (sel) {
+      const one = monthlyRows.filter(b => b.key === sel);
+      return { branches: one, label: one.length ? one[0].name : "—", single: true };
+    }
+    return { branches: monthlyRows.slice(), label: "All Branches", single: false };
+  }
+
+  function scopeSeries(scope) {
+    const sales = monthKeys.map(mk => scope.branches.reduce((s, b) => s + ((b.m.get(mk) || {}).sales || 0), 0));
+    const target = monthKeys.map(mk => scope.branches.reduce((s, b) => s + ((b.m.get(mk) || {}).target || 0), 0));
+    const days = monthKeys.map(mk => {
+      if (scope.single) {
+        const c = scope.branches[0] ? scope.branches[0].m.get(mk) : null;
+        return c ? c.days.size : 0;
+      }
+      const set = new Set();
+      scope.branches.forEach(b => { const c = b.m.get(mk); if (c) c.days.forEach(d => set.add(d)); });
+      return set.size;
+    });
+    return { sales, target, days };
+  }
+
+  function activeMonthIndexes(series) {
+    const idx = [];
+    for (let i = 0; i < monthKeys.length; i++) {
+      if ((series.sales[i] || 0) > 0 || (series.target[i] || 0) > 0) idx.push(i);
+    }
+    return idx;
+  }
+
+  /* ── KPI cards ───────────────────────────────────────────── */
+  function renderKPIs() {
+    const scope = getScope();
+    const series = scopeSeries(scope);
+    const totalSales = series.sales.reduce((a, b) => a + b, 0);
+    const totalTarget = series.target.reduce((a, b) => a + b, 0);
+    const achv = totalTarget > 0 ? (totalSales / totalTarget) * 100 : 0;
+    const monthsActive = activeMonthIndexes(series);
+
+    document.getElementById("kpiSales").textContent = "KES " + formatCompact(totalSales);
+    document.getElementById("kpiSalesSub").textContent =
+      scope.single ? scope.label : `${scope.branches.length} branches · ${monthLabels[0]} to date`;
+
+    document.getElementById("kpiTarget").textContent = "KES " + formatCompact(totalTarget);
+    document.getElementById("kpiTargetSub").textContent = monthsActive.length
+      ? `${monthLongLabel(monthKeys[monthsActive[0]])} → ${monthLongLabel(monthKeys[monthsActive[monthsActive.length - 1]])}`
+      : "same period";
+
+    const achvEl = document.getElementById("kpiAchv");
+    achvEl.textContent = totalTarget > 0 ? achv.toFixed(1) + "%" : "—";
+    achvEl.className = "stat-value " + (achv >= 80 ? "perf-high" : achv >= 50 ? "perf-medium" : "perf-low");
+    document.getElementById("kpiAchvSub").textContent = "KES " + formatCompact(totalSales) + " of KES " + formatCompact(totalTarget);
+
+    // Best COMPLETE month (current calendar month excluded while in progress)
+    const currentMkNow = new Date();
+    const currentMk = currentMkNow.getFullYear() + "-" + String(currentMkNow.getMonth() + 1).padStart(2, "0");
+    let bestIdx = -1, bestVal = -1;
+    series.sales.forEach((v, i) => { if (monthKeys[i] < currentMk && v > bestVal) { bestVal = v; bestIdx = i; } });
+    if (bestIdx >= 0 && bestVal > 0) {
+      document.getElementById("kpiBest").textContent = "KES " + formatCompact(bestVal);
+      const daysN = series.days[bestIdx];
+      document.getElementById("kpiBestSub").textContent = monthLongLabel(monthKeys[bestIdx]) + " · " + daysN + " selling days";
+    } else {
+      document.getElementById("kpiBest").textContent = "—";
+      document.getElementById("kpiBestSub").textContent = "no complete month yet";
+    }
+  }
+
+  /* ── Matrix table ────────────────────────────────────────── */
+  function searchFiltered(rows) {
+    const q = (document.getElementById("searchBox").value || "").toLowerCase().trim();
+    if (!q) return rows;
+    return rows.filter(b => b.name.toLowerCase().includes(q) || (b.code || "").toLowerCase().includes(q));
+  }
+
+  function sortRows(rows) {
+    const { key, dir } = currentSort;
+    const sorted = [...rows];
+    if (key === "name") {
+      sorted.sort((a, b) => dir === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+      return sorted;
+    }
+    const val = (b) => {
+      if (key === "total") return b.total;
+      const c = b.m.get(key);
+      return c ? c.sales : null;
+    };
+    sorted.sort((a, b) => {
+      const va = val(a), vb = val(b);
+      if (va === null && vb === null) return a.name.localeCompare(b.name);
+      if (va === null) return 1;
+      if (vb === null) return -1;
+      return dir === "asc" ? va - vb : vb - va;
+    });
+    return sorted;
+  }
+
+  function trendCellPath(values, i, yMap) {
+    // ONE continuous row-trend line, drawn cell by cell. Each cell draws its
+    // own half-segments, engineered so they join EXACTLY at the cell borders:
+    //   - the curve passes through every month's value at the cell centre,
+    //   - adjacent cells meet at the same midpoint height with a horizontal
+    //     tangent -> no jumps, one smooth consistent trend line per row,
+    //   - the line runs flat into the first / out of the last data month.
+    const v = values[i];
+    if (v === null || v === undefined) return "";
+    const y = yMap(v);
+    const prevOk = i > 0 && values[i - 1] !== null && values[i - 1] !== undefined;
+    const nextOk = i < values.length - 1 && values[i + 1] !== null && values[i + 1] !== undefined;
+    const yL = prevOk ? (yMap(values[i - 1]) + y) / 2 : y;   // meeting point on the left border
+    const yR = nextOk ? (y + yMap(values[i + 1])) / 2 : y;   // meeting point on the right border
+    return `M0,${yL.toFixed(1)} C25,${yL.toFixed(1)} 25,${y.toFixed(1)} 50,${y.toFixed(1)} C75,${y.toFixed(1)} 75,${yR.toFixed(1)} 100,${yR.toFixed(1)}`;
+  }
+
+  function renderMatrix() {
+    const scope = getScope();
+    const rows = sortRows(searchFiltered(scope.branches));
+    const thead = document.getElementById("matrixHeadRow");
+    const tbody = document.getElementById("matrixBody");
+    document.getElementById("matrixCount").textContent =
+      rows.length + (rows.length === 1 ? " branch" : " branches") + (scope.single ? "" : " · " + monthLabels[0] + " to date");
+
+    // header
+    let hh = `<th class="sortable sticky-left" data-sort="name">Branch <span class="sort-icon">▲</span></th>`;
+    monthKeys.forEach(mk => {
+      hh += `<th class="sortable month-col" data-sort="${mk}" title="${monthLongLabel(mk)}">${monthLabel(mk)} <span class="sort-icon">▲</span></th>`;
+    });
+    hh += `<th class="sortable sticky-right total-col" data-sort="total">Total <span class="sort-icon">▲</span></th>`;
+    thead.innerHTML = hh;
+    updateSortHeaders();
+
+    if (!rows.length) {
+      tbody.innerHTML = `<tr class="no-data-row"><td colspan="${monthKeys.length + 2}">No branch data found for the current filter</td></tr>`;
+      renderMatrixNote();
+      buildFloatHeader();
+      syncFloatHeader();
+      return;
+    }
+
+    // note: only shown when leading months have no records
+    renderMatrixNote();
+
+    let html = "";
+    rows.forEach(b => {
+      const values = monthKeys.map(mk => { const c = b.m.get(mk); return c && c.days.size ? c.sales : null; });
+      const valid = values.filter(v => v !== null);
+      let yMap = null;
+      if (valid.length >= 2) {
+        const min = Math.min(...valid), max = Math.max(...valid);
+        const span = (max - min) || 1;
+        yMap = v => 58 + (1 - (v - min) / span) * 36;   // consistent band in the lower part of the cell, like the row-trend reference
+      }
+
+      let rowHtml = `<td class="sticky-left"><div class="branch-name">${escapeHtml(b.name)}</div>${b.code && b.code.toLowerCase() !== b.name.toLowerCase() ? `<div class="branch-code">${escapeHtml(b.code)}</div>` : ""}</td>`;
+
+      let prevVal = null;
+      monthKeys.forEach((mk, i) => {
+        const c = b.m.get(mk);
+        if (!c || !c.days.size) {
+          rowHtml += `<td class="month-cell month-col"><div class="cell-val no-data">—</div><div class="cell-days">&nbsp;</div></td>`;
+          return;
+        }
+        let cls = "";
+        if (prevVal !== null) cls = c.sales >= prevVal ? "up" : "down";
+        const spark = yMap ? `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${trendCellPath(values, i, yMap)}" fill="none" stroke="rgba(96,165,250,0.65)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>` : "";
+        rowHtml += `<td class="month-cell month-col">${spark}<div class="cell-val ${cls}">${formatFull(c.sales)}</div><div class="cell-days">${c.days.size} day${c.days.size === 1 ? "" : "s"}</div></td>`;
+        prevVal = c.sales;
+      });
+
+      rowHtml += `<td class="sticky-right"><div class="total-val">${formatFull(b.total)}</div><div class="total-days">${b.totalDays} days</div></td>`;
+      html += `<tr>${rowHtml}</tr>`;
+    });
+    tbody.innerHTML = html;
+    renderMatrixFoot(rows);
+    buildFloatHeader();
+    syncFloatHeader();
+  }
+
+  /* ── Totals footer — sum of every visible branch per column ── */
+  function renderMatrixFoot(rows) {
+    const foot = document.getElementById("matrixFoot");
+    if (!rows.length) { foot.innerHTML = ""; return; }
+
+    const values = monthKeys.map(mk => rows.reduce((s, b) => { const c = b.m.get(mk); return s + (c && c.days.size ? c.sales : 0); }, 0));
+    const hasData = monthKeys.map(mk => rows.some(b => { const c = b.m.get(mk); return c && c.days.size > 0; }));
+    const daysN = monthKeys.map(mk => rows.reduce((s, b) => { const c = b.m.get(mk); return s + (c ? c.days.size : 0); }, 0));
+    const grand = rows.reduce((s, b) => s + b.total, 0);
+    const grandDays = rows.reduce((s, b) => s + b.totalDays, 0);
+
+    let yMap = null;
+    const valid = values.filter((v, i) => hasData[i]);
+    if (valid.length >= 2) {
+      const min = Math.min(...valid), max = Math.max(...valid);
+      const span = (max - min) || 1;
+      yMap = v => 58 + (1 - (v - min) / span) * 36;   // same trend band as the branch rows
+    }
+
+    let html = `<td class="sticky-left"><span class="foot-label">TOTAL</span><span class="foot-sub">${rows.length} ${rows.length === 1 ? "branch" : "branches"}</span></td>`;
+
+    let prevVal = null;
+    monthKeys.forEach((mk, i) => {
+      if (!hasData[i]) {
+        html += `<td class="month-cell month-col"><div class="cell-val no-activity">—</div><div class="cell-days">&nbsp;</div></td>`;
+        prevVal = values[i];
+        return;
+      }
+      let cls = "";
+      if (prevVal !== null && prevVal > 0) cls = values[i] >= prevVal ? "up" : "down";
+      const spark = yMap ? `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${trendCellPath(values, i, yMap)}" fill="none" stroke="rgba(96,165,250,0.65)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>` : "";
+      html += `<td class="month-cell month-col">${spark}<div class="cell-val ${cls}">${formatFull(values[i])}</div><div class="cell-days">Σ ${daysN[i]} day${daysN[i] === 1 ? "" : "s"}</div></td>`;
+      prevVal = values[i];
+    });
+
+    const lastIdx = hasData.lastIndexOf(true);
+    let prevIdx = -1;
+    for (let i = lastIdx - 1; i >= 0; i--) { if (hasData[i]) { prevIdx = i; break; } }
+    let gCls = "";
+    if (lastIdx >= 0 && prevIdx >= 0 && values[prevIdx] > 0) gCls = values[lastIdx] >= values[prevIdx] ? "up" : "down";
+
+    html += `<td class="sticky-right"><div class="total-val ${gCls}">${formatFull(grand)}</div><div class="total-days">Σ ${grandDays} days</div></td>`;
+    foot.innerHTML = `<tr>${html}</tr>`;
+  }
+
+  function renderMatrixNote() {
+    const note = document.getElementById("matrixNote");
+    const now = new Date();
+    const currentMk = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+    const company = COMPANIES[currentCompany];
+    const dataStart = company.matrixFrom === "data-start";
+    if (firstDataMonthKey && (firstDataMonthKey > monthKeys[0] || dataStart)) {
+      const startTxt = dataStart
+        ? `${company.label} system records begin ${firstDataDateKey ? dateLong(firstDataDateKey) : monthLongLabel(firstDataMonthKey)} — the matrix starts where the data starts.`
+        : `System records begin ${monthLongLabel(firstDataMonthKey)} — earlier months show "—".`;
+      document.getElementById("matrixNoteText").textContent =
+        `${startTxt} ${monthLongLabel(currentMk)} is month-to-date.`;
+      note.classList.add("visible");
+    } else {
+      note.classList.remove("visible");
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  /* ── Sorting UI ──────────────────────────────────────────── */
+  const SORT_LABELS = () => {
+    const map = { name: "Branch", total: "Total" };
+    monthKeys.forEach((mk, i) => map[mk] = monthLongLabel(mk));
+    return map;
+  };
+
+  function updateSortHeaders() {
+    document.querySelectorAll("#matrixHeadRow th.sortable").forEach(th => {
+      th.classList.remove("active-sort", "sort-asc", "sort-desc");
+      if (th.dataset.sort === currentSort.key) th.classList.add("active-sort", currentSort.dir === "asc" ? "sort-asc" : "sort-desc");
+    });
+  }
+
+  function applySort(key) {
+    if (currentSort.key === key) currentSort.dir = currentSort.dir === "desc" ? "asc" : "desc";
+    else currentSort = { key, dir: key === "name" ? "asc" : "desc" };
+    updateSortHeaders();
+    renderMatrix();
+  }
+
+  document.getElementById("matrixHead").addEventListener("click", (e) => {
+    const th = e.target.closest("th.sortable");
+    if (!th) return;
+    applySort(th.dataset.sort);
+  });
+
+  /* ── Floating header bar — build + position sync ─────────── */
+  let floatSyncScheduled = false;
+  function scheduleFloatSync() {
+    if (floatSyncScheduled) return;
+    floatSyncScheduled = true;
+    requestAnimationFrame(() => { floatSyncScheduled = false; syncFloatHeader(); });
+  }
+
+  function buildFloatHeader() {
+    const realRow = document.getElementById("matrixHeadRow");
+    const fRow = document.getElementById("floatHeadRow");
+    if (!realRow || !fRow) return;
+    fRow.innerHTML = "";
+    realRow.querySelectorAll("th").forEach(th => {
+      const clone = th.cloneNode(true);
+      clone.style.width = th.getBoundingClientRect().width + "px";   // exact column match
+      fRow.appendChild(clone);
+    });
+  }
+
+  function syncFloatHeader() {
+    const fh = document.getElementById("floatHead");
+    const wrap = document.getElementById("matrixWrap");
+    const realTable = wrap.querySelector("table");
+    if (!monthlyRows.length || !realTable || !wrap.offsetParent) { fh.style.display = "none"; return; }
+    const headerH = document.querySelector("header").offsetHeight;
+    const rect = wrap.getBoundingClientRect();
+    const theadH = document.getElementById("matrixHead").offsetHeight;
+    // show only when the page scroll has pushed the real header under the page header,
+    // and hide again once the matrix has fully scrolled past
+    const show = rect.top < headerH - 1 && rect.bottom > headerH + theadH + 4;
+    if (!show) { fh.style.display = "none"; return; }
+    fh.style.display = "block";
+    fh.style.top = headerH + "px";
+    fh.style.left = rect.left + "px";
+    fh.style.width = wrap.clientWidth + "px";
+    fh.scrollLeft = wrap.scrollLeft;   // same sticky engine pins Branch left / Total right
+  }
+
+  document.getElementById("floatHeadRow").addEventListener("click", (e) => {
+    const th = e.target.closest("th.sortable");
+    if (!th) return;
+    applySort(th.dataset.sort);
+  });
+
+  window.addEventListener("scroll", scheduleFloatSync, { passive: true });
+  window.addEventListener("resize", scheduleFloatSync);
+  document.getElementById("matrixWrap").addEventListener("scroll", scheduleFloatSync, { passive: true });
+
+  /* ── Chart helpers ───────────────────────────────────────── */
+  function brandHex() { return (getComputedStyle(document.body).getPropertyValue("--brand") || "").trim() || "#ba9305"; }
+  function brandRGB() { return (getComputedStyle(document.body).getPropertyValue("--brand-rgb") || "").trim() || "186, 147, 5"; }
+  function brandCol(a) { return `rgba(${brandRGB()}, ${a})`; }
+  const CHART_COLORS = () => [brandHex(), "#38bdf8", "#22c55e", "#f97316", "#a78bfa", "#f472b6", "#facc15", "#2dd4bf"];
+
+  function destroyCharts() {
+    charts.forEach(c => { try { c.destroy(); } catch (e) {} });
+    charts = [];
+  }
+
+  function chartTheme() {
+    if (!window.Chart) return false;
+    Chart.defaults.color = "#94a3b8";
+    Chart.defaults.borderColor = "rgba(51,65,85,0.6)";
+    Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+    Chart.defaults.font.size = 11;
+    return true;
+  }
+
+  function makeChart(id, config) {
+    const el = document.getElementById(id);
+    if (!el || !window.Chart) {
+      if (el) el.closest(".chart-box").innerHTML = `<div class="chart-fallback">Chart library unavailable — check internet connection</div>`;
+      return;
+    }
+    charts.push(new Chart(el, config));
+  }
+
+  const gridOpts = { grid: { color: "rgba(51,65,85,0.45)" }, ticks: { callback: v => formatCompact(v) } };
+
+  /* ── Analytics ───────────────────────────────────────────── */
+  function linreg(ys) {
+    const n = ys.length;
+    if (n < 3) return null;
+    let sx = 0, sy = 0, sxy = 0, sxx = 0;
+    ys.forEach((y, i) => { sx += i; sy += y; sxy += i * y; sxx += i * i; });
+    const denom = n * sxx - sx * sx;
+    if (!denom) return null;
+    const slope = (n * sxy - sx * sy) / denom;
+    const intercept = (sy - slope * sx) / n;
+    const ybar = sy / n;
+    let ssr = 0, sst = 0;
+    ys.forEach((y, i) => { const f = intercept + slope * i; ssr += Math.pow(y - f, 2); sst += Math.pow(y - ybar, 2); });
+    return { slope, intercept, r2: sst ? Math.max(0, 1 - ssr / sst) : 0 };
+  }
+
+  function currentMonthKey() {
+    const now = new Date();
+    return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  }
+
+  function renderAnalytics() {
+    const scope = getScope();
+    const series = scopeSeries(scope);
+    const idx = activeMonthIndexes(series);
+    const cmk = currentMonthKey();
+    const labels = idx.map(i => monthLabel(monthKeys[i]) + (monthKeys[i] === cmk ? " *" : ""));
+    const sales = idx.map(i => series.sales[i]);
+    const target = idx.map(i => series.target[i]);
+    const days = idx.map(i => series.days[i]);
+    const achv = target.map((t, i) => t > 0 ? (sales[i] / t) * 100 : null);
+
+    document.getElementById("scopeChip").textContent = "Scope: " + scope.label + (scope.single ? "" : ` (${scope.branches.length} branches)`);
+    const mtdSuffix = idx.includes(monthKeys.indexOf(cmk)) ? " · * = month-to-date" : "";
+    document.getElementById("chartSubST").textContent = (scope.single ? scope.label : "Company-wide totals") + " · achievement % on right axis" + mtdSuffix;
+
+    destroyCharts();
+    if (!chartTheme() || !idx.length) {
+      renderInsights(scope, series, idx);
+      return;
+    }
+
+    /* 1 — Overall Monthly Sales vs Target (+ achievement %) */
+    makeChart("chartST", {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          { label: "Sales", data: sales, backgroundColor: brandCol(0.85), borderRadius: 6, order: 2 },
+          { label: "Target", type: "line", data: target, borderColor: "#38bdf8", backgroundColor: "transparent", borderWidth: 2, pointRadius: 3, tension: 0.35, order: 1 },
+          { label: "Achievement %", type: "line", data: achv, borderColor: "#22c55e", backgroundColor: "transparent", borderWidth: 2, borderDash: [6, 4], pointRadius: 2, tension: 0.35, yAxisID: "y2", order: 0 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { labels: { boxWidth: 12, padding: 14 } },
+          tooltip: { callbacks: { label: (c) => c.dataset.yAxisID === "y2" ? ` ${c.dataset.label}: ${(c.parsed.y ?? 0).toFixed(1)}%` : ` ${c.dataset.label}: KES ${formatFull(c.parsed.y)}` } }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { ...gridOpts, beginAtZero: true },
+          y2: { position: "right", min: 0, suggestedMax: 120, grid: { display: false }, ticks: { callback: v => v + "%" } }
+        }
+      }
+    });
+
+    /* 2 — Top 6 branch trends OR branch focus (sales + selling days) */
+    const trendTitle = document.getElementById("chartTrendTitle");
+    const trendSub = document.getElementById("chartSubTrend");
+    if (scope.single) {
+      trendTitle.textContent = "Branch Focus — " + scope.label;
+      trendSub.textContent = "Monthly sales trend · selling days (right axis)";
+      makeChart("chartTrend", {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            { label: "Selling days", data: days, backgroundColor: "rgba(56,189,248,0.30)", borderRadius: 5, yAxisID: "y2" },
+            { label: "Sales", type: "line", data: sales, borderColor: brandHex(), backgroundColor: brandCol(0.12), borderWidth: 2.5, pointRadius: 3, fill: true, tension: 0.35 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+          plugins: { legend: { labels: { boxWidth: 12, padding: 14 } }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.dataset.yAxisID === "y2" ? c.parsed.y + " days" : "KES " + formatFull(c.parsed.y)}` } } },
+          scales: { x: { grid: { display: false } }, y: { ...gridOpts, beginAtZero: true }, y2: { position: "right", beginAtZero: true, grid: { display: false }, ticks: { stepSize: 5 } } }
+        }
+      });
+    } else {
+      trendTitle.textContent = "Branch Trend Analysis — Top 6";
+      trendSub.textContent = "Ranked by total sales in current scope";
+      const top6 = [...scope.branches].sort((a, b) => b.total - a.total).slice(0, 6);
+      makeChart("chartTrend", {
+        type: "line",
+        data: {
+          labels,
+          datasets: top6.map((b, i) => ({
+            label: b.name,
+            data: idx.map(j => { const c = b.m.get(monthKeys[j]); return c ? c.sales : null; }),
+            borderColor: CHART_COLORS()[i % CHART_COLORS().length],
+            backgroundColor: "transparent",
+            borderWidth: 2, pointRadius: 2.5, tension: 0.35, spanGaps: true
+          }))
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+          plugins: { legend: { labels: { boxWidth: 12, padding: 12 } }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: KES ${formatFull(c.parsed.y)}` } } },
+          scales: { x: { grid: { display: false } }, y: { ...gridOpts, beginAtZero: true } }
+        }
+      });
+    }
+
+    /* 3 — Pareto (branch contribution) — hidden for single-branch scope */
+    document.getElementById("cardPareto").style.display = scope.single ? "none" : "";
+    if (!scope.single) {
+      const ranked = [...scope.branches].filter(b => b.total > 0).sort((a, b) => b.total - a.total);
+      const grand = ranked.reduce((s, b) => s + b.total, 0);
+      let cum = 0;
+      const cumPct = ranked.map(b => { cum += b.total; return grand ? (cum / grand) * 100 : 0; });
+      makeChart("chartPareto", {
+        type: "bar",
+        data: {
+          labels: ranked.map(b => b.name.length > 14 ? b.name.slice(0, 13) + "…" : b.name),
+          datasets: [
+            { label: "Sales", data: ranked.map(b => b.total), backgroundColor: brandCol(0.75), borderRadius: 4, yAxisID: "y" },
+            { label: "Cumulative %", type: "line", data: cumPct, borderColor: "#38bdf8", backgroundColor: "transparent", borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: "y2" },
+            { label: "80% threshold", type: "line", data: cumPct.map(() => 80), borderColor: "rgba(239,68,68,0.7)", borderWidth: 1.5, borderDash: [7, 5], pointRadius: 0, yAxisID: "y2" }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { boxWidth: 12, padding: 12 } },
+            tooltip: { callbacks: { label: (c) => c.dataset.yAxisID === "y2" ? ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%` : ` ${c.dataset.label}: KES ${formatFull(c.parsed.y)}` } }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { maxRotation: 60, minRotation: 40, font: { size: 9 } } },
+            y: { ...gridOpts, beginAtZero: true },
+            y2: { position: "right", min: 0, max: 100, grid: { display: false }, ticks: { callback: v => v + "%" } }
+          }
+        }
+      });
+    }
+
+    /* 4 — Achievement ranking (branches, or months for single branch) */
+    const achvTitle = document.getElementById("chartAchvTitle");
+    const achvSub = document.getElementById("chartSubAchv");
+    const barColor = v => v >= 80 ? "#22c55e" : v >= 50 ? "#facc15" : "#ef4444";
+    if (scope.single) {
+      achvTitle.textContent = "Monthly Achievement % — " + scope.label;
+      achvSub.textContent = "Sales vs target per month · green ≥ 80% · yellow ≥ 50% · red below";
+      const aData = target.map((t, i) => t > 0 ? (sales[i] / t) * 100 : 0);
+      makeChart("chartAchv", {
+        type: "bar",
+        data: { labels, datasets: [{ label: "Achievement %", data: aData, backgroundColor: aData.map(barColor), borderRadius: 5 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` Achievement: ${c.parsed.y.toFixed(1)}%` } } },
+          scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: "rgba(51,65,85,0.45)" }, ticks: { callback: v => v + "%" } } }
+        }
+      });
+    } else {
+      achvTitle.textContent = "Target Achievement by Branch";
+      achvSub.textContent = "Full period · green ≥ 80% · yellow ≥ 50% · red below 50%";
+      const withTarget = scope.branches.filter(b => {
+        let t = 0; monthKeys.forEach(mk => { const c = b.m.get(mk); if (c) t += c.target; });
+        return t > 0;
+      }).map(b => {
+        let t = 0, s = 0;
+        monthKeys.forEach(mk => { const c = b.m.get(mk); if (c) { t += c.target; s += c.sales; } });
+        return { name: b.name, pct: (s / t) * 100, sales: s };
+      }).sort((a, b) => b.pct - a.pct);
+      makeChart("chartAchv", {
+        type: "bar",
+        data: {
+          labels: withTarget.map(b => b.name.length > 16 ? b.name.slice(0, 15) + "…" : b.name),
+          datasets: [{ label: "Achievement %", data: withTarget.map(b => b.pct), backgroundColor: withTarget.map(b => barColor(b.pct)), borderRadius: 4 }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` Achievement: ${c.parsed.x.toFixed(1)}%` } } },
+          scales: {
+            x: { beginAtZero: true, grid: { color: "rgba(51,65,85,0.45)" }, ticks: { callback: v => v + "%" } },
+            y: { grid: { display: false }, ticks: { font: { size: 9 } } }
+          }
+        }
+      });
+    }
+
+    /* 5 — MoM growth % + selling days */
+    const growth = sales.map((v, i) => {
+      if (i === 0) return null;
+      const p = sales[i - 1];
+      return p > 0 ? ((v - p) / p) * 100 : null;
+    });
+    const growSub = document.getElementById("chartSubGrow");
+    growSub.textContent = (scope.single ? scope.label + " · " : "Company-wide · ") + "growth vs previous month · days on right axis" + mtdSuffix;
+    makeChart("chartGrow", {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          { label: "MoM growth %", data: growth, backgroundColor: growth.map(g => g === null ? "rgba(100,116,139,0.4)" : g >= 0 ? "rgba(34,197,94,0.8)" : "rgba(239,68,68,0.8)"), borderRadius: 5 },
+          { label: "Selling days", type: "line", data: days, borderColor: "#94a3b8", backgroundColor: "transparent", borderWidth: 2, borderDash: [4, 4], pointRadius: 2.5, tension: 0.3, yAxisID: "y2" }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { labels: { boxWidth: 12, padding: 12 } },
+          tooltip: { callbacks: { label: (c) => c.dataset.yAxisID === "y2" ? ` ${c.dataset.label}: ${c.parsed.y} days` : ` ${c.dataset.label}: ${c.parsed.y === null ? "—" : c.parsed.y.toFixed(1) + "%"}` } }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: "rgba(51,65,85,0.45)" }, ticks: { callback: v => v + "%" } },
+          y2: { position: "right", beginAtZero: true, grid: { display: false }, suggestedMax: 30 }
+        }
+      }
+    });
+
+    /* 6 — Sales mix doughnut — hidden for single-branch scope */
+    document.getElementById("cardMix").style.display = scope.single ? "none" : "";
+    if (!scope.single) {
+      const ranked = [...scope.branches].filter(b => b.total > 0).sort((a, b) => b.total - a.total);
+      const top8 = ranked.slice(0, 8);
+      const others = ranked.slice(8).reduce((s, b) => s + b.total, 0);
+      makeChart("chartMix", {
+        type: "doughnut",
+        data: {
+          labels: [...top8.map(b => b.name), "Others"],
+          datasets: [{
+            data: [...top8.map(b => b.total), others],
+            backgroundColor: [...CHART_COLORS().slice(0, 8), "#334155"],
+            borderColor: "#1e293b", borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: "58%",
+          plugins: {
+            legend: { position: "right", labels: { boxWidth: 10, padding: 10, font: { size: 10 } } },
+            tooltip: { callbacks: { label: (c) => ` ${c.label}: KES ${formatFull(c.parsed)} (${((c.parsed / ranked.reduce((s, b) => s + b.total, 0)) * 100).toFixed(1)}%)` } }
+          }
+        }
+      });
+    }
+
+    renderInsights(scope, series, idx);
+  }
+
+  /* ── Statistical insights ──────────────────────────────────
+     Statistics are computed over COMPLETE months only — the current
+     calendar month is month-to-date and would distort trend, volatility
+     and rankings. It is reported separately as an MTD bullet.
+     ────────────────────────────────────────────────────────── */
+  function renderInsights(scope, series, idx) {
+    const cmk = currentMonthKey();
+    const cIdx = idx.filter(i => monthKeys[i] < cmk);          // complete months
+    const mtdI = idx.indexOf(monthKeys.indexOf(cmk));          // position of current month in idx, -1 if absent
+    const sales = idx.map(i => series.sales[i]);
+    const target = idx.map(i => series.target[i]);
+    const totalSales = sales.reduce((a, b) => a + b, 0);
+    const totalTarget = target.reduce((a, b) => a + b, 0);
+    const n = idx.length;
+
+    // mini cards — based on complete months
+    const cSales = cIdx.map(i => series.sales[i]);
+    const cN = cSales.length;
+    const mean = cN ? cSales.reduce((a, b) => a + b, 0) / cN : 0;
+    document.getElementById("insAvg").textContent = cN ? "KES " + formatCompact(mean) : "—";
+    document.getElementById("insAvgSub").textContent = `over ${cN} complete month${cN === 1 ? "" : "s"}`;
+
+    let std = 0;
+    if (cN > 1) {
+      const variance = cSales.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / cN;
+      std = Math.sqrt(variance);
+    }
+    const cv = mean > 0 ? (std / mean) * 100 : 0;
+    const cvEl = document.getElementById("insCv");
+    cvEl.textContent = cN > 1 ? cv.toFixed(1) + "%" : "—";
+    cvEl.className = "stat-value " + (cv < 10 ? "perf-high" : cv < 20 ? "perf-medium" : "perf-low");
+    document.getElementById("insCvSub").textContent = cN > 1 ? `σ KES ${formatCompact(std)} around mean` : "need 2+ months";
+
+    const reg = linreg(cSales);
+    const trendEl = document.getElementById("insTrend");
+    if (reg) {
+      const dirTxt = reg.slope >= 0 ? "▲" : "▼";
+      trendEl.textContent = dirTxt + " " + (reg.slope >= 0 ? "Uptrend" : "Downtrend");
+      trendEl.className = "stat-value " + (reg.slope >= 0 ? "perf-high" : "perf-low");
+      document.getElementById("insTrendSub").textContent =
+        `${reg.slope >= 0 ? "+" : "−"}KES ${formatCompact(Math.abs(reg.slope))}/mo · R² ${reg.r2.toFixed(2)}`;
+    } else {
+      trendEl.textContent = "—";
+      document.getElementById("insTrendSub").textContent = "need 3+ months";
+    }
+
+    // Projection: if current month in progress → its full-month pace estimate;
+    // otherwise next month from the complete-month regression.
+    let proj = null, projLabel = "indicative";
+    if (mtdI >= 0) {
+      const mtdSales = series.sales[idx[mtdI]];
+      const mtdDays = series.days[idx[mtdI]];
+      const avgDays = cIdx.length ? cIdx.reduce((s, i) => s + series.days[i], 0) / cIdx.length : mtdDays;
+      if (mtdDays > 0 && avgDays > 0) {
+        proj = (mtdSales / mtdDays) * avgDays;
+        projLabel = monthLongLabel(monthKeys[idx[mtdI]]) + " full-month pace";
+      }
+    } else if (reg) {
+      proj = Math.max(0, reg.intercept + reg.slope * cN);
+      projLabel = monthLongLabel(nextMonthKey(idx)) + " · indicative";
+    }
+    document.getElementById("insProj").textContent = proj !== null ? "KES " + formatCompact(proj) : "—";
+    document.getElementById("insProjSub").textContent = proj !== null ? projLabel : "need 3+ months";
+
+    // bullets
+    const bullets = [];
+    const achv = totalTarget > 0 ? (totalSales / totalTarget) * 100 : 0;
+    bullets.push(`<b>Coverage:</b> ${scope.single ? "1 branch (" + scope.label + ")" : scope.branches.length + " branches"} · ${n} months of data (${idx.length ? monthLongLabel(monthKeys[idx[0]]) + " → " + monthLongLabel(monthKeys[idx[idx.length - 1]]) : "—"}) · <b>KES ${formatCompact(totalSales)}</b> vs KES ${formatCompact(totalTarget)} target (<span class="${achv >= 80 ? "up" : achv >= 50 ? "" : "down"}">${achv.toFixed(1)}%</span>). Statistics below use complete months only.`);
+
+    if (reg && cN >= 3) {
+      bullets.push(`<b>Trend (complete months):</b> monthly sales are in an ${reg.slope >= 0 ? "<span class='up'>uptrend</span>" : "<span class='down'>downtrend</span>"} of ${reg.slope >= 0 ? "+" : "−"}KES ${formatCompact(Math.abs(reg.slope))} per month (R² ${reg.r2.toFixed(2)} — ${reg.r2 >= 0.6 ? "strong" : reg.r2 >= 0.3 ? "moderate" : "weak"} fit).`);
+      if (mtdI >= 0 && proj !== null) {
+        const mtdSales = series.sales[idx[mtdI]];
+        const mtdDays = series.days[idx[mtdI]];
+        bullets.push(`<b>${monthLongLabel(monthKeys[idx[mtdI]])} (month-to-date):</b> KES ${formatCompact(mtdSales)} over ${mtdDays} selling day${mtdDays === 1 ? "" : "s"} → full-month pace ≈ <b>KES ${formatCompact(proj)}</b>${cN ? " vs KES " + formatCompact(Math.max(...cSales)) + " best complete month" : ""}.`);
+      } else if (proj !== null) {
+        bullets.push(`<b>Run-rate projection:</b> ${monthLongLabel(nextMonthKey(idx))} lands around <b>KES ${formatCompact(proj)}</b> if the current trajectory holds (indicative, not a target).`);
+      }
+    }
+
+    if (cN > 1) {
+      bullets.push(`<b>Volatility (complete months):</b> monthly swing is ${cv < 10 ? "LOW" : cv < 20 ? "MODERATE" : "HIGH"} (CV ${cv.toFixed(1)}%, σ KES ${formatCompact(std)} around a KES ${formatCompact(mean)} monthly mean) — ${cv < 10 ? "stable base to plan on" : cv < 20 ? "plan buffers around the mean" : "investigate drivers of month-to-month swings"}.`);
+    }
+
+    if (cN >= 2) {
+      let bestI = 0, worstI = 0;
+      cSales.forEach((v, i) => { if (v > cSales[bestI]) bestI = i; if (v < cSales[worstI]) worstI = i; });
+      bullets.push(`<b>Best month:</b> ${monthLongLabel(monthKeys[cIdx[bestI]])} at KES ${formatCompact(cSales[bestI])}; <b>weakest:</b> ${monthLongLabel(monthKeys[cIdx[worstI]])} at KES ${formatCompact(cSales[worstI])}${worstI === 0 ? " (first month of records)" : ""}. Current month excluded while in progress.`);
+      const lastC = cSales[cN - 1], prevC = cSales[cN - 2];
+      const momC = prevC > 0 ? ((lastC - prevC) / prevC) * 100 : null;
+      if (momC !== null) {
+        bullets.push(`<b>Last complete month (${monthLongLabel(monthKeys[cIdx[cN - 1]])}):</b> KES ${formatCompact(lastC)} — <span class="${momC >= 0 ? "up" : "down"}">${momC >= 0 ? "+" : ""}${momC.toFixed(1)}%</span> vs ${monthLongLabel(monthKeys[cIdx[cN - 2]])}.`);
+      }
+    }
+
+    if (!scope.single && totalSales > 0) {
+      const ranked = [...scope.branches].filter(b => b.total > 0).sort((a, b) => b.total - a.total);
+      const top3 = ranked.slice(0, 3).reduce((s, b) => s + b.total, 0);
+      let cum = 0, n80 = 0;
+      for (let i = 0; i < ranked.length; i++) { cum += ranked[i].total; if (cum / totalSales >= 0.8) { n80 = i + 1; break; } }
+      bullets.push(`<b>Concentration (80/20):</b> top 3 branches contribute <b>${((top3 / totalSales) * 100).toFixed(1)}%</b> of sales; ${n80} of ${ranked.length} branches generate 80% of revenue. Protect the ${n80} core accounts — the tail adds complexity for thin returns.`);
+
+      const withTarget = ranked.map(b => {
+        let t = 0, s = 0;
+        monthKeys.forEach(mk => { const c = b.m.get(mk); if (c) { t += c.target; s += c.sales; } });
+        return { name: b.name, pct: t > 0 ? (s / t) * 100 : 0 };
+      });
+      const hi = withTarget.filter(b => b.pct >= 80).length;
+      const lo = withTarget.filter(b => b.pct < 50).length;
+      bullets.push(`<b>Target delivery:</b> ${hi} branch${hi === 1 ? "" : "es"} at ≥80% achievement; ${lo} below 50% — those need root-cause review (stock availability, staffing, selling days) before target resets.`);
+
+      const avgDaysC = cIdx.length ? (cIdx.reduce((s, i) => s + series.days[i], 0) / cIdx.length) : 0;
+      bullets.push(`<b>Selling days:</b> network averaged <b>${avgDaysC.toFixed(1)} days/month</b> (complete months). Months with fewer selling days directly suppress sales — factor this into target setting and incentives.`);
+    }
+
+    const list = document.getElementById("insightList");
+    list.innerHTML = bullets.map(b => `<li>${b}</li>`).join("") || `<li>No data in current scope.</li>`;
+  }
+
+  function nextMonthKey(idx) {
+    const lastMk = monthKeys[idx[idx.length - 1]];
+    const [y, m] = lastMk.split("-").map(Number);
+    return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+  }
+
+  /* ── CSV export ──────────────────────────────────────────── */
+  function exportCSV() {
+    const scope = getScope();
+    const rows = sortRows(searchFiltered(scope.branches));
+    if (!rows.length) { showToast("Nothing to export — no rows in scope", "warn"); return; }
+
+    const esc = (v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const header = ["Branch", "Code"];
+    monthKeys.forEach(mk => { header.push(monthLongLabel(mk) + " Sales", monthLongLabel(mk) + " Days"); });
+    header.push("Total Sales", "Total Days");
+
+    const lines = [header.map(esc).join(",")];
+    rows.forEach(b => {
+      const row = [b.name, b.code];
+      monthKeys.forEach(mk => {
+        const c = b.m.get(mk);
+        row.push(c && c.days.size ? Math.round(c.sales) : "", c && c.days.size ? c.days.size : "");
+      });
+      row.push(Math.round(b.total), b.totalDays);
+      lines.push(row.map(esc).join(","));
+    });
+
+    // TOTAL row — same sums as the matrix footer
+    const totRow = ["TOTAL (" + rows.length + " branches)", ""];
+    monthKeys.forEach(mk => {
+      let s = 0, d = 0;
+      rows.forEach(b => { const c = b.m.get(mk); if (c && c.days.size) { s += c.sales; d += c.days.size; } });
+      totRow.push(Math.round(s), d);
+    });
+    totRow.push(Math.round(rows.reduce((s, b) => s + b.total, 0)), rows.reduce((s, b) => s + b.totalDays, 0));
+    lines.push(totRow.map(esc).join(","));
+
+    const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const d = new Date();
+    const fname = `${currentCompany}-branch-performance-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}.csv`;
+    if (window.saveAs) saveAs(blob, fname);
+    else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = fname;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    showToast(`Exported ${rows.length} branches × ${monthKeys.length} months`, "retry");
+  }
+
+  /* ── Branch selector ─────────────────────────────────────── */
+  function buildBranchSelect() {
+    const sel = document.getElementById("branchSelect");
+    const prev = sel.value;
+    sel.innerHTML = `<option value="">All Branches</option>`;
+    [...monthlyRows].sort((a, b) => a.name.localeCompare(b.name)).forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = b.key;
+      opt.textContent = b.name;
+      sel.appendChild(opt);
+    });
+    if (prev && monthlyRows.some(b => b.key === prev)) sel.value = prev;
+  }
+
+  /* ── Company switching ───────────────────────────────────── */
+  function switchCompany(key) {
+    if (currentCompany === key) return;
+    currentCompany = key;
+
+    document.body.classList.toggle("brand-beibora", key === "bei-bora");
+
+    const btnP = document.getElementById("btnPharma");
+    const btnB = document.getElementById("btnBeiBora");
+    btnP.classList.remove("active");
+    btnB.classList.remove("active");
+    const logo = document.getElementById("headerLogo");
+    if (key === "bei-bora") {
+      btnB.classList.add("active");
+      logo.textContent = "BB";
+      document.getElementById("headerTitle").textContent = "Branch Sales Trend Dashboard";
+      document.getElementById("headerSubtitle").textContent = "Bei Bora";
+    } else {
+      btnP.classList.add("active");
+      logo.textContent = "BP";
+      document.getElementById("headerTitle").textContent = "Branch Performance Dashboard";
+      document.getElementById("headerSubtitle").textContent = "Pharma — Monthly Sales Performance · January to Date";
+    }
+
+    // Both companies render the SAME dashboard — Bei Bora is live.
+    // The connect card (#beiboraView) only appears as a fallback when
+    // the Bei Bora probe fails inside loadAllData().
+
+    document.getElementById("branchSelect").value = "";
+    loadAllData();
+  }
+
+  /* ── Bei Bora connect card (fallback only) ─────────────── */
+  function showDashboardView() {
+    document.getElementById("pharmaView").style.display = "flex";
+    document.getElementById("beiboraView").style.display = "none";
+  }
+
+  function showConnectView() {
+    document.getElementById("pharmaView").style.display = "none";
+    document.getElementById("beiboraView").style.display = "flex";
+  }
+
+  function renderConnectCard(reason) {
+    showConnectView();
+    document.getElementById("matrixBody").innerHTML = "";
+    document.getElementById("matrixFoot").innerHTML = "";
+    setLoadingState(false);
+    showToast(reason || "Bei Bora data source not connected yet", "warn");
+  }
+
+  /* ── Main load ───────────────────────────────────────────── */
+  async function loadAllData() {
+    if (isLoading) return;
+    const signal = abortPreviousRequests();
+    setLoadingState(true);
+    const company = COMPANIES[currentCompany];
+
+    try {
+      if (currentCompany === "bei-bora") {
+        // probe: does the endpoint respond?
+        try {
+          const probeUrl = `${company.apiBase}${company.endpoint}?pageSize=1`;
+          await fetchWithRetry(probeUrl, { signal });
+          beiBoraProbe = { probedAt: Date.now(), ok: true };
+        } catch (err) {
+          if (err.name === "AbortError") throw err;
+          beiBoraProbe = { probedAt: Date.now(), ok: false };
+          renderConnectCard("Bei Bora endpoint not reachable (" + err.message + ") — showing connect card");
+          return;
+        }
+      }
+      showDashboardView();
+
+      rawRows = await fetchBranchReports(company.apiBase, signal);
+      if (signal.aborted) return;
+      monthlyRows = buildMonthly(rawRows);
+      lastDataFetchAt = new Date();
+
+      if (currentCompany === "bei-bora" && monthKeys.length) {
+        document.getElementById("headerSubtitle").textContent =
+          "Bei Bora — Monthly Sales Performance · " + monthLongLabel(monthKeys[0]) + " to Date";
+      }
+
+      buildBranchSelect();
+      renderKPIs();
+      renderMatrix();
+      renderAnalytics();
+
+      document.getElementById("lastUpdated").textContent = lastDataFetchAt.toLocaleTimeString();
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      console.error(err);
+      showToast("Failed to load data: " + err.message, "warn");
+    } finally {
+      if (!signal.aborted) setLoadingState(false);
+    }
+  }
+
+  function refreshFromCachedData() {
+    if (!monthlyRows.length) return;
+    renderKPIs();
+    renderMatrix();
+    renderAnalytics();
+  }
+
+  /* ── Events ──────────────────────────────────────────────── */
+  document.getElementById("branchSelect").addEventListener("change", () => {
+    currentSort = { key: "total", dir: "desc" };
+    refreshFromCachedData();
+  });
+
+  let searchDebounce = null;
+  document.getElementById("searchBox").addEventListener("input", () => {
+    if (searchDebounce) clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(renderMatrix, 150);
+  });
+
+  /* ── Initial load ────────────────────────────────────────── */
+  loadAllData();
+  setInterval(() => { if (!isLoading) loadAllData(); }, AUTO_REFRESH_MS);
+</script>
+
+</body>
+</html>
