@@ -1011,8 +1011,8 @@
      2. Calc. Target = static ratio × branch RAW target for the selected range
         (branch reports first; telesales reports as fallback when branch
         reports carry no target for the branch).
-     3. Any calculated target below KES 100,000 is overwritten with 100,000. */
-  const INDIVIDUAL_MIN_TARGET = 100000;
+     3. Any calculated target below KES 150,000 is overwritten with 150,000. */
+  const INDIVIDUAL_MIN_TARGET = 150000;
 
   function getLastMonthRange() {
     const today = getToday();
@@ -1408,7 +1408,7 @@
       if (deficit > 0) deficitHTML = `<span class="kes">KES</span> <span class="deficit-val">${formatValue(deficit)}</span>`;
       else if (deficit < 0) deficitHTML = `<span class="kes">KES</span> <span class="surplus-val">${formatValue(Math.abs(deficit))}</span>`;
       else deficitHTML = `<span class="surplus-val" style="color:#22c55e;">On Target</span>`;
-      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"${item.targetFloored ? ' title="Minimum target of KES 100,000 applied"' : ""}><span class="kes">KES</span> ${formatValue(target)}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
+      html += `<tr><td class="${rankClass}">${i + 1}</td><td class="sales-name">${item.salesPersonName}</td><td class="branch-cell">${item.branchName}</td><td class="value-cell"><span class="kes">KES</span> ${formatValue(histSales)}</td><td style="text-align:center;">${ratio.toFixed(1)}%</td><td style="text-align:center;"><span class="pct-badge ${pctClass}">${sales.toFixed(1)}%</span></td><td class="value-cell"><span class="kes">KES</span> ${formatValue(value)}</td><td class="value-cell"${item.targetFloored ? ' title="Minimum target of KES 150,000 applied"' : ""}><span class="kes">KES</span> ${formatValue(target)}</td><td class="deficit-cell">${deficitHTML}</td></tr>`;
     });
     tbody.innerHTML = html;
   }
