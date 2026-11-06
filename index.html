@@ -549,6 +549,9 @@
                 }
             }
 
+            // Holds the dashboard URL when a user clicks a protected card.
+            var pendingRedirect = null;
+
             // 3. The core function that checks the password
             function checkPassword() {
                 var password = passwordInput.value;
@@ -575,7 +578,7 @@
                     loginOverlay.classList.add('hidden'); // Hide overlay
 
                     // --- Check if user was redirected from a specific dashboard ---
-                    var redirectPath = urlParams.get('redirect');
+                    var redirectPath = pendingRedirect || urlParams.get('redirect');
 
                     if (redirectPath) {
                         // If they came from a dashboard, send them back to it immediately
@@ -597,10 +600,42 @@
                 }
             }
 
-            // 4. Listen for button click
+            // 4. Protect dashboard navigation from the Hub.
+            // If there is no valid 5-day session, keep the user on this page,
+            // display the password overlay, and redirect after successful login.
+            var dashboardCards = document.querySelectorAll('.dashboard-card');
+
+            dashboardCards.forEach(function(card) {
+                card.addEventListener('click', function(event) {
+                    var savedStamp = localStorage.getItem('authStamp');
+                    var savedLoginTime = parseInt(localStorage.getItem('loginTime') || '0', 10);
+                    var sessionIsValid =
+                        savedStamp === sessionStamp() &&
+                        savedLoginTime > 0 &&
+                        (Date.now() - savedLoginTime) < FIVE_DAYS_MS;
+
+                    if (sessionIsValid) {
+                        return; // Allow normal navigation for a valid session.
+                    }
+
+                    event.preventDefault();
+                    pendingRedirect = card.href;
+
+                    // Remove any expired/invalid session data.
+                    localStorage.removeItem('loginTime');
+                    localStorage.removeItem('authStamp');
+
+                    loginOverlay.classList.remove('hidden');
+                    passwordInput.value = '';
+                    errorMessage.classList.remove('show');
+                    passwordInput.focus();
+                });
+            });
+
+            // 5. Listen for button click
             loginBtn.addEventListener('click', checkPassword);
 
-            // 5. Listen for pressing the "Enter" key while inside the password box
+            // 6. Listen for pressing the "Enter" key while inside the password box
             passwordInput.addEventListener('keypress', function(event) {
                 if (event.key === "Enter") {
                     event.preventDefault(); // Prevent default browser behavior
