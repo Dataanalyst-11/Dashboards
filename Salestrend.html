@@ -244,26 +244,42 @@
     box-shadow: 0 14px 30px rgba(2, 6, 23, 0.6);
   }
 
-  /* ── Totals footer row (sticky bottom) ─────────────────── */
-  .matrix-table tfoot td {
-    position: sticky; bottom: 0; z-index: 4; background: #1b2740;
-    border-top: 2px solid var(--brand); text-align: right;
-    padding: 9px 12px; color: #f1f5f9; font-size: 12px;
+  /* ── Totals band — pinned directly under the column headers, BEFORE the branch
+     rows. Bold and unmistakable: brand-tinted gradient (Pharma gold / Bei Bora
+     green via var(--brand)), 4px brand borders, solid brand TOTAL badge. ── */
+  .matrix-table tbody.totals-tbody tr td {
+    position: sticky; top: var(--head-h, 45px); z-index: 4;
+    background-color: #1b2740;
+    background-image: linear-gradient(180deg, rgba(var(--brand-rgb), 0.34) 0%, rgba(var(--brand-rgb), 0.18) 100%);
+    border-top: 4px solid var(--brand); border-bottom: 4px solid var(--brand); text-align: right;
+    padding: 10px 12px; color: #ffffff; font-size: 12.5px; font-weight: 800;
     font-variant-numeric: tabular-nums; white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(2, 6, 23, 0.35);
   }
-  .matrix-table tfoot td.sticky-left { left: 0; z-index: 6; text-align: left; border-right: 1px solid #334155; }
-  .matrix-table tfoot td.sticky-right { right: 0; z-index: 6; border-left: 2px solid #334155; box-shadow: -8px 0 14px -8px rgba(0, 0, 0, 0.55); }
-  .matrix-table tfoot td.month-col { min-width: 120px; }
-  .matrix-table tfoot .foot-label { font-weight: 800; color: #f8fafc; font-size: 12.5px; letter-spacing: 1px; }
-  .matrix-table tfoot .foot-sub { display: block; font-size: 9.5px; color: #64748b; font-weight: 600; margin-top: 2px; letter-spacing: 0.4px; }
-  .matrix-table tfoot .cell-val { color: #f8fafc; font-weight: 800; }
-  .matrix-table tfoot .cell-val.up { color: #4ade80; }
-  .matrix-table tfoot .cell-val.down { color: #f87171; }
-  .matrix-table tfoot .cell-days { color: #64748b; }
-  .matrix-table tfoot .cell-val.no-activity { color: #475569; font-weight: 400; }
-  .matrix-table tfoot .total-val { font-size: 13px; }
-  .matrix-table tfoot .total-val.up { color: #4ade80; }
-  .matrix-table tfoot .total-val.down { color: #f87171; }
+  .matrix-table tbody.totals-tbody tr td.sticky-left { left: 0; z-index: 6; text-align: left; border-right: 3px solid var(--brand); }
+  .matrix-table tbody.totals-tbody tr td.sticky-right { right: 0; z-index: 6; border-left: 3px solid var(--brand); box-shadow: -10px 0 16px -8px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(2, 6, 23, 0.35); }
+  .matrix-table tbody.totals-tbody tr:hover td {
+    background-color: #1e2c4a;
+    background-image: linear-gradient(180deg, rgba(var(--brand-rgb), 0.40) 0%, rgba(var(--brand-rgb), 0.22) 100%);
+  }
+  .matrix-table tbody.totals-tbody td.month-col { min-width: 120px; }
+  .matrix-table tbody.totals-tbody .foot-label {
+    display: inline-block; font-weight: 900; font-size: 11px; letter-spacing: 1.4px;
+    color: var(--brand-ink); background: var(--brand);
+    padding: 3px 12px; border-radius: 7px; text-transform: uppercase;
+  }
+  .matrix-table tbody.totals-tbody .foot-sub { display: block; font-size: 9.5px; color: #cbd5e1; font-weight: 700; margin-top: 4px; letter-spacing: 0.4px; }
+  .matrix-table tbody.totals-tbody .cell-val { color: #ffffff; font-weight: 900; }
+  .matrix-table tbody.totals-tbody .cell-val.up { color: #4ade80; }
+  .matrix-table tbody.totals-tbody .cell-val.down { color: #f87171; }
+  .matrix-table tbody.totals-tbody .cell-days { color: #cbd5e1; font-weight: 600; }
+  .matrix-table tbody.totals-tbody .cell-val.no-activity { color: #94a3b8; font-weight: 700; }
+  .matrix-table tbody.totals-tbody .total-val { font-size: 13.5px; font-weight: 900; color: #ffffff; }
+  .matrix-table tbody.totals-tbody .total-val.up { color: #4ade80; }
+  .matrix-table tbody.totals-tbody .total-val.down { color: #f87171; }
+  /* inside the floating header bar the totals row sits in normal flow —
+     keep the left/right pinning but neutralise the vertical offset */
+  .matrix-float-head tbody.totals-tbody tr td { top: 0; }
 
   .no-data-row td { text-align: center; padding: 60px 20px; color: #475569; font-size: 15px; }
   .loading-row td { text-align: center; padding: 60px 20px; color: #64748b; font-size: 15px; }
@@ -428,13 +444,14 @@
     </div>
     <div class="matrix-note" id="matrixNote"><span class="note-ico">ⓘ</span><span id="matrixNoteText"></span></div>
     <div class="matrix-float-head" id="floatHead">
-      <table class="matrix-table"><thead><tr id="floatHeadRow"></tr></thead></table>
+      <table class="matrix-table"><thead><tr id="floatHeadRow"></tr></thead><tbody class="totals-tbody"><tr id="floatTotalsRow"></tr></tbody></table>
     </div>
     <div class="matrix-wrap" id="matrixWrap">
       <table class="matrix-table">
         <thead id="matrixHead">
           <tr id="matrixHeadRow"></tr>
         </thead>
+        <tbody id="matrixTotalsBody" class="totals-tbody"></tbody>
         <tbody id="matrixBody">
           <tr class="loading-row">
             <td colspan="13">
@@ -443,7 +460,6 @@
             </td>
           </tr>
         </tbody>
-        <tfoot id="matrixFoot"></tfoot>
       </table>
     </div>
   </div>
@@ -590,6 +606,7 @@
   let lastDataFetchAt = null;
   let beiBoraProbe = { probedAt: 0, ok: false };
   let firstDataDateKey = null;      // earliest "YYYY-MM-DD" with a record (for the note)
+  let networkFirstMk = null;        // earliest month ANY branch has data (onboarding baseline)
 
   /* ── Formatting helpers ──────────────────────────────────── */
   function toNumber(value) {
@@ -697,33 +714,86 @@
     else { overlay.classList.remove("active"); branchSel.disabled = (currentCompany === "bei-bora" && !beiBoraProbe.ok); }
   }
 
-  /* ── Aggregation: branch × month ─────────────────────────── */
+  /* ── Aggregation: branch × month ───────────────────────────
+     The MIS portal posts some rows WITHOUT orgBranchName (null) — real
+     sales sitting under a bare orgBranchCode. Keying by name alone used
+     to split those into phantom code-named rows with partial history
+     (KAWANGRTL2, SGIMARA, …). Nameless rows are now merged into the
+     named branch that owns the same orgBranchCode (date-span based when
+     one code maps to two names across a rebrand), so every branch
+     reports its COMPLETE history. ── */
   function buildMonthly(rows) {
-    const byBranch = new Map();
+    const byName = new Map();       // lowercase name → branch object
+    const codeOwners = new Map();   // code → Set of branch keys (named rows only)
     const now = new Date();
     const thisYear = now.getFullYear();
 
-    for (const r of rows) {
-      const dateKey = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
-      if (!dateKey) continue;
-      const name = String(r.orgBranchName || "").trim() || String(r.orgBranchCode || "").trim() || "Unknown";
-      const code = String(r.orgBranchCode || "").trim() || "";
+    const getBranch = (name) => {
       const k = name.toLowerCase();
-      if (!byBranch.has(k)) byBranch.set(k, { key: k, name, code, m: new Map() });
-      const b = byBranch.get(k);
+      if (!byName.has(k)) byName.set(k, { key: k, name, codes: new Map(), m: new Map(), spanStart: null, spanEnd: null });
+      return byName.get(k);
+    };
+    const addTo = (b, dateKey, r) => {
       const mk = dateKey.slice(0, 7);
       if (!b.m.has(mk)) b.m.set(mk, { sales: 0, target: 0, days: new Set() });
       const c = b.m.get(mk);
       c.sales += toNumber(r.netDailySales ?? r.netSales ?? r.dailyNetSales);
       c.target += toNumber(r.dailySalesTarget ?? r.salesTarget ?? r.target);
       c.days.add(dateKey);
+      if (!b.spanStart || dateKey < b.spanStart) b.spanStart = dateKey;
+      if (!b.spanEnd || dateKey > b.spanEnd) b.spanEnd = dateKey;
+    };
+
+    // pass 1 — rows that carry a branch name
+    for (const r of rows) {
+      const dateKey = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
+      if (!dateKey) continue;
+      const name = String(r.orgBranchName || "").trim();
+      if (!name) continue;                       // handled in pass 2
+      const code = String(r.orgBranchCode || "").trim();
+      const b = getBranch(name);
+      if (code) {
+        b.codes.set(code, (b.codes.get(code) || 0) + 1);
+        if (!codeOwners.has(code)) codeOwners.set(code, new Set());
+        codeOwners.get(code).add(b.key);
+      }
+      addTo(b, dateKey, r);
+    }
+
+    // pass 2 — nameless rows: attach to the named branch owning the code
+    for (const r of rows) {
+      const dateKey = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
+      if (!dateKey) continue;
+      if (String(r.orgBranchName || "").trim()) continue;
+      const code = String(r.orgBranchCode || "").trim();
+      if (!code) continue;
+      const owners = [...(codeOwners.get(code) || [])];
+      let b = null;
+      if (owners.length === 1) {
+        b = byName.get(owners[0]);
+      } else if (owners.length > 1) {
+        // code shared by 2+ names over time (rebrand) → the branch whose
+        // named date-span covers the row, else the nearest span
+        const t = Date.parse(dateKey);
+        let bestDist = Infinity;
+        for (const k of owners) {
+          const c = byName.get(k);
+          const a = c.spanStart ? Date.parse(c.spanStart) : NaN;
+          const z = c.spanEnd ? Date.parse(c.spanEnd) : NaN;
+          const covers = !Number.isNaN(a) && !Number.isNaN(z) && t >= a && t <= z;
+          const dist = covers ? -1 : Math.min(Math.abs(t - a), Math.abs(t - z)) / 86400000;
+          if (dist < bestDist) { bestDist = dist; b = c; }
+        }
+      }
+      if (!b) b = getBranch(code);   // no named owner → stands alone under its code
+      addTo(b, dateKey, r);
     }
 
     // Month axis: Pharma runs January → date (months before records show "—");
     // Bei Bora starts at the first month the API actually has ("data-start").
     // Either way the axis auto-expands into 2027+ as new months arrive.
     let firstMk = null;
-    for (const b of byBranch.values()) {
+    for (const b of byName.values()) {
       for (const mk of b.m.keys()) {
         if (!firstMk || mk < firstMk) firstMk = mk;
       }
@@ -742,22 +812,33 @@
     firstDataMonthKey = null;
     firstDataDateKey = null;
     const out = [];
-    for (const b of byBranch.values()) {
-      let total = 0, totalDays = 0;
+    for (const b of byName.values()) {
+      let total = 0, totalDays = 0, firstMk = null, anyTarget = 0;
       for (const mk of monthKeys) {
         const c = b.m.get(mk);
         if (!c) continue;
-        total += c.sales;
-        totalDays += c.days.size;
-        if (c.days.size > 0 && (!firstDataMonthKey || mk < firstDataMonthKey)) firstDataMonthKey = mk;
+        anyTarget += c.target;
+        if (c.days.size > 0) {
+          total += c.sales;
+          totalDays += c.days.size;
+          if (!firstMk) firstMk = mk;
+          if (!firstDataMonthKey || mk < firstDataMonthKey) firstDataMonthKey = mk;
+        }
       }
-      out.push({ key: b.key, name: b.name, code: b.code, m: b.m, total, totalDays });
+      if (!total && !anyTarget) continue;   // drop empty placeholders (e.g. bare code, zero sales)
+      let dispCode = "", maxN = 0;
+      for (const [cd, n] of b.codes) { if (n > maxN) { maxN = n; dispCode = cd; } }
+      out.push({ key: b.key, name: b.name, code: dispCode, m: b.m, total, totalDays, firstMk });
     }
     // earliest full date with a record (for the "records begin" note)
     for (const r of rows) {
       const dk = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
       if (dk && (!firstDataDateKey || dk < firstDataDateKey)) firstDataDateKey = dk;
     }
+    // network onboarding baseline — the earliest month ANY branch has data;
+    // branches starting later get a small "data from …" tag in the matrix
+    networkFirstMk = null;
+    for (const b of out) { if (b.firstMk && (!networkFirstMk || b.firstMk < networkFirstMk)) networkFirstMk = b.firstMk; }
     out.sort((a, b) => b.total - a.total);
     return out;
   }
@@ -881,6 +962,15 @@
     return `M0,${yL.toFixed(1)} C25,${yL.toFixed(1)} 25,${y.toFixed(1)} 50,${y.toFixed(1)} C75,${y.toFixed(1)} 75,${yR.toFixed(1)} 100,${yR.toFixed(1)}`;
   }
 
+  function syncHeadHeight() {
+    // the totals row sticks directly UNDER the header row, so it needs the
+    // exact rendered header height as its sticky top offset
+    const wrap = document.getElementById("matrixWrap");
+    const head = document.getElementById("matrixHead");
+    if (!wrap || !head) return;
+    wrap.style.setProperty("--head-h", Math.ceil(head.getBoundingClientRect().height) + "px");
+  }
+
   function renderMatrix() {
     const scope = getScope();
     const rows = sortRows(searchFiltered(scope.branches));
@@ -897,9 +987,11 @@
     hh += `<th class="sortable sticky-right total-col" data-sort="total">Total <span class="sort-icon">▲</span></th>`;
     thead.innerHTML = hh;
     updateSortHeaders();
+    syncHeadHeight();
 
     if (!rows.length) {
       tbody.innerHTML = `<tr class="no-data-row"><td colspan="${monthKeys.length + 2}">No branch data found for the current filter</td></tr>`;
+      renderMatrixFoot(rows);
       renderMatrixNote();
       buildFloatHeader();
       syncFloatHeader();
@@ -920,7 +1012,12 @@
         yMap = v => 58 + (1 - (v - min) / span) * 36;   // consistent band in the lower part of the cell, like the row-trend reference
       }
 
-      let rowHtml = `<td class="sticky-left"><div class="branch-name">${escapeHtml(b.name)}</div>${b.code && b.code.toLowerCase() !== b.name.toLowerCase() ? `<div class="branch-code">${escapeHtml(b.code)}</div>` : ""}</td>`;
+      const meta = [];
+      if (b.code && b.code.toLowerCase() !== b.name.toLowerCase()) meta.push(escapeHtml(b.code));
+      if (b.firstMk && networkFirstMk && b.firstMk > networkFirstMk) meta.push(`data from ${monthLabel(b.firstMk)}`);
+      const metaTitle = (b.firstMk && networkFirstMk && b.firstMk > networkFirstMk)
+        ? ` title="Branch onboarded to the portal later — records begin ${monthLongLabel(b.firstMk)}; earlier months have no data to pull"` : "";
+      let rowHtml = `<td class="sticky-left"><div class="branch-name">${escapeHtml(b.name)}</div>${meta.length ? `<div class="branch-code"${metaTitle}>${meta.join(" · ")}</div>` : ""}</td>`;
 
       let prevVal = null;
       monthKeys.forEach((mk, i) => {
@@ -945,16 +1042,16 @@
     syncFloatHeader();
   }
 
-  /* ── Totals footer — sum of every visible branch per column ── */
+  /* ── Totals row — sum of every visible branch per column,
+     rendered immediately after the headers, before the branch rows ── */
   function renderMatrixFoot(rows) {
-    const foot = document.getElementById("matrixFoot");
+    const foot = document.getElementById("matrixTotalsBody");
     if (!rows.length) { foot.innerHTML = ""; return; }
 
     const values = monthKeys.map(mk => rows.reduce((s, b) => { const c = b.m.get(mk); return s + (c && c.days.size ? c.sales : 0); }, 0));
     const hasData = monthKeys.map(mk => rows.some(b => { const c = b.m.get(mk); return c && c.days.size > 0; }));
-    const daysN = monthKeys.map(mk => rows.reduce((s, b) => { const c = b.m.get(mk); return s + (c ? c.days.size : 0); }, 0));
     const grand = rows.reduce((s, b) => s + b.total, 0);
-    const grandDays = rows.reduce((s, b) => s + b.totalDays, 0);
+    // NOTE: totals row carries SALES ONLY — no days worked (management request)
 
     let yMap = null;
     const valid = values.filter((v, i) => hasData[i]);
@@ -964,19 +1061,19 @@
       yMap = v => 58 + (1 - (v - min) / span) * 36;   // same trend band as the branch rows
     }
 
-    let html = `<td class="sticky-left"><span class="foot-label">TOTAL</span><span class="foot-sub">${rows.length} ${rows.length === 1 ? "branch" : "branches"}</span></td>`;
+    let html = `<td class="sticky-left"><span class="foot-label">Σ TOTAL</span><span class="foot-sub">${rows.length} ${rows.length === 1 ? "branch" : "branches"}</span></td>`;
 
     let prevVal = null;
     monthKeys.forEach((mk, i) => {
       if (!hasData[i]) {
-        html += `<td class="month-cell month-col"><div class="cell-val no-activity">—</div><div class="cell-days">&nbsp;</div></td>`;
+        html += `<td class="month-cell month-col"><div class="cell-val no-activity">—</div></td>`;
         prevVal = values[i];
         return;
       }
       let cls = "";
       if (prevVal !== null && prevVal > 0) cls = values[i] >= prevVal ? "up" : "down";
       const spark = yMap ? `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${trendCellPath(values, i, yMap)}" fill="none" stroke="rgba(96,165,250,0.65)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>` : "";
-      html += `<td class="month-cell month-col">${spark}<div class="cell-val ${cls}">${formatFull(values[i])}</div><div class="cell-days">Σ ${daysN[i]} day${daysN[i] === 1 ? "" : "s"}</div></td>`;
+      html += `<td class="month-cell month-col">${spark}<div class="cell-val ${cls}">${formatFull(values[i])}</div></td>`;
       prevVal = values[i];
     });
 
@@ -986,7 +1083,7 @@
     let gCls = "";
     if (lastIdx >= 0 && prevIdx >= 0 && values[prevIdx] > 0) gCls = values[lastIdx] >= values[prevIdx] ? "up" : "down";
 
-    html += `<td class="sticky-right"><div class="total-val ${gCls}">${formatFull(grand)}</div><div class="total-days">Σ ${grandDays} days</div></td>`;
+    html += `<td class="sticky-right"><div class="total-val ${gCls}">${formatFull(grand)}</div></td>`;
     foot.innerHTML = `<tr>${html}</tr>`;
   }
 
@@ -1050,6 +1147,8 @@
   function buildFloatHeader() {
     const realRow = document.getElementById("matrixHeadRow");
     const fRow = document.getElementById("floatHeadRow");
+    const realTot = document.querySelector("#matrixTotalsBody tr");
+    const fTot = document.getElementById("floatTotalsRow");
     if (!realRow || !fRow) return;
     fRow.innerHTML = "";
     realRow.querySelectorAll("th").forEach(th => {
@@ -1057,6 +1156,16 @@
       clone.style.width = th.getBoundingClientRect().width + "px";   // exact column match
       fRow.appendChild(clone);
     });
+    if (fTot) {
+      fTot.innerHTML = "";
+      if (realTot) {
+        realTot.querySelectorAll("td").forEach(td => {
+          const clone = td.cloneNode(true);
+          clone.style.width = td.getBoundingClientRect().width + "px";   // exact column match
+          fTot.appendChild(clone);
+        });
+      }
+    }
   }
 
   function syncFloatHeader() {
@@ -1067,9 +1176,11 @@
     const headerH = document.querySelector("header").offsetHeight;
     const rect = wrap.getBoundingClientRect();
     const theadH = document.getElementById("matrixHead").offsetHeight;
+    const totalsBody = document.getElementById("matrixTotalsBody");
+    const totalsH = totalsBody ? totalsBody.offsetHeight : 0;
     // show only when the page scroll has pushed the real header under the page header,
     // and hide again once the matrix has fully scrolled past
-    const show = rect.top < headerH - 1 && rect.bottom > headerH + theadH + 4;
+    const show = rect.top < headerH - 1 && rect.bottom > headerH + theadH + totalsH + 4;
     if (!show) { fh.style.display = "none"; return; }
     fh.style.display = "block";
     fh.style.top = headerH + "px";
@@ -1506,6 +1617,17 @@
     header.push("Total Sales", "Total Days");
 
     const lines = [header.map(esc).join(",")];
+
+    // TOTAL row — sales only, mirroring the on-screen totals band (no days)
+    const totRow = ["TOTAL (" + rows.length + " branches)", ""];
+    monthKeys.forEach(mk => {
+      let s = 0;
+      rows.forEach(b => { const c = b.m.get(mk); if (c && c.days.size) s += c.sales; });
+      totRow.push(Math.round(s), "");
+    });
+    totRow.push(Math.round(rows.reduce((s, b) => s + b.total, 0)), "");
+    lines.push(totRow.map(esc).join(","));
+
     rows.forEach(b => {
       const row = [b.name, b.code];
       monthKeys.forEach(mk => {
@@ -1515,16 +1637,6 @@
       row.push(Math.round(b.total), b.totalDays);
       lines.push(row.map(esc).join(","));
     });
-
-    // TOTAL row — same sums as the matrix footer
-    const totRow = ["TOTAL (" + rows.length + " branches)", ""];
-    monthKeys.forEach(mk => {
-      let s = 0, d = 0;
-      rows.forEach(b => { const c = b.m.get(mk); if (c && c.days.size) { s += c.sales; d += c.days.size; } });
-      totRow.push(Math.round(s), d);
-    });
-    totRow.push(Math.round(rows.reduce((s, b) => s + b.total, 0)), rows.reduce((s, b) => s + b.totalDays, 0));
-    lines.push(totRow.map(esc).join(","));
 
     const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
     const d = new Date();
@@ -1600,7 +1712,7 @@
   function renderConnectCard(reason) {
     showConnectView();
     document.getElementById("matrixBody").innerHTML = "";
-    document.getElementById("matrixFoot").innerHTML = "";
+    document.getElementById("matrixTotalsBody").innerHTML = "";
     setLoadingState(false);
     showToast(reason || "Bei Bora data source not connected yet", "warn");
   }
