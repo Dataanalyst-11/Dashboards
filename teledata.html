@@ -1479,9 +1479,9 @@
     const withData = branches.filter(b => b.hasData);
     const totalNet = withData.reduce((s, b) => s + b.netSales, 0);
     const totalEffectiveTarget = withData.reduce((s, b) => s + b.effectiveTarget, 0);
-    const totalBaseTarget = withData.reduce((s, b) => s + b.baseTarget, 0);
+    const totalOriginalApiTarget = withData.reduce((s, b) => s + b.originalApiTarget, 0);
     const overallPct = totalEffectiveTarget > 0 ? (totalNet / totalEffectiveTarget) * 100 : 0;
-    const overallRawPct = totalBaseTarget > 0 ? (totalNet / totalBaseTarget) * 100 : 0;
+    const overallRawPct = totalOriginalApiTarget > 0 ? (totalNet / totalOriginalApiTarget) * 100 : 0;
     const onTrack = withData.filter(b => b.pct >= 80).length;
     const overallClass = overallPct >= 80 ? "perf-high" : overallPct >= 50 ? "perf-medium" : "perf-low";
     const groupLabel = currentBranchGroup === "retail" ? "Retail" : currentBranchGroup === "semi" ? "Semi Wholesale" : "Wholesale";
@@ -1495,7 +1495,7 @@
     const rawPerfClass = overallRawPct >= 80 ? "perf-high" : overallRawPct >= 50 ? "perf-medium" : "perf-low";
     document.getElementById("bsRawPerf").textContent = overallRawPct.toFixed(1) + "%";
     document.getElementById("bsRawPerf").className = "stat-value " + rawPerfClass;
-    document.getElementById("bsRawPerfSub").textContent = `${groupLabel} branches against base targets`;
+    document.getElementById("bsRawPerfSub").textContent = `${groupLabel} branches against raw API targets`;
 
     let html = "";
     if (branches.length === 0) html = `<div class="no-branch-data">No ${groupLabel.toLowerCase()} branches found</div>`;
