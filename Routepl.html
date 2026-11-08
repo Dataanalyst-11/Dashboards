@@ -148,6 +148,11 @@ footer span.highlight { color: #ba9305; font-weight: 600; }
         <option value="">All Branches</option>
       </select>
     </div>
+    <div class="filter-select">
+      <select id="spSelect">
+        <option value="">All Sales Persons</option>
+      </select>
+    </div>
   </div>
 </header>
 <div class="stats-row">
@@ -216,6 +221,43 @@ footer span.highlight { color: #ba9305; font-weight: 600; }
   Replace the object below with your full master template.
   Ensure the format is exactly: "ROUTE_NAME": ["MAIN_ROUTE", "SALES_PERSON", "BRANCH_CODE"]
 */
+const masterTemplate = {
+  "TAVETA": ["TAVETA", "NO FCRO", "VOI"],
+  "MWATATE": ["MWATATE", "NO FCRO", "VOI"],
+  "NJUKINI": ["TAVETA", "NO FCRO", "VOI"],
+  "VOI CBD": ["VOI", "CECILIA KIOKO", "VOI"],
+  "MACKINON": ["VOI", "CECILIA KIOKO", "VOI"],
+  "SAMBURU": ["SAMBURU", "CECILIA KIOKO", "VOI"],
+  "JOGOO ROAD": ["Jogoo Road", "VIVIAN ACHIENG", "HEAD OFFICE"],
+  "UMOJA": ["UMOJA", "TRACY AWITI", "HEAD OFFICE"],
+  "KIMILILI": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "BUNGOMA CBD": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "THIKA": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "KENOL": ["THIKA/KENOL ROUTE", "LINET MORAA", "THIKA"]
+  /* ... CONTINUE YOUR FULL MASTER TEMPLATE HERE (all remaining routes) ... */
+};
+
+// Keep ORIGINAL_TEMPLATE untouched so overrides always know the source values.
+const ORIGINAL_TEMPLATE = JSON.parse(JSON.stringify(masterTemplate));
+
+// Override compatibility: if you manage overrides in the daily Routewise dashboard
+// (localStorage key "routeOverrides"), they are applied here automatically so the
+// monthly view always matches your current route assignments.
+(function applyStoredOverrides() {
+  let routeOverrides = {};
+  try { routeOverrides = JSON.parse(localStorage.getItem('routeOverrides') || '{}'); } catch (e) {}
+  let applied = 0;
+  for (const route in routeOverrides) {
+    if (!ORIGINAL_TEMPLATE[route]) continue;
+    const ov = routeOverrides[route];
+    if (ov.mainRoute && ov.mainRoute.override) { masterTemplate[route][0] = ov.mainRoute.override; applied++; }
+    if (ov.sp && ov.sp.override) { masterTemplate[route][1] = ov.sp.override; applied++; }
+    if (ov.branch && ov.branch.override) { masterTemplate[route][2] = ov.branch.override; applied++; }
+  }
+  if (applied > 0) console.log(`[Overrides] Applied ${applied} field override(s) from localStorage.`);
+})();
+
+// Branch ID reference (used only as fallback labels for API rows that don't match the template).
 const masterTemplate = {
   "TAVETA": ["TAVETA", "NO FCRO", "VOI"],
   "MWATATE": ["MWATATE", "NO FCRO", "VOI"],
@@ -1528,60 +1570,6 @@ const masterTemplate = {
   "GACHARAGE": ["WEITEITHIE ROUTE", "LINET MORAA", "THIKA"]
 };
 
-// Keep ORIGINAL_TEMPLATE untouched so overrides always know the source values.
-const ORIGINAL_TEMPLATE = JSON.parse(JSON.stringify(masterTemplate));
-
-// Override compatibility: if you manage overrides in the daily Routewise dashboard
-// (localStorage key "routeOverrides"), they are applied here automatically so the
-// monthly view always matches your current route assignments.
-(function applyStoredOverrides() {
-  let routeOverrides = {};
-  try { routeOverrides = JSON.parse(localStorage.getItem('routeOverrides') || '{}'); } catch (e) {}
-  let applied = 0;
-  for (const route in routeOverrides) {
-    if (!ORIGINAL_TEMPLATE[route]) continue;
-    const ov = routeOverrides[route];
-    if (ov.mainRoute && ov.mainRoute.override) { masterTemplate[route][0] = ov.mainRoute.override; applied++; }
-    if (ov.sp && ov.sp.override) { masterTemplate[route][1] = ov.sp.override; applied++; }
-    if (ov.branch && ov.branch.override) { masterTemplate[route][2] = ov.branch.override; applied++; }
-  }
-  if (applied > 0) console.log(`[Overrides] Applied ${applied} field override(s) from localStorage.`);
-})();
-
-// Branch ID reference (used only as fallback labels for API rows that don't match the template).
-const branchNames = {
-  "orgbranch-683976e3994a072a600cbd7a": "Head Office",
-  "orgbranch-684558f576bd774c32f00d8e": "Naivasha",
-  "orgbranch-68455bea76bd774c32f031cc": "Kitengela",
-  "orgbranch-68458a4b76bd774c32f10527": "Githurai",
-  "orgbranch-684593b176bd774c32f150c6": "Kawangware Wholesale",
-  "orgbranch-685001107d3c6f75c8c1d42e": "Karatina",
-  "orgbranch-685001217d3c6f75c8c1d491": "Meru",
-  "orgbranch-6850012f7d3c6f75c8c1d557": "Busia",
-  "orgbranch-685001387d3c6f75c8c1d557": "Mombasa Wholesale",
-  "orgbranch-685001457d3c6f75c8c1d5ba": "Kisii",
-  "orgbranch-685001557d3c6f75c8c1d61d": "Philton",
-  "orgbranch-6850015d7d3c6f75c8c1d680": "Kitui Wholesale",
-  "orgbranch-685001667d3c6f75c8c1d6e3": "Philmed Malindi",
-  "orgbranch-685001967d3c6f75c8c1d746": "Kericho",
-  "orgbranch-6850019e7d6f75c8c1d7a9": "Nakuru",
-  "orgbranch-685001a77d3c6f75c8c1d80c": "Kisumu",
-  "orgbranch-685001b17d3c6f75c8c1d86f": "Philmed Eldoret",
-  "orgbranch-685001c17d3c6f75c8c1d8d2": "Philmed Thika",
-  "orgbranch-685001ce7d3c6f75c8c1d935": "Voi Branch",
-  "orgbranch-685001e27d3c6f75c8c1d998": "Kendia",
-  "orgbranch-685001f37d3c6f75c8c1d9fb": "Kakamega",
-  "orgbranch-685001ff7d3c6f75c8c1da5e": "Bungoma",
-  "orgbranch-685002097d3c6f75c8c1dac1": "Makindu",
-  "orgbranch-685002137d3c6f75c8c1db4f": "Rongai Wholesale",
-  "orgbranch-685002247d3c6f75c8c1dc25": "Embu",
-  "orgbranch-69df9dc58418a65253e015a6": "Arms Narok Wholesale",
-  "orgbranch-69f7511b83ba28b7dda7ccd1": "Ol Kalou",
-  "orgbranch-6a14177260c3a453acb56ceb": "Nanyuki",
-  "orgbranch-6a8c509e44cec8b9b30ec559": "Wote",
-  "orgbranch-6a840bfb1936a960f8ec3e7a": "Migori"
-};
-
 const MONTH_LABELS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const AUTO_REFRESH_MS = 600000, PAGE_SIZE = 100000, CHUNK_DAYS = 15, FETCH_CONCURRENCY = 3;
@@ -1590,6 +1578,9 @@ const MAX_LOOKBACK_MONTHS = 72, EMPTY_STOP = 3, ROLLOVER_CHECK_MS = 60000;
 const S = {
   yearFilter: "all",
   branch: "",
+  branchLabel: "",
+  sp: "",
+  spLabel: "",
   search: "",
   sort: { key: "avg", dir: "desc" },
   routes: [],
@@ -1597,7 +1588,8 @@ const S = {
   emptyMonths: new Set(),     // "YYYY-MM" keys probed but empty (no rows on the portal)
   loading: false,
   abort: null,
-  matrix: []                  // routes with cellMap keyed by "YYYY-MM"
+  matrix: [],                 // routes passing the filters (cellMap keyed by "YYYY-MM")
+  matrixAll: []               // every built route, unfiltered — feeds the dropdowns
 };
 
 const $ = id => document.getElementById(id);
@@ -1615,6 +1607,8 @@ const parseDate = v => {
 };
 const norm = n => String(n || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 const normBranch = name => String(name || "").toUpperCase().replace(/BRANCH|WHOLESALE|PHILMED|ARMS/g, "").trim();
+const spKey = s => String(s || "").toUpperCase().replace(/\s+/g, " ").trim();
+const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const getWorkingDaysExcludingSaturday = (s, e) => {
   let count = 0;
   const start = new Date(s + "T00:00:00"), end = new Date(e + "T00:00:00");
@@ -1667,7 +1661,7 @@ const setLoading = (loading, silent = false) => {
   S.loading = loading;
   if (silent) return;
   const ov = $("headerLoading");
-  ["yearSelect", "branchSelect"].forEach(id => $(id).disabled = loading);
+  ["yearSelect", "branchSelect", "spSelect"].forEach(id => $(id).disabled = loading);
   ov.classList.toggle("active", loading);
 };
 
@@ -1902,13 +1896,13 @@ function buildMatrix() {
     return { routeName: g.routeName, mainRoute: g.mainRoute, sp: g.sp, branch: g.branch, cellMap: g.cellMap };
   });
 
-  if (S.branch) {
-    const nb = normBranch(S.branch);
-    matrix = matrix.filter(r => normBranch(r.branch) === nb);
-  }
-
   matrix.sort((a, b) => a.routeName.localeCompare(b.routeName));
-  S.matrix = matrix;
+  S.matrixAll = matrix; // unfiltered — feeds the Branch / Sales Person dropdowns
+  // Filters act on the body data: only routes aligned to the selected branch / sales person pass.
+  S.matrix = matrix.filter(r =>
+    (!S.branch || normBranch(r.branch) === S.branch) &&
+    (!S.sp || spKey(r.sp) === S.sp)
+  );
 }
 
 // Weighted percentage for a set of rows on one month key (net ÷ target — never money displayed).
@@ -1980,11 +1974,17 @@ function spSubtotalRowHTML(sp, rows, months) {
   </tr>`;
 }
 
+// Scope line for the stats card / company row — reflects the active filters.
+const scopeNoteText = () => {
+  const bits = [S.branchLabel, S.spLabel].filter(Boolean).map(esc);
+  return bits.length ? bits.join(" · ") : "all sales persons";
+};
+
 function companyRowHTML(rows, months) {
   let cells = "";
   months.forEach(k => { cells += `<td${isFutureMonth(k) ? ` class="future-cell"` : ""}>${badgeHTML(weightedPctKey(rows, k))}</td>`; });
   return `<tr class="company-row">
-    <td class="rowhead"><span class="sub-label">COMPANY AVG</span><span class="sub-note">all sales persons &amp; branches</span></td>
+    <td class="rowhead"><span class="sub-label">COMPANY AVG</span><span class="sub-note">${scopeNoteText().replace("all sales persons", "all sales persons &amp; branches")}</span></td>
     <td class="cell-main"></td><td class="cell-sp"></td>
     ${cells}
     <td class="avg-cell">${badgeHTML(weightedAvgKeys(rows, months))}</td>
@@ -2030,11 +2030,11 @@ function renderStats(routes, months) {
   const onTrack = withAvg.filter(r => r.avgVis >= 80).length;
 
   const overallEl = $("statOverall");
-  if (overall == null) { overallEl.textContent = "—"; overallEl.className = "stat-value"; $("statOverallSub").textContent = "no data loaded yet"; }
+  if (overall == null) { overallEl.textContent = "—"; overallEl.className = "stat-value"; $("statOverallSub").textContent = (S.branch || S.sp) ? "no routes match the active filters" : "no data loaded yet"; }
   else {
     overallEl.textContent = overall.toFixed(1) + "%";
     overallEl.className = "stat-value " + (overall >= 80 ? "perf-high" : overall >= 50 ? "perf-medium" : "perf-low");
-    $("statOverallSub").textContent = months.length ? `all sales persons · ${keyLabel(months[0])} – ${keyLabel(months[months.length - 1])}` : "all sales persons · all loaded months";
+    $("statOverallSub").textContent = months.length ? `${scopeNoteText()} · ${keyLabel(months[0])} – ${keyLabel(months[months.length - 1])}` : `${scopeNoteText()} · all loaded months`;
   }
 
   const maEl = $("statMonthlyAvg");
@@ -2089,15 +2089,16 @@ function renderTable() {
   let visible = routes;
   if (q) visible = visible.filter(r => r.routeName.toLowerCase().includes(q) || (r.sp || "").toLowerCase().includes(q) || (r.branch || "").toLowerCase().includes(q) || (r.mainRoute || "").toLowerCase().includes(q));
 
-  // Branch → Sales Person → routes
+  // Branch → Sales Person → routes. Keys are normalized so the filter dropdowns and the
+  // body grouping always agree (e.g. "Voi Branch" and "VOI" collapse into one group).
   const byBranch = new Map();
   visible.forEach(r => {
-    const b = r.branch || "Unassigned Branch";
-    if (!byBranch.has(b)) byBranch.set(b, new Map());
-    const spMap = byBranch.get(b);
-    const sp = r.sp || "Unassigned";
-    if (!spMap.has(sp)) spMap.set(sp, []);
-    spMap.get(sp).push(r);
+    const bk = normBranch(r.branch) || "UNASSIGNED";
+    if (!byBranch.has(bk)) byBranch.set(bk, { label: r.branch || "Unassigned Branch", spMap: new Map() });
+    const bg = byBranch.get(bk);
+    const sk = spKey(r.sp) || "UNASSIGNED";
+    if (!bg.spMap.has(sk)) bg.spMap.set(sk, { label: r.sp || "Unassigned", rows: [] });
+    bg.spMap.get(sk).rows.push(r);
   });
 
   const { key, dir } = S.sort;
@@ -2108,41 +2109,73 @@ function renderTable() {
     if (key.startsWith("m:")) { const v = weightedPctKey(rows, key.slice(2)); return v == null ? nullLast : v; }
     return null;
   };
-  const branches = [...byBranch.keys()].sort((a, b) => {
-    if (key === "name") return dir === "asc" ? a.localeCompare(b) : -a.localeCompare(b);
-    const va = groupVal([...byBranch.get(a).values()].flat()), vb = groupVal([...byBranch.get(b).values()].flat());
+  const branchRows = bk => { let a = []; byBranch.get(bk).spMap.forEach(g => { a = a.concat(g.rows); }); return a; };
+  const branchKeys = [...byBranch.keys()].sort((a, b) => {
+    if (key === "name") return dir === "asc" ? byBranch.get(a).label.localeCompare(byBranch.get(b).label) : -byBranch.get(a).label.localeCompare(byBranch.get(b).label);
+    const va = groupVal(branchRows(a)), vb = groupVal(branchRows(b));
     return dir === "asc" ? va - vb : vb - va;
   });
 
   let html = "";
   let routeCount = 0;
-  branches.forEach(b => {
-    const spMap = byBranch.get(b);
-    let allBranchRoutes = [];
-    spMap.forEach(rows => { allBranchRoutes = allBranchRoutes.concat(rows); });
-    html += `<tr class="branch-header"><td colspan="3">${b} <span class="bh-count">· ${allBranchRoutes.length} route${allBranchRoutes.length === 1 ? "" : "s"}</span></td><td colspan="96"></td></tr>`;
-    const spNames = [...spMap.keys()].sort((a, b) => {
-      if (key === "name") return dir === "asc" ? a.localeCompare(b) : -a.localeCompare(b);
-      const va = groupVal(spMap.get(a)), vb = groupVal(spMap.get(b));
+  branchKeys.forEach(bk => {
+    const bg = byBranch.get(bk);
+    const nRoutes = branchRows(bk).length;
+    html += `<tr class="branch-header"><td colspan="3">${esc(bg.label)} <span class="bh-count">· ${nRoutes} route${nRoutes === 1 ? "" : "s"}</span></td><td colspan="96"></td></tr>`;
+    const spKeys = [...bg.spMap.keys()].sort((a, b) => {
+      if (key === "name") return dir === "asc" ? bg.spMap.get(a).label.localeCompare(bg.spMap.get(b).label) : -bg.spMap.get(a).label.localeCompare(bg.spMap.get(b).label);
+      const va = groupVal(bg.spMap.get(a).rows), vb = groupVal(bg.spMap.get(b).rows);
       return dir === "asc" ? va - vb : vb - va;
     });
-    spNames.forEach(sp => {
-      const rows = sortRows(spMap.get(sp));
+    spKeys.forEach(sk => {
+      const g = bg.spMap.get(sk);
+      const rows = sortRows(g.rows);
       rows.forEach(r => { html += routeRowHTML(r); routeCount++; });
-      html += spSubtotalRowHTML(sp, rows, months);
+      html += spSubtotalRowHTML(g.label, rows, months);
     });
   });
   html += companyRowHTML(visible, months);
 
   tbody.innerHTML = html;
-  $("tableCount").textContent = `${routeCount} route${routeCount === 1 ? "" : "s"} · ${branches.length} branch${branches.length === 1 ? "" : "es"}`;
+  $("tableCount").textContent = `${routeCount} route${routeCount === 1 ? "" : "s"} · ${branchKeys.length} branch${branchKeys.length === 1 ? "" : "es"}`;
   renderStats(visible, months);
 }
 
 function buildAndRender() {
   buildMatrix();
+  if (refreshFilters()) buildMatrix(); // a vanished selection was reset → re-filter the body
   renderTable();
   refreshYearFilter();
+}
+
+// Rebuild the Branch / Sales Person dropdowns from the routes actually in the body,
+// so whatever the body groups can be filtered exactly. Returns true if a stale
+// selection had to be reset (the caller then re-filters).
+function refreshFilters() {
+  const all = S.matrixAll || [];
+  const branches = new Map(), sps = new Map();
+  all.forEach(r => {
+    const bk = normBranch(r.branch) || "UNASSIGNED";
+    if (!branches.has(bk)) branches.set(bk, r.branch || "Unassigned Branch");
+    const sk = spKey(r.sp) || "UNASSIGNED";
+    if (!sps.has(sk)) sps.set(sk, r.sp || "Unassigned");
+  });
+  let changed = false;
+  const bSel = $("branchSelect");
+  bSel.innerHTML = `<option value="">All Branches</option>` +
+    [...branches.entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1])))
+      .map(([k, label]) => `<option value="${k}">${esc(label)}</option>`).join("");
+  if (S.branch && branches.has(S.branch)) bSel.value = S.branch;
+  else if (S.branch) { S.branch = ""; S.branchLabel = ""; changed = true; bSel.value = ""; }
+  const spSel = $("spSelect");
+  spSel.innerHTML = `<option value="">All Sales Persons</option>` +
+    [...sps.entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1])))
+      .map(([k, label]) => `<option value="${k}">${esc(label)}</option>`).join("");
+  if (S.sp && sps.has(S.sp)) spSel.value = S.sp;
+  else if (S.sp) { S.sp = ""; S.spLabel = ""; changed = true; spSel.value = ""; }
+  S.branchLabel = S.branch ? (branches.get(S.branch) || "") : "";
+  S.spLabel = S.sp ? (sps.get(S.sp) || "") : "";
+  return changed;
 }
 
 function refreshYearFilter() {
@@ -2188,6 +2221,11 @@ $("branchSelect").addEventListener("change", () => {
   buildAndRender();
 });
 
+$("spSelect").addEventListener("change", () => {
+  S.sp = $("spSelect").value;
+  buildAndRender();
+});
+
 $("yearSelect").addEventListener("change", () => {
   S.yearFilter = $("yearSelect").value;
   // If the sorted month column is no longer visible (e.g. year filter changed), fall back to AVG.
@@ -2199,14 +2237,6 @@ $("yearSelect").addEventListener("change", () => {
 });
 
 (async () => {
-  // Populate branch selector from the master template branch codes.
-  [...new Set(Object.values(masterTemplate).map(t => String(t[2]).trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b)).forEach(b => {
-    const o = document.createElement("option");
-    o.value = b;
-    o.textContent = b;
-    $("branchSelect").appendChild(o);
-  });
-
   updateSortHint();
   buildShell(alignedMonthKeys()); // show the aligned JAN–DEC skeleton while the first fetch runs
   await loadAllHistory(false);
