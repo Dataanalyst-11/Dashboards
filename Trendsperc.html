@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Branch Achievement Dashboard</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    /* Brand tokens — Pharma gold by default, Bei Bora green via body.brand-beibora */
+    --brand: #ba9305;
+    --brand-rgb: 186, 147, 5;
+    --brand-ink: #020617;
+  }
+  body.brand-beibora {
+    --brand: #14b8a6;
+    --brand-rgb: 20, 184, 166;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 50;   /* stay pinned while the page scrolls */
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-bottom: 3px solid var(--brand);
+    box-shadow: 0 10px 30px rgba(2, 6, 23, 0.5);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 20px; }
+
+  .header-logo {
+    width: 44px; height: 44px; background: var(--brand); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 20px; color: #020617; flex-shrink: 0;
+  }
+
+  .header-title { font-size: 22px; font-weight: 700; color: #f8fafc; letter-spacing: -0.3px; }
+  .header-subtitle { font-size: 12px; color: #64748b; font-weight: 400; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: relative; }
+
+  .header-loading-overlay {
+    position: absolute; inset: 0; background: rgba(15, 23, 42, 0.6);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .header-loading-overlay.active { opacity: 1; pointer-events: all; }
+  .header-loading-overlay .mini-spinner {
+    width: 22px; height: 22px; border: 3px solid #334155; border-top-color: var(--brand);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+
+  .filter-select { position: relative; }
+  .filter-select select {
+    padding: 12px 42px 12px 16px; border-radius: 10px;
+    border: 2px solid #334155; background: #1e293b; color: #f1f5f9;
+    font-size: 14px; font-weight: 600; cursor: pointer; appearance: none; -webkit-appearance: none;
+    transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s; outline: none;
+  }
+  .filter-select select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .filter-select select:hover:not(:disabled) { border-color: var(--brand); }
+  .filter-select select:focus:not(:disabled) { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15); }
+  .filter-select::after {
+    content: "\25BE"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    color: var(--brand); font-size: 16px; pointer-events: none;
+  }
+  .branch-selector select { min-width: 250px; }
+
+  .company-toggle { display: flex; background: #0f172a; border-radius: 10px; padding: 3px; border: 2px solid #334155; }
+  .company-toggle button {
+    padding: 10px 26px; border: none; background: transparent; color: #64748b;
+    font-weight: 800; font-size: 13px; border-radius: 8px; cursor: pointer;
+    transition: all 0.25s; white-space: nowrap; letter-spacing: 0.5px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .company-toggle button:hover:not(:disabled) { color: #94a3b8; }
+  .company-toggle button.active { background: var(--brand); color: var(--brand-ink); }
+  .company-toggle button .co-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+  .company-toggle button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #pharmaView, #beiboraView { flex: 1; display: flex; flex-direction: column; }
+  #beiboraView { display: none; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px 32px 0; }
+
+  .stat-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 22px 24px;
+    position: relative; overflow: hidden; transition: border-color 0.2s, transform 0.15s;
+  }
+  .stat-card:hover { border-color: #475569; transform: translateY(-2px); }
+  .stat-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 4px 0 0 4px; }
+  .stat-card:nth-child(1)::before { background: #22c55e; }
+  .stat-card:nth-child(2)::before { background: #38bdf8; }
+  .stat-card:nth-child(3)::before { background: #ef4444; }
+  .stat-card:nth-child(4)::before { background: #f97316; }
+
+  .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: #64748b; font-weight: 600; margin-bottom: 10px; }
+  .stat-value { font-size: 26px; font-weight: 800; color: #f8fafc; line-height: 1; }
+  .stat-sub { font-size: 13px; color: #94a3b8; margin-top: 6px; font-weight: 400; }
+
+  .perf-high { color: #22c55e !important; }
+  .perf-medium { color: #facc15 !important; }
+  .perf-low { color: #ef4444 !important; }
+
+  /* ── Matrix section ─────────────────────────────────────── */
+  .table-section { flex: 1; padding: 20px 32px 8px; display: flex; flex-direction: column; min-height: 0; }
+  .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 12px; }
+  .table-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+  .table-count { font-size: 13px; color: #64748b; background: #0f172a; padding: 5px 20px; border-radius: 99px; font-weight: 600; }
+  .sort-hint { font-size: 11px; color: #475569; font-weight: 400; }
+  .achv-legend { display: inline-flex; align-items: center; font-size: 11px; color: #94a3b8; font-weight: 600; white-space: nowrap; }
+  .achv-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin: 0 5px 0 12px; }
+  .achv-legend i:first-child { margin-left: 0; }
+
+  .search-box {
+    padding: 9px 16px 9px 38px; border-radius: 10px; border: 2px solid #334155;
+    background: #0f172a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397,1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 20px center no-repeat;
+    color: #f1f5f9; font-size: 13px; width: 240px; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-box::placeholder { color: #475569; }
+  .search-box:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.12); }
+
+  .export-btn {
+    padding: 9px 18px; border-radius: 10px; border: 2px solid #334155; background: #1e293b;
+    color: var(--brand); font-weight: 800; font-size: 12px; cursor: pointer; letter-spacing: 0.6px;
+    text-transform: uppercase; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .export-btn:hover { border-color: var(--brand); background: var(--brand); color: var(--brand-ink); }
+  .export-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+  .matrix-note {
+    display: none; align-items: center; gap: 8px; margin-bottom: 12px;
+    font-size: 11.5px; color: #94a3b8; background: rgba(var(--brand-rgb), 0.08);
+    border: 1px solid rgba(var(--brand-rgb), 0.3); border-radius: 10px; padding: 8px 14px; width: fit-content;
+  }
+  .matrix-note.visible { display: inline-flex; }
+  .matrix-note .note-ico { color: var(--brand); font-weight: 900; }
+
+  .matrix-wrap {
+    flex: 1; overflow: auto; border-radius: 20px; border: 1px solid #334155;
+    background: #0f172a; max-height: max(420px, calc(100vh - 310px));   /* fill the viewport so row scrolling happens inside, under the pinned headers */
+    scrollbar-width: thin; scrollbar-color: #334155 transparent;
+  }
+  .matrix-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+  .matrix-wrap::-webkit-scrollbar-track { background: transparent; }
+  .matrix-wrap::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+  .matrix-wrap::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+  .matrix-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; }
+  .matrix-table thead th {
+    position: sticky; top: 0; z-index: 2; background: #1e293b; color: #94a3b8;
+    text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-weight: 700;
+    padding: 14px 12px; border-bottom: 2px solid #334155; text-align: right;
+    user-select: none; white-space: nowrap;
+  }
+  .matrix-table thead th.sortable { cursor: pointer; transition: color 0.2s, background 0.2s; }
+  .matrix-table thead th.sortable:hover { color: #f1f5f9; background: #263348; }
+  .matrix-table thead th.sortable.active-sort { color: var(--brand); }
+  .sort-icon { display: inline-block; margin-left: 5px; font-size: 9px; opacity: 0.35; vertical-align: middle; transition: opacity 0.2s, transform 0.25s; }
+  .matrix-table thead th.sortable:hover .sort-icon { opacity: 0.7; }
+  .matrix-table thead th.sortable.active-sort .sort-icon { opacity: 1; }
+  .matrix-table thead th.sortable.active-sort.sort-asc .sort-icon { transform: rotate(0deg); }
+  .matrix-table thead th.sortable.active-sort.sort-desc .sort-icon { transform: rotate(180deg); }
+
+  .matrix-table thead th.sticky-left, .matrix-table td.sticky-left { position: sticky; left: 0; z-index: 5; text-align: left; min-width: 180px; max-width: 180px; }
+  .matrix-table thead th.sticky-right, .matrix-table td.sticky-right { position: sticky; right: 0; z-index: 5; min-width: 128px; }
+  .matrix-table td.sticky-left { z-index: 3; }
+  .matrix-table td.sticky-right { z-index: 3; }
+  .matrix-table thead th.sticky-left { border-right: 1px solid #334155; }
+  .matrix-table td.sticky-left { border-right: 1px solid #334155; }
+  .matrix-table thead th.sticky-right, .matrix-table td.sticky-right { border-left: 2px solid #334155; box-shadow: -8px 0 14px -8px rgba(0, 0, 0, 0.55); }
+  .matrix-table thead th.month-col, .matrix-table td.month-col { min-width: 120px; }
+  .matrix-table thead th.total-col { color: var(--brand); }
+
+  .matrix-table td {
+    padding: 9px 12px; border-bottom: 1px solid #1e293b; text-align: right;
+    color: #cbd5e1; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .matrix-table tbody tr:nth-child(odd) td { background: #0f172a; }
+  .matrix-table tbody tr:nth-child(even) td { background: #101a2e; }
+  .matrix-table tbody tr:hover td { background: #1c2a44; }
+
+  .branch-name { font-weight: 700; color: #f1f5f9; font-size: 12.5px; line-height: 1.3; }
+  .branch-code { font-size: 10px; color: #64748b; margin-top: 2px; letter-spacing: 0.4px; text-transform: uppercase; }
+
+  .month-cell { position: relative; }
+  .month-cell svg.spark { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .cell-val { position: relative; z-index: 1; font-weight: 700; font-size: 12px; color: #e2e8f0; }
+  .cell-days { position: relative; z-index: 1; font-size: 10px; color: #64748b; margin-top: 2px; font-weight: 500; }
+  .cell-val.hi { color: #22c55e; }
+  .cell-val.mid { color: #facc15; }
+  .cell-val.lo { color: #ef4444; }
+  .cell-val.na { color: #64748b; font-weight: 500; }
+  .cell-val.no-data { color: #334155; font-weight: 400; }
+  .total-val { font-weight: 800; color: #f8fafc; font-size: 12.5px; }
+  .total-val.hi { color: #22c55e; }
+  .total-val.mid { color: #facc15; }
+  .total-val.lo { color: #ef4444; }
+  .total-days { font-size: 10px; color: #64748b; margin-top: 2px; font-weight: 500; }
+
+  /* ── Floating header bar — keeps the column headers on screen
+     while the page scroll carries the matrix top out of view.
+     Pixel-cloned from the real header; it is itself a hidden
+     horizontal scroll container driven by the matrix scrollLeft,
+     so the browser's own sticky engine pins Branch (left) and
+     Total (right) exactly like the real table. ── */
+  .matrix-float-head {
+    position: fixed; left: 0; top: 0; z-index: 45; display: none;
+    overflow: hidden; background: #1e293b;
+    border: 1px solid #334155; border-radius: 10px;
+    box-shadow: 0 14px 30px rgba(2, 6, 23, 0.6);
+  }
+
+  /* ── Totals band — pinned directly under the column headers, BEFORE the branch
+     rows. Bold and unmistakable: brand-tinted gradient (Pharma gold / Bei Bora
+     green via var(--brand)), 4px brand borders, solid brand TOTAL badge. ── */
+  .matrix-table tbody.totals-tbody tr td {
+    position: sticky; top: var(--head-h, 45px); z-index: 4;
+    background-color: #1b2740;
+    background-image: linear-gradient(180deg, rgba(var(--brand-rgb), 0.34) 0%, rgba(var(--brand-rgb), 0.18) 100%);
+    border-top: 4px solid var(--brand); border-bottom: 4px solid var(--brand); text-align: right;
+    padding: 10px 12px; color: #ffffff; font-size: 12.5px; font-weight: 800;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(2, 6, 23, 0.35);
+  }
+  .matrix-table tbody.totals-tbody tr td.sticky-left { left: 0; z-index: 6; text-align: left; border-right: 3px solid var(--brand); }
+  .matrix-table tbody.totals-tbody tr td.sticky-right { right: 0; z-index: 6; border-left: 3px solid var(--brand); box-shadow: -10px 0 16px -8px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(2, 6, 23, 0.35); }
+  .matrix-table tbody.totals-tbody tr:hover td {
+    background-color: #1e2c4a;
+    background-image: linear-gradient(180deg, rgba(var(--brand-rgb), 0.40) 0%, rgba(var(--brand-rgb), 0.22) 100%);
+  }
+  .matrix-table tbody.totals-tbody td.month-col { min-width: 120px; }
+  .matrix-table tbody.totals-tbody .foot-label {
+    display: inline-block; font-weight: 900; font-size: 11px; letter-spacing: 1.4px;
+    color: var(--brand-ink); background: var(--brand);
+    padding: 3px 12px; border-radius: 7px; text-transform: uppercase;
+  }
+  .matrix-table tbody.totals-tbody .foot-sub { display: block; font-size: 9.5px; color: #cbd5e1; font-weight: 700; margin-top: 4px; letter-spacing: 0.4px; }
+  .matrix-table tbody.totals-tbody .cell-val { color: #ffffff; font-weight: 900; }
+  .matrix-table tbody.totals-tbody .cell-val.hi { color: #4ade80; }
+  .matrix-table tbody.totals-tbody .cell-val.mid { color: #fde047; }
+  .matrix-table tbody.totals-tbody .cell-val.lo { color: #f87171; }
+  .matrix-table tbody.totals-tbody .cell-val.na { color: #94a3b8; }
+  .matrix-table tbody.totals-tbody .cell-days { color: #cbd5e1; font-weight: 600; }
+  .matrix-table tbody.totals-tbody .cell-val.no-activity { color: #94a3b8; font-weight: 700; }
+  .matrix-table tbody.totals-tbody .total-val { font-size: 13.5px; font-weight: 900; color: #ffffff; }
+  .matrix-table tbody.totals-tbody .total-val.hi { color: #4ade80; }
+  .matrix-table tbody.totals-tbody .total-val.mid { color: #fde047; }
+  .matrix-table tbody.totals-tbody .total-val.lo { color: #f87171; }
+  /* inside the floating header bar the totals row sits in normal flow —
+     keep the left/right pinning but neutralise the vertical offset */
+  .matrix-float-head tbody.totals-tbody tr td { top: 0; }
+
+  .no-data-row td { text-align: center; padding: 60px 20px; color: #475569; font-size: 15px; }
+  .loading-row td { text-align: center; padding: 60px 20px; color: #64748b; font-size: 15px; }
+  .loading-spinner {
+    display: inline-block; width: 20px; height: 20px; border: 3px solid #334155; border-top-color: var(--brand);
+    border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Bei Bora connect card ──────────────────────────────── */
+  .connect-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 50px 32px; }
+  .connect-card { max-width: 660px; background: #1e293b; border: 2px dashed #334155; border-radius: 24px; padding: 42px 44px; text-align: center; }
+  .connect-icon { width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 18px; background: rgba(56, 189, 248, 0.12); display: flex; align-items: center; justify-content: center; }
+  .connect-icon svg { width: 30px; height: 30px; fill: var(--brand); }
+  .connect-card h2 { font-size: 19px; color: #f8fafc; font-weight: 800; margin-bottom: 12px; }
+  .connect-card p { font-size: 13px; color: #94a3b8; line-height: 1.75; margin-bottom: 10px; }
+  .connect-card p b { color: #e2e8f0; }
+  .connect-code {
+    background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px 16px;
+    font-family: Consolas, 'Courier New', monospace; font-size: 11.5px; color: var(--brand);
+    text-align: left; margin-top: 16px; white-space: pre; overflow-x: auto; line-height: 1.6;
+  }
+  .connect-code .cmt { color: #64748b; }
+  .connect-foot { font-size: 11px; color: #475569; margin-top: 16px; }
+
+  footer { text-align: center; padding: 20px; font-size: 12px; background: #0f172a; color: #475569; border-top: 1px solid #1e293b; }
+  footer span.highlight { color: var(--brand); font-weight: 600; }
+
+  .toast {
+    position: fixed; bottom: 30px; right: 30px; background: #1e293b; border: 1px solid #334155;
+    border-left: 4px solid #ef4444; color: #f1f5f9; padding: 16px 24px; border-radius: 12px;
+    font-size: 13px; font-weight: 600; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 999;
+    transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); max-width: 380px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.toast-warn { border-left-color: #f59e0b; }
+  .toast.toast-retry { border-left-color: #38bdf8; }
+
+  @media (max-width: 1250px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 900px) {
+    header { padding: 16px 18px; }
+    .stats-row { padding: 16px 18px 0; }
+    .table-section { padding-left: 18px; padding-right: 18px; }
+    .search-box { width: 100%; }
+  }
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: 1fr; }
+    .stat-value { font-size: 20px; }
+    .header-right { width: 100%; }
+    .filter-select { flex: 1; min-width: 0; }
+    .filter-select select { width: 100%; }
+    .company-toggle { flex: 1; }
+    .company-toggle button { flex: 1; justify-content: center; padding: 10px 8px; font-size: 11px; }
+    .connect-card { padding: 28px 22px; }
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-logo" id="headerLogo">BP</div>
+    <div>
+      <div class="header-title" id="headerTitle">Branch Achievement Dashboard</div>
+      <div class="header-subtitle" id="headerSubtitle">Pharma</div>
+    </div>
+  </div>
+  <div class="header-right" id="headerRight">
+    <div class="header-loading-overlay" id="headerLoading">
+      <div class="mini-spinner"></div>
+    </div>
+    <div class="company-toggle">
+      <button id="btnPharma" class="active" onclick="switchCompany('pharma')"><span class="co-dot"></span>Pharma</button>
+      <button id="btnBeiBora" onclick="switchCompany('bei-bora')"><span class="co-dot"></span>Bei Bora</button>
+    </div>
+    <div class="filter-select branch-selector" id="branchSelectorWrap">
+      <select id="branchSelect">
+        <option value="">All Branches</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<div id="pharmaView">
+  <div class="stats-row" id="kpiRow">
+    <div class="stat-card">
+      <div class="stat-label">Company Achievement</div>
+      <div class="stat-value" id="kpiAchv">—</div>
+      <div class="stat-sub" id="kpiAchvSub">loading…</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Branch Average</div>
+      <div class="stat-value" id="kpiAvgBranch">—</div>
+      <div class="stat-sub" id="kpiAvgBranchSub">mean of branch rates</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Branches ≥ 80%</div>
+      <div class="stat-value" id="kpiOnTarget">—</div>
+      <div class="stat-sub" id="kpiOnTargetSub">of branches in scope</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Top Branch</div>
+      <div class="stat-value" id="kpiBest">—</div>
+      <div class="stat-sub" id="kpiBestSub">by overall achievement</div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-header">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <span class="table-title">Monthly Achievement Matrix</span>
+        <span class="table-count" id="matrixCount">0 branches</span>
+        <span class="sort-hint">Click any header to sort</span>
+        <span class="achv-legend"><i style="background:#22c55e"></i>≥ 80%<i style="background:#facc15"></i>50 – 80%<i style="background:#ef4444"></i>&lt; 50%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <input type="text" class="search-box" id="searchBox" placeholder="Search branch...">
+        <button class="export-btn" id="exportBtn" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+    <div class="matrix-note" id="matrixNote"><span class="note-ico">ⓘ</span><span id="matrixNoteText"></span></div>
+    <div class="matrix-float-head" id="floatHead">
+      <table class="matrix-table"><thead><tr id="floatHeadRow"></tr></thead><tbody class="totals-tbody"><tr id="floatTotalsRow"></tr></tbody></table>
+    </div>
+    <div class="matrix-wrap" id="matrixWrap">
+      <table class="matrix-table">
+        <thead id="matrixHead">
+          <tr id="matrixHeadRow"></tr>
+        </thead>
+        <tbody id="matrixTotalsBody" class="totals-tbody"></tbody>
+        <tbody id="matrixBody">
+          <tr class="loading-row">
+            <td colspan="13">
+              <span class="loading-spinner"></span>
+              Loading branch data...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div id="beiboraView">
+  <div class="connect-wrap">
+    <div class="connect-card">
+      <div class="connect-icon">
+        <svg viewBox="0 0 24 24"><path d="M16 7h1a1 1 0 0 0 0-2h-1V3a1 1 0 1 0-2 0v2h-4V3a1 1 0 1 0-2 0v2H7a3 3 0 0 0-3 3v4a5 5 0 0 0 4 4.9V21a1 1 0 1 0 2 0v-4h4v4a1 1 0 1 0 2 0v-2.1a5 5 0 0 0 4-4.9v-4a3 3 0 0 0-3-3zm1 7a3 3 0 0 1-3 3H10a3 3 0 0 1-3-3v-4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v4z"/></svg>
+      </div>
+      <h2>Bei Bora — Connect Data Source</h2>
+      <p>The Bei Bora endpoint <b>could not be reached</b> on this refresh. The dashboard auto-probes the MIS proxy route on every load — once it responds, the full achievement matrix, KPIs and company averages come alive for Bei Bora with no other change.</p>
+      <p>Wired configuration (already pointing at the live route):</p>
+      <div class="connect-code"><span class="cmt">// COMPANIES config — top of the &lt;script&gt; section</span>
+"bei-bora": {
+  label: "Bei Bora",
+  apiBase: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/beibora/",
+  endpoint: "branch-performance/reports"
+}
+<span class="cmt">// → if MIS moves the route, edit only this block.</span></div>
+      <div class="connect-foot">Everything is already wired: company switch, KPIs, monthly achievement matrix and company averages render automatically once data flows.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Last updated: <span class="highlight" id="lastUpdated">—</span> &nbsp;|&nbsp;
+  Auto-refreshes every 10 mins &nbsp;|&nbsp;
+  Designed and Managed by <span class="highlight">MIS.DPT</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ════════════════════════════════════════════════════════════
+     COMPANY CONFIG — when MIS publishes the Bei Bora route,
+     change ONLY the apiBase line for "bei-bora" below.
+     ════════════════════════════════════════════════════════════ */
+  const COMPANIES = {
+    "pharma": {
+      label: "Pharma",
+      short: "PH",
+      apiBase: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/",
+      endpoint: "branch-sales-performance-reports",   // live MIS route for Pharma
+      matrixFrom: "january"                           // matrix runs Jan → date; months before records show "—"
+    },
+    "bei-bora": {
+      label: "Bei Bora",
+      short: "BB",
+      apiBase: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/beibora/",
+      endpoint: "branch-performance/reports",         // live MIS route for Bei Bora
+      matrixFrom: "data-start"                        // matrix starts where the API data starts
+    }
+  };
+
+  const AUTO_REFRESH_MS = 600000;
+
+  /* ── State ───────────────────────────────────────────────── */
+  let currentCompany = "pharma";
+  let rawRows = [];              // raw branch-report rows for current company
+  let monthlyRows = [];          // aggregated per-branch rows
+  let monthKeys = [];            // ["2026-01", ...]
+  let monthLabels = [];          // ["Jan", ...]
+  let multiYear = false;
+  let firstDataMonthKey = null;
+  let currentSort = { key: "total", dir: "desc" };
+  let isLoading = false;
+  let currentAbortCtrl = null;
+  let lastDataFetchAt = null;
+  let beiBoraProbe = { probedAt: 0, ok: false };
+  let firstDataDateKey = null;      // earliest "YYYY-MM-DD" with a record (for the note)
+  let networkFirstMk = null;        // earliest month ANY branch has data (onboarding baseline)
+
+  /* ── Formatting helpers ──────────────────────────────────── */
+  function toNumber(value) {
+    if (value === null || value === undefined || value === "") return 0;
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    const cleaned = String(value).replace(/,/g, "").replace(/%/g, "").trim();
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function parseDateKey(value) {
+    if (!value) return null;
+    const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : null;
+  }
+
+  function formatFull(n) { return Math.round(Number(n) || 0).toLocaleString("en-US"); }
+
+  function formatCompact(n) {
+    const v = Number(n) || 0;
+    const abs = Math.abs(v);
+    if (abs >= 1e9) return (v / 1e9).toFixed(2) + "B";
+    if (abs >= 1e6) return (v / 1e6).toFixed(1) + "M";
+    if (abs >= 1e3) return (v / 1e3).toFixed(0) + "K";
+    return Math.round(v).toLocaleString("en-US");
+  }
+
+  const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function monthLabel(mk) {
+    const [y, m] = mk.split("-");
+    return MONTH_NAMES[parseInt(m, 10) - 1] + (multiYear ? " '" + y.slice(2) : "");
+  }
+  function monthLongLabel(mk) {
+    const [y, m] = mk.split("-");
+    return MONTH_NAMES[parseInt(m, 10) - 1] + " " + y;
+  }
+
+  function dateLong(dk) {
+    const [y, m, d] = dk.split("-").map(Number);
+    return d + " " + MONTH_NAMES[m - 1] + " " + y;
+  }
+
+  /* ── Toast / abort / retry (reference pattern) ───────────── */
+  let toastTimer = null;
+  function showToast(msg, type) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast" + (type ? " toast-" + type : "");
+    void t.offsetWidth;
+    t.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 4500);
+  }
+
+  function abortPreviousRequests() {
+    if (currentAbortCtrl) { currentAbortCtrl.abort(); currentAbortCtrl = null; }
+    currentAbortCtrl = new AbortController();
+    return currentAbortCtrl.signal;
+  }
+
+  async function fetchWithRetry(url, options, maxRetries = 3) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (response.status === 409 && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
+          showToast(`Rate limited — retrying in ${Math.round(delay / 1000)}s...`, "retry");
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return await response.json();
+      } catch (err) {
+        if (err.name === "AbortError") throw err;
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 700 + Math.random() * 300;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
+  /* ── Data fetch ──────────────────────────────────────────── */
+  function getFetchRange() {
+    const now = new Date();
+    const startYear = now.getFullYear() - 1;   // covers "January to date" + auto-expands each new year
+    return { startDate: `${startYear}-01-01`, endDate: `${now.getFullYear()}-12-31` };
+  }
+
+  async function fetchBranchReports(apiBase, signal) {
+    const company = COMPANIES[currentCompany];
+    const { startDate, endDate } = getFetchRange();
+    const url = `${apiBase}${company.endpoint}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&pageSize=50000`;
+    const json = await fetchWithRetry(url, { signal, headers: { "Content-Type": "application/json" } });
+    return Array.isArray(json) ? json : (json.data || []);
+  }
+
+  function setLoadingState(loading) {
+    isLoading = loading;
+    const overlay = document.getElementById("headerLoading");
+    const branchSel = document.getElementById("branchSelect");
+    if (loading) { overlay.classList.add("active"); branchSel.disabled = true; }
+    else { overlay.classList.remove("active"); branchSel.disabled = (currentCompany === "bei-bora" && !beiBoraProbe.ok); }
+  }
+
+  /* ── Aggregation: branch × month ───────────────────────────
+     The MIS portal posts some rows WITHOUT orgBranchName (null) — real
+     sales sitting under a bare orgBranchCode. Keying by name alone used
+     to split those into phantom code-named rows with partial history
+     (KAWANGRTL2, SGIMARA, …). Nameless rows are now merged into the
+     named branch that owns the same orgBranchCode (date-span based when
+     one code maps to two names across a rebrand), so every branch
+     reports its COMPLETE history. ── */
+  function buildMonthly(rows) {
+    const byName = new Map();       // lowercase name → branch object
+    const codeOwners = new Map();   // code → Set of branch keys (named rows only)
+    const now = new Date();
+    const thisYear = now.getFullYear();
+
+    const getBranch = (name) => {
+      const k = name.toLowerCase();
+      if (!byName.has(k)) byName.set(k, { key: k, name, codes: new Map(), m: new Map(), spanStart: null, spanEnd: null });
+      return byName.get(k);
+    };
+    const addTo = (b, dateKey, r) => {
+      const mk = dateKey.slice(0, 7);
+      if (!b.m.has(mk)) b.m.set(mk, { sales: 0, target: 0, days: new Set() });
+      const c = b.m.get(mk);
+      c.sales += toNumber(r.netDailySales ?? r.netSales ?? r.dailyNetSales);
+      c.target += toNumber(r.dailySalesTarget ?? r.salesTarget ?? r.target);
+      c.days.add(dateKey);
+      if (!b.spanStart || dateKey < b.spanStart) b.spanStart = dateKey;
+      if (!b.spanEnd || dateKey > b.spanEnd) b.spanEnd = dateKey;
+    };
+
+    // pass 1 — rows that carry a branch name
+    for (const r of rows) {
+      const dateKey = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
+      if (!dateKey) continue;
+      const name = String(r.orgBranchName || "").trim();
+      if (!name) continue;                       // handled in pass 2
+      const code = String(r.orgBranchCode || "").trim();
+      const b = getBranch(name);
+      if (code) {
+        b.codes.set(code, (b.codes.get(code) || 0) + 1);
+        if (!codeOwners.has(code)) codeOwners.set(code, new Set());
+        codeOwners.get(code).add(b.key);
+      }
+      addTo(b, dateKey, r);
+    }
+
+    // pass 2 — nameless rows: attach to the named branch owning the code
+    for (const r of rows) {
+      const dateKey = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
+      if (!dateKey) continue;
+      if (String(r.orgBranchName || "").trim()) continue;
+      const code = String(r.orgBranchCode || "").trim();
+      if (!code) continue;
+      const owners = [...(codeOwners.get(code) || [])];
+      let b = null;
+      if (owners.length === 1) {
+        b = byName.get(owners[0]);
+      } else if (owners.length > 1) {
+        // code shared by 2+ names over time (rebrand) → the branch whose
+        // named date-span covers the row, else the nearest span
+        const t = Date.parse(dateKey);
+        let bestDist = Infinity;
+        for (const k of owners) {
+          const c = byName.get(k);
+          const a = c.spanStart ? Date.parse(c.spanStart) : NaN;
+          const z = c.spanEnd ? Date.parse(c.spanEnd) : NaN;
+          const covers = !Number.isNaN(a) && !Number.isNaN(z) && t >= a && t <= z;
+          const dist = covers ? -1 : Math.min(Math.abs(t - a), Math.abs(t - z)) / 86400000;
+          if (dist < bestDist) { bestDist = dist; b = c; }
+        }
+      }
+      if (!b) b = getBranch(code);   // no named owner → stands alone under its code
+      addTo(b, dateKey, r);
+    }
+
+    // Month axis: Pharma runs January → date (months before records show "—");
+    // Bei Bora starts at the first month the API actually has ("data-start").
+    // Either way the axis auto-expands into 2027+ as new months arrive.
+    let firstMk = null;
+    for (const b of byName.values()) {
+      for (const mk of b.m.keys()) {
+        if (!firstMk || mk < firstMk) firstMk = mk;
+      }
+    }
+    multiYear = firstMk ? parseInt(firstMk.slice(0, 4), 10) !== thisYear : false;
+    const startYear = firstMk ? parseInt(firstMk.slice(0, 4), 10) : thisYear;
+    const startMonth = (firstMk && COMPANIES[currentCompany].matrixFrom === "data-start") ? parseInt(firstMk.slice(5, 7), 10) : 1;
+    monthKeys = [];
+    for (let y = startYear; y <= thisYear; y++) {
+      const endMonth = (y === thisYear) ? now.getMonth() + 1 : 12;
+      const m0 = (y === startYear) ? startMonth : 1;
+      for (let m = m0; m <= endMonth; m++) monthKeys.push(y + "-" + String(m).padStart(2, "0"));
+    }
+    monthLabels = monthKeys.map(monthLabel);
+
+    firstDataMonthKey = null;
+    firstDataDateKey = null;
+    const out = [];
+    for (const b of byName.values()) {
+      let total = 0, totalDays = 0, firstMk = null, anyTarget = 0;
+      for (const mk of monthKeys) {
+        const c = b.m.get(mk);
+        if (!c) continue;
+        anyTarget += c.target;
+        if (c.days.size > 0) {
+          total += c.sales;
+          totalDays += c.days.size;
+          if (!firstMk) firstMk = mk;
+          if (!firstDataMonthKey || mk < firstDataMonthKey) firstDataMonthKey = mk;
+        }
+      }
+      if (!total && !anyTarget) continue;   // drop empty placeholders (e.g. bare code, zero sales)
+      let dispCode = "", maxN = 0;
+      for (const [cd, n] of b.codes) { if (n > maxN) { maxN = n; dispCode = cd; } }
+      out.push({ key: b.key, name: b.name, code: dispCode, m: b.m, total, totalTarget: anyTarget, totalDays, firstMk });
+    }
+    // earliest full date with a record (for the "records begin" note)
+    for (const r of rows) {
+      const dk = parseDateKey(r.reportingDate || r.reportDate || r.date || r.createdAt);
+      if (dk && (!firstDataDateKey || dk < firstDataDateKey)) firstDataDateKey = dk;
+    }
+    // network onboarding baseline — the earliest month ANY branch has data;
+    // branches starting later get a small "data from …" tag in the matrix
+    networkFirstMk = null;
+    for (const b of out) { if (b.firstMk && (!networkFirstMk || b.firstMk < networkFirstMk)) networkFirstMk = b.firstMk; }
+    out.sort((a, b) => b.total - a.total);
+    return out;
+  }
+
+  /* ── Filters ─────────────────────────────────────────────── */
+  function getSelectedBranchKey() { return document.getElementById("branchSelect").value || ""; }
+
+  function getScope() {
+    const sel = getSelectedBranchKey();
+    if (sel) {
+      const one = monthlyRows.filter(b => b.key === sel);
+      return { branches: one, label: one.length ? one[0].name : "—", single: true };
+    }
+    return { branches: monthlyRows.slice(), label: "All Branches", single: false };
+  }
+
+  /* ── Achievement helpers ───────────────────────────────────
+     The dashboard is percentage-based: every cell shows
+     achievement = net sales ÷ target × 100 for its month.
+     Colour bands follow the company convention:
+       green ≥ 80% · yellow ≥ 50% · red below 50%. ── */
+  function achvBandClass(p) { return p >= 80 ? "hi" : p >= 50 ? "mid" : "lo"; }
+
+  function branchAchvPct(b) {
+    const t = b.totalTarget || 0;
+    return t > 0 ? (b.total / t) * 100 : null;
+  }
+
+  function monthAchvPct(b, mk) {
+    const c = b.m.get(mk);
+    if (!c || !c.days.size || !(c.target > 0)) return null;
+    return (c.sales / c.target) * 100;
+  }
+
+  /* ── KPI cards — achievement view ────────────────────────── */
+  function renderKPIs() {
+    const scope = getScope();
+    const branches = scope.branches;
+
+    let totSales = 0, totTarget = 0;
+    branches.forEach(b => { totSales += b.total; totTarget += (b.totalTarget || 0); });
+    const companyPct = totTarget > 0 ? (totSales / totTarget) * 100 : null;
+
+    const achvEl = document.getElementById("kpiAchv");
+    achvEl.textContent = companyPct !== null ? companyPct.toFixed(1) + "%" : "—";
+    achvEl.className = "stat-value " + (companyPct !== null ? achvBandClass(companyPct) : "");
+    document.getElementById("kpiAchvSub").textContent =
+      scope.single ? scope.label : `${branches.length} branches · ${monthLabels[0]} to date`;
+
+    // mean of the individual branch achievement rates (unweighted)
+    const pcts = branches.map(branchAchvPct).filter(p => p !== null);
+    const mean = pcts.length ? pcts.reduce((a, p2) => a + p2, 0) / pcts.length : null;
+    const meanEl = document.getElementById("kpiAvgBranch");
+    meanEl.textContent = mean !== null ? mean.toFixed(1) + "%" : "—";
+    meanEl.className = "stat-value " + (mean !== null ? achvBandClass(mean) : "");
+    document.getElementById("kpiAvgBranchSub").textContent = pcts.length
+      ? `mean of ${pcts.length} branch${pcts.length === 1 ? "" : "es"} with targets`
+      : "no targets in scope";
+
+    const hi = pcts.filter(p => p >= 80).length;
+    document.getElementById("kpiOnTarget").textContent = pcts.length ? `${hi} / ${pcts.length}` : "—";
+    document.getElementById("kpiOnTargetSub").textContent = pcts.length ? "branches at ≥ 80% achievement" : "no branches with a target";
+
+    let best = null;
+    branches.forEach(b => {
+      const p = branchAchvPct(b);
+      if (p !== null && (!best || p > best.pct)) best = { name: b.name, pct: p };
+    });
+    const bestEl = document.getElementById("kpiBest");
+    if (best) {
+      bestEl.textContent = best.pct.toFixed(1) + "%";
+      bestEl.className = "stat-value " + achvBandClass(best.pct);
+      document.getElementById("kpiBestSub").textContent = best.name;
+    } else {
+      bestEl.textContent = "—";
+      bestEl.className = "stat-value";
+      document.getElementById("kpiBestSub").textContent = "no targeted branches";
+    }
+  }
+
+  /* ── Matrix table ────────────────────────────────────────── */
+  function searchFiltered(rows) {
+    const q = (document.getElementById("searchBox").value || "").toLowerCase().trim();
+    if (!q) return rows;
+    return rows.filter(b => b.name.toLowerCase().includes(q) || (b.code || "").toLowerCase().includes(q));
+  }
+
+  function sortRows(rows) {
+    const { key, dir } = currentSort;
+    const sorted = [...rows];
+    if (key === "name") {
+      sorted.sort((a, b) => dir === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+      return sorted;
+    }
+    const val = (b) => {
+      if (key === "total") return branchAchvPct(b);
+      return monthAchvPct(b, key);
+    };
+    sorted.sort((a, b) => {
+      const va = val(a), vb = val(b);
+      if (va === null && vb === null) return a.name.localeCompare(b.name);
+      if (va === null) return 1;
+      if (vb === null) return -1;
+      return dir === "asc" ? va - vb : vb - va;
+    });
+    return sorted;
+  }
+
+  function trendCellPath(values, i, yMap) {
+    // ONE continuous row-trend line, drawn cell by cell. Each cell draws its
+    // own half-segments, engineered so they join EXACTLY at the cell borders:
+    //   - the curve passes through every month's value at the cell centre,
+    //   - adjacent cells meet at the same midpoint height with a horizontal
+    //     tangent -> no jumps, one smooth consistent trend line per row,
+    //   - the line runs flat into the first / out of the last data month.
+    const v = values[i];
+    if (v === null || v === undefined) return "";
+    const y = yMap(v);
+    const prevOk = i > 0 && values[i - 1] !== null && values[i - 1] !== undefined;
+    const nextOk = i < values.length - 1 && values[i + 1] !== null && values[i + 1] !== undefined;
+    const yL = prevOk ? (yMap(values[i - 1]) + y) / 2 : y;   // meeting point on the left border
+    const yR = nextOk ? (y + yMap(values[i + 1])) / 2 : y;   // meeting point on the right border
+    return `M0,${yL.toFixed(1)} C25,${yL.toFixed(1)} 25,${y.toFixed(1)} 50,${y.toFixed(1)} C75,${y.toFixed(1)} 75,${yR.toFixed(1)} 100,${yR.toFixed(1)}`;
+  }
+
+  function syncHeadHeight() {
+    // the totals row sticks directly UNDER the header row, so it needs the
+    // exact rendered header height as its sticky top offset
+    const wrap = document.getElementById("matrixWrap");
+    const head = document.getElementById("matrixHead");
+    if (!wrap || !head) return;
+    wrap.style.setProperty("--head-h", Math.ceil(head.getBoundingClientRect().height) + "px");
+  }
+
+  function renderMatrix() {
+    const scope = getScope();
+    const rows = sortRows(searchFiltered(scope.branches));
+    const thead = document.getElementById("matrixHeadRow");
+    const tbody = document.getElementById("matrixBody");
+    document.getElementById("matrixCount").textContent =
+      rows.length + (rows.length === 1 ? " branch" : " branches") + (scope.single ? "" : " · " + monthLabels[0] + " to date");
+
+    // header
+    let hh = `<th class="sortable sticky-left" data-sort="name">Branch <span class="sort-icon">▲</span></th>`;
+    monthKeys.forEach(mk => {
+      hh += `<th class="sortable month-col" data-sort="${mk}" title="${monthLongLabel(mk)}">${monthLabel(mk)} <span class="sort-icon">▲</span></th>`;
+    });
+    hh += `<th class="sortable sticky-right total-col" data-sort="total">Total <span class="sort-icon">▲</span></th>`;
+    thead.innerHTML = hh;
+    updateSortHeaders();
+    syncHeadHeight();
+
+    if (!rows.length) {
+      tbody.innerHTML = `<tr class="no-data-row"><td colspan="${monthKeys.length + 2}">No branch data found for the current filter</td></tr>`;
+      renderMatrixFoot(rows);
+      renderMatrixNote();
+      buildFloatHeader();
+      syncFloatHeader();
+      return;
+    }
+
+    // note: only shown when leading months have no records
+    renderMatrixNote();
+
+    let html = "";
+    rows.forEach(b => {
+      const values = monthKeys.map(mk => monthAchvPct(b, mk));   // achievement % per month (null = no data / no target)
+      const valid = values.filter(v => v !== null);
+      let yMap = null;
+      if (valid.length >= 2) {
+        const min = Math.min(...valid), max = Math.max(...valid);
+        const span = (max - min) || 1;
+        yMap = v => 58 + (1 - (v - min) / span) * 36;   // consistent band in the lower part of the cell, like the row-trend reference
+      }
+
+      const meta = [];
+      if (b.code && b.code.toLowerCase() !== b.name.toLowerCase()) meta.push(escapeHtml(b.code));
+      if (b.firstMk && networkFirstMk && b.firstMk > networkFirstMk) meta.push(`data from ${monthLabel(b.firstMk)}`);
+      const metaTitle = (b.firstMk && networkFirstMk && b.firstMk > networkFirstMk)
+        ? ` title="Branch onboarded to the portal later — records begin ${monthLongLabel(b.firstMk)}; earlier months have no data to pull"` : "";
+      let rowHtml = `<td class="sticky-left"><div class="branch-name">${escapeHtml(b.name)}</div>${meta.length ? `<div class="branch-code"${metaTitle}>${meta.join(" · ")}</div>` : ""}</td>`;
+
+      monthKeys.forEach((mk, i) => {
+        const c = b.m.get(mk);
+        if (!c || !c.days.size) {
+          rowHtml += `<td class="month-cell month-col"><div class="cell-val no-data">—</div><div class="cell-days">&nbsp;</div></td>`;
+          return;
+        }
+        const pct = monthAchvPct(b, mk);
+        const spark = yMap ? `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${trendCellPath(values, i, yMap)}" fill="none" stroke="rgba(96,165,250,0.65)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>` : "";
+        if (pct === null) {
+          rowHtml += `<td class="month-cell month-col">${spark}<div class="cell-val na" title="No target set for this month — achievement % cannot be computed">n/a</div><div class="cell-days">${c.days.size} day${c.days.size === 1 ? "" : "s"}</div></td>`;
+          return;
+        }
+        rowHtml += `<td class="month-cell month-col">${spark}<div class="cell-val ${achvBandClass(pct)}" title="${monthLongLabel(mk)}: ${pct.toFixed(1)}%">${pct.toFixed(1)}%</div><div class="cell-days">${c.days.size} day${c.days.size === 1 ? "" : "s"}</div></td>`;
+      });
+
+      const bPct = branchAchvPct(b);
+      rowHtml += `<td class="sticky-right"><div class="total-val ${bPct !== null ? achvBandClass(bPct) : ""}" title="Overall: ${bPct !== null ? bPct.toFixed(1) + "%" : "no target"}">${bPct !== null ? bPct.toFixed(1) + "%" : "n/a"}</div><div class="total-days">${b.totalDays} days</div></td>`;
+      html += `<tr>${rowHtml}</tr>`;
+    });
+    tbody.innerHTML = html;
+    renderMatrixFoot(rows);
+    buildFloatHeader();
+    syncFloatHeader();
+  }
+
+  /* ── Totals row — COMPANY AVERAGE achievement per column,
+     computed as Σ net sales ÷ Σ target over every visible branch
+     (weighted by target size), rendered immediately after the
+     headers, before the branch rows ── */
+  function renderMatrixFoot(rows) {
+    const foot = document.getElementById("matrixTotalsBody");
+    if (!rows.length) { foot.innerHTML = ""; return; }
+
+    const monthSales = monthKeys.map(mk => rows.reduce((s, b) => { const c = b.m.get(mk); return s + (c && c.days.size ? c.sales : 0); }, 0));
+    const monthTarget = monthKeys.map(mk => rows.reduce((s, b) => { const c = b.m.get(mk); return s + (c && c.days.size ? c.target : 0); }, 0));
+    const hasData = monthKeys.map(mk => rows.some(b => { const c = b.m.get(mk); return c && c.days.size > 0; }));
+    const values = monthKeys.map((mk, i) => monthTarget[i] > 0 ? (monthSales[i] / monthTarget[i]) * 100 : null);
+
+    const totSales = rows.reduce((s, b) => s + b.total, 0);
+    const totTarget = rows.reduce((s, b) => s + (b.totalTarget || 0), 0);
+    const grandPct = totTarget > 0 ? (totSales / totTarget) * 100 : null;
+
+    let yMap = null;
+    const valid = values.filter((v, i) => hasData[i] && v !== null);
+    if (valid.length >= 2) {
+      const min = Math.min(...valid), max = Math.max(...valid);
+      const span = (max - min) || 1;
+      yMap = v => 58 + (1 - (v - min) / span) * 36;   // same trend band as the branch rows
+    }
+
+    let html = `<td class="sticky-left" title="Company average = Σ net sales ÷ Σ target across the visible branches"><span class="foot-label">Σ COMPANY AVG</span><span class="foot-sub">${rows.length} ${rows.length === 1 ? "branch" : "branches"} · weighted</span></td>`;
+
+    monthKeys.forEach((mk, i) => {
+      if (!hasData[i]) {
+        html += `<td class="month-cell month-col"><div class="cell-val no-activity">—</div></td>`;
+        return;
+      }
+      const p = values[i];
+      const cls = p === null ? "na" : achvBandClass(p);
+      const spark = (yMap && p !== null) ? `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${trendCellPath(values, i, yMap)}" fill="none" stroke="rgba(96,165,250,0.65)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>` : "";
+      html += `<td class="month-cell month-col">${spark}<div class="cell-val ${cls}" title="${monthLongLabel(mk)} company average: ${p === null ? "no target" : p.toFixed(1) + "%"}">${p === null ? "n/a" : p.toFixed(1) + "%"}</div></td>`;
+    });
+
+    html += `<td class="sticky-right"><div class="total-val ${grandPct !== null ? achvBandClass(grandPct) : ""}" title="Company overall: ${grandPct !== null ? grandPct.toFixed(1) + "%" : "no target"}">${grandPct !== null ? grandPct.toFixed(1) + "%" : "n/a"}</div></td>`;
+    foot.innerHTML = `<tr>${html}</tr>`;
+  }
+
+  function renderMatrixNote() {
+    const note = document.getElementById("matrixNote");
+    const now = new Date();
+    const currentMk = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+    const company = COMPANIES[currentCompany];
+    const dataStart = company.matrixFrom === "data-start";
+    if (firstDataMonthKey && (firstDataMonthKey > monthKeys[0] || dataStart)) {
+      const startTxt = dataStart
+        ? `${company.label} system records begin ${firstDataDateKey ? dateLong(firstDataDateKey) : monthLongLabel(firstDataMonthKey)} — the matrix starts where the data starts.`
+        : `System records begin ${monthLongLabel(firstDataMonthKey)} — earlier months show "—".`;
+      document.getElementById("matrixNoteText").textContent =
+        `${startTxt} ${monthLongLabel(currentMk)} is month-to-date.`;
+      note.classList.add("visible");
+    } else {
+      note.classList.remove("visible");
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  /* ── Sorting UI ──────────────────────────────────────────── */
+  const SORT_LABELS = () => {
+    const map = { name: "Branch", total: "Total" };
+    monthKeys.forEach((mk, i) => map[mk] = monthLongLabel(mk));
+    return map;
+  };
+
+  function updateSortHeaders() {
+    document.querySelectorAll("#matrixHeadRow th.sortable").forEach(th => {
+      th.classList.remove("active-sort", "sort-asc", "sort-desc");
+      if (th.dataset.sort === currentSort.key) th.classList.add("active-sort", currentSort.dir === "asc" ? "sort-asc" : "sort-desc");
+    });
+  }
+
+  function applySort(key) {
+    if (currentSort.key === key) currentSort.dir = currentSort.dir === "desc" ? "asc" : "desc";
+    else currentSort = { key, dir: key === "name" ? "asc" : "desc" };
+    updateSortHeaders();
+    renderMatrix();
+  }
+
+  document.getElementById("matrixHead").addEventListener("click", (e) => {
+    const th = e.target.closest("th.sortable");
+    if (!th) return;
+    applySort(th.dataset.sort);
+  });
+
+  /* ── Floating header bar — build + position sync ─────────── */
+  let floatSyncScheduled = false;
+  function scheduleFloatSync() {
+    if (floatSyncScheduled) return;
+    floatSyncScheduled = true;
+    requestAnimationFrame(() => { floatSyncScheduled = false; syncFloatHeader(); });
+  }
+
+  function buildFloatHeader() {
+    const realRow = document.getElementById("matrixHeadRow");
+    const fRow = document.getElementById("floatHeadRow");
+    const realTot = document.querySelector("#matrixTotalsBody tr");
+    const fTot = document.getElementById("floatTotalsRow");
+    if (!realRow || !fRow) return;
+    fRow.innerHTML = "";
+    realRow.querySelectorAll("th").forEach(th => {
+      const clone = th.cloneNode(true);
+      clone.style.width = th.getBoundingClientRect().width + "px";   // exact column match
+      fRow.appendChild(clone);
+    });
+    if (fTot) {
+      fTot.innerHTML = "";
+      if (realTot) {
+        realTot.querySelectorAll("td").forEach(td => {
+          const clone = td.cloneNode(true);
+          clone.style.width = td.getBoundingClientRect().width + "px";   // exact column match
+          fTot.appendChild(clone);
+        });
+      }
+    }
+  }
+
+  function syncFloatHeader() {
+    const fh = document.getElementById("floatHead");
+    const wrap = document.getElementById("matrixWrap");
+    const realTable = wrap.querySelector("table");
+    if (!monthlyRows.length || !realTable || !wrap.offsetParent) { fh.style.display = "none"; return; }
+    const headerH = document.querySelector("header").offsetHeight;
+    const rect = wrap.getBoundingClientRect();
+    const theadH = document.getElementById("matrixHead").offsetHeight;
+    const totalsBody = document.getElementById("matrixTotalsBody");
+    const totalsH = totalsBody ? totalsBody.offsetHeight : 0;
+    // show only when the page scroll has pushed the real header under the page header,
+    // and hide again once the matrix has fully scrolled past
+    const show = rect.top < headerH - 1 && rect.bottom > headerH + theadH + totalsH + 4;
+    if (!show) { fh.style.display = "none"; return; }
+    fh.style.display = "block";
+    fh.style.top = headerH + "px";
+    fh.style.left = rect.left + "px";
+    fh.style.width = wrap.clientWidth + "px";
+    fh.scrollLeft = wrap.scrollLeft;   // same sticky engine pins Branch left / Total right
+  }
+
+  document.getElementById("floatHeadRow").addEventListener("click", (e) => {
+    const th = e.target.closest("th.sortable");
+    if (!th) return;
+    applySort(th.dataset.sort);
+  });
+
+  window.addEventListener("scroll", scheduleFloatSync, { passive: true });
+  window.addEventListener("resize", scheduleFloatSync);
+  document.getElementById("matrixWrap").addEventListener("scroll", scheduleFloatSync, { passive: true });
+
+  /* ── CSV export ──────────────────────────────────────────── */
+  function exportCSV() {
+    const scope = getScope();
+    const rows = sortRows(searchFiltered(scope.branches));
+    if (!rows.length) { showToast("Nothing to export — no rows in scope", "warn"); return; }
+
+    const esc = (v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const pct1 = v => v === null || v === undefined ? "" : (Math.round(v * 10) / 10).toFixed(1);
+    const header = ["Branch", "Code"];
+    monthKeys.forEach(mk => { header.push(monthLongLabel(mk) + " Achievement %"); });
+    header.push("Overall Achievement %");
+
+    const lines = [header.map(esc).join(",")];
+
+    // TOTAL row — company average achievement (Σ sales ÷ Σ target), mirroring the on-screen totals band
+    const totRow = ["COMPANY AVG (" + rows.length + " branches)", ""];
+    monthKeys.forEach(mk => {
+      let s = 0, t = 0;
+      rows.forEach(b => { const c = b.m.get(mk); if (c && c.days.size) { s += c.sales; t += c.target; } });
+      totRow.push(t > 0 ? pct1((s / t) * 100) : "");
+    });
+    const gS = rows.reduce((s, b) => s + b.total, 0), gT = rows.reduce((s, b) => s + (b.totalTarget || 0), 0);
+    totRow.push(gT > 0 ? pct1((gS / gT) * 100) : "");
+    lines.push(totRow.map(esc).join(","));
+
+    rows.forEach(b => {
+      const row = [b.name, b.code];
+      monthKeys.forEach(mk => {
+        const p = monthAchvPct(b, mk);
+        row.push(pct1(p));
+      });
+      row.push(pct1(branchAchvPct(b)));
+      lines.push(row.map(esc).join(","));
+    });
+
+    const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const d = new Date();
+    const fname = `${currentCompany}-branch-achievement-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}.csv`;
+    if (window.saveAs) saveAs(blob, fname);
+    else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = fname;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    showToast(`Exported achievement % — ${rows.length} branches × ${monthKeys.length} months`, "retry");
+  }
+
+  /* ── Branch selector ─────────────────────────────────────── */
+  function buildBranchSelect() {
+    const sel = document.getElementById("branchSelect");
+    const prev = sel.value;
+    sel.innerHTML = `<option value="">All Branches</option>`;
+    [...monthlyRows].sort((a, b) => a.name.localeCompare(b.name)).forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = b.key;
+      opt.textContent = b.name;
+      sel.appendChild(opt);
+    });
+    if (prev && monthlyRows.some(b => b.key === prev)) sel.value = prev;
+  }
+
+  /* ── Company switching ───────────────────────────────────── */
+  function switchCompany(key) {
+    if (currentCompany === key) return;
+    currentCompany = key;
+
+    document.body.classList.toggle("brand-beibora", key === "bei-bora");
+
+    const btnP = document.getElementById("btnPharma");
+    const btnB = document.getElementById("btnBeiBora");
+    btnP.classList.remove("active");
+    btnB.classList.remove("active");
+    const logo = document.getElementById("headerLogo");
+    if (key === "bei-bora") {
+      btnB.classList.add("active");
+      logo.textContent = "BB";
+      document.getElementById("headerTitle").textContent = "Branch Achievement Dashboard";
+      document.getElementById("headerSubtitle").textContent = "Bei Bora";
+    } else {
+      btnP.classList.add("active");
+      logo.textContent = "BP";
+      document.getElementById("headerTitle").textContent = "Branch Performance Dashboard";
+      document.getElementById("headerSubtitle").textContent = "Pharma — Monthly Target Achievement · January to Date";
+    }
+
+    // Both companies render the SAME dashboard — Bei Bora is live.
+    // The connect card (#beiboraView) only appears as a fallback when
+    // the Bei Bora probe fails inside loadAllData().
+
+    document.getElementById("branchSelect").value = "";
+    loadAllData();
+  }
+
+  /* ── Bei Bora connect card (fallback only) ─────────────── */
+  function showDashboardView() {
+    document.getElementById("pharmaView").style.display = "flex";
+    document.getElementById("beiboraView").style.display = "none";
+  }
+
+  function showConnectView() {
+    document.getElementById("pharmaView").style.display = "none";
+    document.getElementById("beiboraView").style.display = "flex";
+  }
+
+  function renderConnectCard(reason) {
+    showConnectView();
+    document.getElementById("matrixBody").innerHTML = "";
+    document.getElementById("matrixTotalsBody").innerHTML = "";
+    setLoadingState(false);
+    showToast(reason || "Bei Bora data source not connected yet", "warn");
+  }
+
+  /* ── Main load ───────────────────────────────────────────── */
+  async function loadAllData() {
+    if (isLoading) return;
+    const signal = abortPreviousRequests();
+    setLoadingState(true);
+    const company = COMPANIES[currentCompany];
+
+    try {
+      if (currentCompany === "bei-bora") {
+        // probe: does the endpoint respond?
+        try {
+          const probeUrl = `${company.apiBase}${company.endpoint}?pageSize=1`;
+          await fetchWithRetry(probeUrl, { signal });
+          beiBoraProbe = { probedAt: Date.now(), ok: true };
+        } catch (err) {
+          if (err.name === "AbortError") throw err;
+          beiBoraProbe = { probedAt: Date.now(), ok: false };
+          renderConnectCard("Bei Bora endpoint not reachable (" + err.message + ") — showing connect card");
+          return;
+        }
+      }
+      showDashboardView();
+
+      rawRows = await fetchBranchReports(company.apiBase, signal);
+      if (signal.aborted) return;
+      monthlyRows = buildMonthly(rawRows);
+      lastDataFetchAt = new Date();
+
+      if (currentCompany === "bei-bora" && monthKeys.length) {
+        document.getElementById("headerSubtitle").textContent =
+          "Bei Bora — Monthly Target Achievement · " + monthLongLabel(monthKeys[0]) + " to Date";
+      }
+
+      buildBranchSelect();
+      renderKPIs();
+      renderMatrix();
+
+      document.getElementById("lastUpdated").textContent = lastDataFetchAt.toLocaleTimeString();
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      console.error(err);
+      showToast("Failed to load data: " + err.message, "warn");
+    } finally {
+      if (!signal.aborted) setLoadingState(false);
+    }
+  }
+
+  function refreshFromCachedData() {
+    if (!monthlyRows.length) return;
+    renderKPIs();
+    renderMatrix();
+  }
+
+  /* ── Events ──────────────────────────────────────────────── */
+  document.getElementById("branchSelect").addEventListener("change", () => {
+    currentSort = { key: "total", dir: "desc" };
+    refreshFromCachedData();
+  });
+
+  let searchDebounce = null;
+  document.getElementById("searchBox").addEventListener("input", () => {
+    if (searchDebounce) clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(renderMatrix, 150);
+  });
+
+  /* ── Initial load ────────────────────────────────────────── */
+  loadAllData();
+  setInterval(() => { if (!isLoading) loadAllData(); }, AUTO_REFRESH_MS);
+</script>
+
+</body>
+</html>
