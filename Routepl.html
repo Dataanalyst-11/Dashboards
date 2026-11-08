@@ -1,0 +1,2236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Route Monthly Performance — Percentage View</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #e5e7eb; height: 100dvh; width: 100dvw; display: flex; flex-direction: column; overflow: hidden; }
+header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-bottom: 3px solid #ba9305; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; flex-shrink: 0; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { width: 38px; height: 38px; background: #ba9305; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; color: #020617; flex-shrink: 0; }
+.header-title { font-size: 18px; font-weight: 700; color: #f8fafc; letter-spacing: -0.3px; }
+.header-subtitle { font-size: 11px; color: #64748b; font-weight: 400; margin-top: 1px; }
+.header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; position: relative; }
+.header-loading-overlay { position: absolute; inset: 0; background: rgba(15,23,42,.6); border-radius: 8px; display: flex; align-items: center; justify-content: center; z-index: 10; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.header-loading-overlay.active { opacity: 1; pointer-events: all; }
+.header-loading-overlay .mini-spinner { width: 20px; height: 20px; border: 3px solid #334155; border-top-color: #ba9305; border-radius: 50%; animation: spin .7s linear infinite; }
+.filter-select { position: relative; }
+.filter-select select { padding: 8px 36px 8px 14px; border-radius: 8px; border: 2px solid #334155; background: #1e293b; color: #f1f5f9; font-size: 13px; font-weight: 600; cursor: pointer; appearance: none; -webkit-appearance: none; transition: border-color .2s, box-shadow .2s, opacity .2s; outline: none; }
+.filter-select select:disabled { opacity: .5; cursor: not-allowed; }
+.filter-select select:hover:not(:disabled) { border-color: #ba9305; }
+.filter-select select:focus:not(:disabled) { border-color: #ba9305; box-shadow: 0 0 0 3px rgba(186,147,5,.15); }
+.filter-select::after { content: "\25BE"; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #ba9305; font-size: 16px; pointer-events: none; }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; padding: 16px 24px 0; flex-shrink: 0; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 12px 16px; position: relative; overflow: hidden; transition: border-color .2s; }
+.stat-card:hover { border-color: #475569; }
+.stat-card::before { content: ""; position: absolute; top: 0; left: 0; width: 3px; height: 100%; border-radius: 3px 0 0 3px; }
+.stat-card:nth-child(1)::before { background: #22c55e; }
+.stat-card:nth-child(2)::before { background: #38bdf8; }
+.stat-card:nth-child(3)::before { background: #f97316; }
+.stat-card:nth-child(4)::before { background: #ba9305; }
+.stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+.stat-value { font-size: 22px; font-weight: 800; color: #f8fafc; line-height: 1; }
+.stat-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; font-weight: 400; }
+.perf-high { color: #22c55e !important; }
+.perf-medium { color: #facc15 !important; }
+.perf-low { color: #ef4444 !important; }
+.table-section { flex: 1; padding: 14px 24px 12px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+.table-title { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+.table-count { font-size: 12px; color: #64748b; background: #0f172a; padding: 4px 12px; border-radius: 99px; font-weight: 600; }
+.sort-hint { font-size: 10px; color: #475569; font-weight: 400; }
+.legend { display: flex; align-items: center; gap: 12px; font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.legend .dot-high { background: #22c55e; } .legend .dot-medium { background: #facc15; } .legend .dot-low { background: #ef4444; } .legend .dot-na { background: #475569; }
+.search-box { padding: 7px 14px 7px 32px; border-radius: 8px; border: 2px solid #334155; background: #0f172a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397-1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 12px center no-repeat; color: #f1f5f9; font-size: 13px; width: 260px; outline: none; transition: border-color .2s, box-shadow .2s; }
+.search-box::placeholder { color: #475569; }
+.search-box:focus { border-color: #ba9305; box-shadow: 0 0 0 3px rgba(186,147,5,.12); }
+.table-wrap { flex: 1; overflow: auto; border-radius: 10px; border: 1px solid #334155; background: #0f172a; scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+.table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.table-wrap::-webkit-scrollbar-track { background: transparent; }
+.table-wrap::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 12px; }
+thead th { position: sticky; top: 0; background: #1e293b; color: #94a3b8; text-transform: uppercase; font-size: 10px; letter-spacing: .5px; font-weight: 700; z-index: 3; padding: 10px 4px; border-bottom: 2px solid #334155; text-align: center; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+thead th.corner { left: 0; z-index: 5; text-align: left; padding-left: 12px; }
+thead th.h-main, thead th.h-sp { z-index: 5; text-align: left; padding-left: 12px; }
+thead th.h-main { left: var(--sw1, 190px); }
+thead th.h-sp { left: var(--sw2, 350px); }
+thead th.sortable { cursor: pointer; transition: color .2s, background .2s; }
+thead th.sortable:hover { color: #f1f5f9; background: #263348; }
+thead th.sortable.active-sort { color: #ba9305; }
+thead th.current-month { color: #e7c14d; }
+thead th.future-month { color: #475569; }
+td.future-cell { background: rgba(30,41,59,.35); }
+td.future-cell .pct-na { color: #3b4a61; }
+.sort-icon { display: inline-block; margin-left: 2px; font-size: 8px; opacity: .35; vertical-align: middle; transition: opacity .2s, transform .25s; }
+thead th.sortable:hover .sort-icon { opacity: .7; }
+thead th.sortable.active-sort .sort-icon { opacity: 1; }
+thead th.sortable.active-sort.sort-asc .sort-icon { transform: rotate(0deg); }
+thead th.sortable.active-sort.sort-desc .sort-icon { transform: rotate(180deg); }
+td { padding: 7px 4px; border-bottom: 1px solid #1e293b; vertical-align: middle; color: #cbd5e1; text-align: center; overflow: hidden; }
+tbody tr { transition: background .15s; }
+tbody tr:hover { background: rgba(30,41,59,.6); }
+td.rowhead { position: sticky; left: 0; z-index: 2; background: #0f172a; text-align: left; padding-left: 12px; border-right: 1px solid #1e293b; }
+tr:hover td.rowhead { background: #1b2537; }
+.route-name { font-weight: 700; color: #f1f5f9; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+td.cell-main, td.cell-sp { position: sticky; z-index: 2; background: #0f172a; text-align: left; padding-left: 12px; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+td.cell-main { left: var(--sw1, 190px); border-right: 1px solid #1e293b; color: #94a3b8; }
+td.cell-sp { left: var(--sw2, 350px); border-right: 1px solid #1e293b; color: #cbd5e1; font-weight: 600; text-transform: uppercase; }
+tr:hover td.cell-main, tr:hover td.cell-sp { background: #1b2537; }
+tr.branch-header td { background: #1e3a8a; color: #bfdbfe; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 9px 12px; text-align: left; border-top: 3px solid #3b82f6; border-bottom: 1px solid #1e40af; }
+tr.branch-header td .bh-count { color: #93c5fd; font-weight: 600; text-transform: none; letter-spacing: 0; }
+tr.branch-header td:first-child { position: sticky; left: 0; z-index: 2; }
+tr.sp-subtotal td { background: #9333ea; border-top: 2px solid #ec4899; border-bottom: 2px solid #7e22ce; padding: 8px 4px; }
+tr.sp-subtotal td.rowhead { background: linear-gradient(90deg, #db2777 0%, #9333ea 100%); border-right: 1px solid #7e22ce; }
+tr.sp-subtotal .sub-label { color: #fff; font-weight: 900; font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; }
+tr.sp-subtotal .sp-name { color: #fde047; }
+tr.sp-subtotal .sub-note { display: block; font-size: 9px; color: rgba(255,255,255,.75); font-weight: 700; letter-spacing: .3px; margin-top: 1px; }
+tr.sp-subtotal .pct-badge { background: rgba(15,23,42,.55); color: #fff; border: 1px solid rgba(255,255,255,.65); }
+tr.company-row td { position: sticky; bottom: 0; background: #ba9305; border-top: 2px solid #e7c14d; padding: 9px 4px; z-index: 3; }
+tr.company-row td.rowhead { z-index: 4; background: linear-gradient(90deg, #a67f04 0%, #d4a820 100%); border-right: 1px solid #8a6d05; }
+tr.company-row .sub-label { color: #020617; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+tr.company-row td.rowhead .sub-note { display: block; font-size: 9px; color: #57430a; font-weight: 700; text-transform: none; letter-spacing: .3px; margin-top: 1px; }
+.pct-badge { display: inline-block; padding: 3px 5px; border-radius: 99px; font-weight: 800; font-size: 10.5px; min-width: 48px; text-align: center; font-variant-numeric: tabular-nums; }
+.pct-high { background: rgba(34,197,94,.12); color: #22c55e; }
+.pct-medium { background: rgba(250,204,21,.12); color: #facc15; }
+.pct-low { background: rgba(239,68,68,.12); color: #ef4444; }
+.pct-na { color: #475569; font-weight: 600; }
+tr.company-row .pct-badge { background: rgba(2,6,23,.5); border: 1px solid rgba(2,6,23,.55); }
+tr.company-row .pct-high { color: #4ade80; }
+tr.company-row .pct-medium { color: #fde047; }
+tr.company-row .pct-low { color: #f87171; }
+.avg-cell .pct-badge { font-size: 11.5px; min-width: 54px; border: 1px solid #334155; }
+tr.sp-subtotal .avg-cell .pct-badge, tr.company-row .avg-cell .pct-badge { font-weight: 900; }
+.no-data-row td { text-align: center; padding: 40px 20px; color: #475569; font-size: 14px; }
+.loading-row td { text-align: center; padding: 40px 20px; color: #64748b; font-size: 14px; }
+.loading-spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid #334155; border-top-color: #ba9305; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+footer { text-align: center; padding: 8px; font-size: 11px; background: #0f172a; color: #475569; border-top: 1px solid #1e293b; flex-shrink: 0; }
+footer span.highlight { color: #ba9305; font-weight: 600; }
+.toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; border: 1px solid #334155; border-left: 4px solid #ef4444; color: #f1f5f9; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: 0 8px 32px rgba(0,0,0,.4); z-index: 999; transform: translateX(120%); transition: transform .35s cubic-bezier(.22,1,.36,1); max-width: 380px; }
+.toast.show { transform: translateX(0); }
+.toast.toast-warn { border-left-color: #f59e0b; }
+.toast.toast-retry { border-left-color: #38bdf8; }
+.toast.toast-success { border-left-color: #22c55e; }
+@media(max-width:1100px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .search-box { width: 200px; }
+}
+@media(max-width:700px) {
+  /* on phones freeze only the ROUTE column — MAIN ROUTE / SALES PERSON scroll with the months */
+  td.cell-main, td.cell-sp, thead th.h-main, thead th.h-sp { position: static; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <div class="header-logo">RM</div>
+    <div>
+      <div class="header-title" id="headerTitle">Route Monthly Performance — Percentage View</div>
+      <div class="header-subtitle" id="headerSubtitle">Month-by-Month % Achievement (JAN–DEC) · Clustered by Sales Person · Percentages Only — No Figures</div>
+    </div>
+  </div>
+  <div class="header-right" id="headerRight">
+    <div class="header-loading-overlay" id="headerLoading"><div class="mini-spinner"></div></div>
+    <div class="filter-select">
+      <select id="yearSelect">
+        <option value="all">All Years</option>
+      </select>
+    </div>
+    <div class="filter-select">
+      <select id="branchSelect">
+        <option value="">All Branches</option>
+      </select>
+    </div>
+  </div>
+</header>
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">Company Overall</div>
+    <div class="stat-value" id="statOverall">—</div>
+    <div class="stat-sub" id="statOverallSub">all sales persons · all loaded months</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Monthly Average</div>
+    <div class="stat-value" id="statMonthlyAvg">—</div>
+    <div class="stat-sub" id="statMonthlyAvgSub">company average across months</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Routes On Track</div>
+    <div class="stat-value perf-high" id="statOnTrack">—</div>
+    <div class="stat-sub" id="statOnTrackSub">average at 80% or above</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Best Month</div>
+    <div class="stat-value" id="statBest">—</div>
+    <div class="stat-sub" id="statBestSub">company average in that month</div>
+  </div>
+</div>
+<div class="table-section">
+  <div class="table-header">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span class="table-title">Route % Performance by Month — Clustered by Sales Person</span>
+      <span class="table-count" id="tableCount">0 routes</span>
+      <span class="sort-hint" id="sortHint">Click column headers to sort</span>
+      <span class="legend">
+        <span><i class="dot-high"></i> ≥80%</span>
+        <span><i class="dot-medium"></i> 50–79%</span>
+        <span><i class="dot-low"></i> &lt;50%</span>
+        <span><i class="dot-na"></i> no data</span>
+      </span>
+    </div>
+    <input type="text" class="search-box" id="searchBox" placeholder="Search route, sales person, or branch...">
+  </div>
+  <div class="table-wrap" id="tableWrap">
+    <table id="matrixTable">
+      <thead>
+        <tr id="theadRow"></tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr class="loading-row"><td colspan="99"><span class="loading-spinner"></span> Fetching portal history — aligning months...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<footer>Last updated: <span class="highlight" id="lastUpdated">—</span>&nbsp;|&nbsp;Auto-refreshes every 10 mins · JAN–DEC trend rolls forward automatically each month&nbsp;|&nbsp;Designed and Managed by <span class="highlight">MIS.DPT</span></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+  // Not a credential — proxy only accepts requests from this site's origin.
+  // The real API token lives ONLY in the Cloudflare worker's secrets.
+  window.API_CONFIG = {
+    API_URL: "https://dashboard-proxy.mis-philmed01-dpt.workers.dev/pharma/"
+  };
+</script>
+
+<script>
+/*
+  MASTER TEMPLATE SAMPLE:
+  I have truncated this heavily so the code doesn't break.
+  Replace the object below with your full master template.
+  Ensure the format is exactly: "ROUTE_NAME": ["MAIN_ROUTE", "SALES_PERSON", "BRANCH_CODE"]
+*/
+const masterTemplate = {
+  "TAVETA": ["TAVETA", "NO FCRO", "VOI"],
+  "MWATATE": ["MWATATE", "NO FCRO", "VOI"],
+  "NJUKINI": ["TAVETA", "NO FCRO", "VOI"],
+  "WUNDANYI": ["WUNDANYI", "NO FCRO", "VOI"],
+  "BURA - VOI": ["BURA", "NO FCRO", "VOI"],
+  "VOI CBD": ["VOI", "CECILIA KIOKO", "VOI"],
+  "MACKINON": ["VOI", "CECILIA KIOKO", "VOI"],
+  "MAUNGU": ["VOI", "CECILIA KIOKO", "VOI"],
+  "SAMBURU": ["SAMBURU", "CECILIA KIOKO", "VOI"],
+  "TARU": ["SAMBURU", "CECILIA KIOKO", "VOI"],
+  "JOGOO ROAD": ["Jogoo Road", "VIVIAN ACHIENG", "HEAD OFFICE"],
+  "DONHOLM": ["Donholm", "TRACY AWITI", "HEAD OFFICE"],
+  "BURUBURU": ["Buruburu", "VIVIAN ACHIENG", "HEAD OFFICE"],
+  "GIKOMBA": ["Gikomba", "VIVIAN ACHIENG", "HEAD OFFICE"],
+  "SHAURI MOYO": ["Shauri Moyo", "VIVIAN ACHIENG", "HEAD OFFICE"],
+  "UMOJA": ["UMOJA", "TRACY AWITI", "HEAD OFFICE"],
+  "KARIOBANGI SOUTH": ["KARIOBANGI SOUTH", "YVONNE MONYENCHE", "HEAD OFFICE"],
+  "MOWLEM - HEAD OFFICE": ["Mowlem", "YVONNE MONYENCHE", "HEAD OFFICE"],
+  "KIAMBIO": ["KIAMBIO", "YVONNE MONYENCHE", "HEAD OFFICE"],
+  "MATHARE": ["Mathare", "EMMANUEL OBIRI", "HEAD OFFICE"],
+  "HURUMA - HEAD OFFICE": ["HURUMA", "EMMANUEL OBIRI", "HEAD OFFICE"],
+  "KIAMAIKO": ["KIAMAIKO", "EMMANUEL OBIRI", "HEAD OFFICE"],
+  "MACHAKOS - HQ": ["Machakos-HQ", "EVERLINE", "HEAD OFFICE"],
+  "KIKIMA-HQ": ["KIKIMA", "EVERLINE", "HEAD OFFICE"],
+  "UTAWALA": ["Utawala", "MAGDALENE MBETE", "HEAD OFFICE"],
+  "TASSIA": ["Tassia", "MAGDALENE MBETE", "HEAD OFFICE"],
+  "EMBAKASI": ["Embakasi", "MAGDALENE MBETE", "HEAD OFFICE"],
+  "FEDHA": ["Fedha", "MAGDALENE MBETE", "HEAD OFFICE"],
+  "PIPELINE - HQ": ["Pipeline", "LILIAN MUENI", "HEAD OFFICE"],
+  "IMARA DAIMA": ["Imara Daima", "LILIAN MUENI", "HEAD OFFICE"],
+  "KWARE - HQ": ["Pipeline", "LILIAN MUENI", "HEAD OFFICE"],
+  "SOUTH B": ["South B", "JOASH KIAGE", "HEAD OFFICE"],
+  "REUBEN": ["Reuben", "JOASH KIAGE", "HEAD OFFICE"],
+  "NJENGA": ["Njenga", "JOASH KIAGE", "HEAD OFFICE"],
+  "LUNGALUNGA - HQ": ["Lunga Lunga", "JOASH KIAGE", "HEAD OFFICE"],
+  "NAIROBI CBD": ["CBD", "AMMEAL MICHEKA", "HEAD OFFICE"],
+  "WESTLANDS - HQ": ["WESTLANDS", "AMMEAL MICHEKA", "HEAD OFFICE"],
+  "NGARA": ["Ngara", "AMMEAL MICHEKA", "HEAD OFFICE"],
+  "PARKLANDS": ["Parklands", "AMMEAL MICHEKA", "HEAD OFFICE"],
+  "EASTLEIGH": ["Eastleigh", "AMMEAL MICHEKA", "HEAD OFFICE"],
+  "PANGANI": ["Pangani", "AMMEAL MICHEKA", "HEAD OFFICE"],
+  "MLANGO KUBWA": ["Mlango Kubwa", "AMMEAL MICHEKA", "HEAD OFFICE"],
+  "RUAI": ["Ruai", "NANCY MAMBOLEO", "HEAD OFFICE"],
+  "KAMULU": ["Kamulu", "NANCY MAMBOLEO", "HEAD OFFICE"],
+  "JOSKA": ["Joska", "NANCY MAMBOLEO", "HEAD OFFICE"],
+  "TALA": ["Tala", "NANCY MAMBOLEO", "HEAD OFFICE"],
+  "KANGUNDO": ["Kangundo", "NANCY MAMBOLEO", "HEAD OFFICE"],
+  "MALAA": ["Malaa", "NANCY MAMBOLEO", "HEAD OFFICE"],
+  "DANDORA": ["Dandora", "STANLEY MBOYA", "HEAD OFFICE"],
+  "BABA DOGO": ["Baba Dogo", "STANLEY MBOYA", "HEAD OFFICE"],
+  "LUCKY SUMMER": ["LuckY Summer", "STANLEY MBOYA", "HEAD OFFICE"],
+  "KARIOBANGI NORTH": ["Kariobangi", "STANLEY MBOYA", "HEAD OFFICE"],
+  "NGOMONGO - HQ": ["Ngomongo", "STANLEY MBOYA", "HEAD OFFICE"],
+  "KAYOLE - HQ": ["Kayole", "AMOS MONGÁRE & EFFIE OYOO", "HEAD OFFICE"],
+  "SOWETO - HQ": ["Soweto", "AMOS MONGÁRE & EFFIE OYOO", "HEAD OFFICE"],
+  "BEE CENTER": ["Kayole", "BERYL ONYAPIDI", "HEAD OFFICE"],
+  "KOMAROCKS": ["Komarocks", "BERYL ONYAPIDI", "HEAD OFFICE"],
+  "SAIKA": ["Saika", "BERYL ONYAPIDI", "HEAD OFFICE"],
+  "CHOKAA": ["Chokaa", "BERYL ONYAPIDI", "HEAD OFFICE"],
+  "KAYOLE JUNCTION": ["Kayole", "BERYL ONYAPIDI", "HEAD OFFICE"],
+  "OBAMA": ["Obama", "BERYL ONYAPIDI", "HEAD OFFICE"],
+  "NJIRU": ["Njiru", "BERYL ONYAPIDI", "HEAD OFFICE"],
+  "MATOPENI": ["Matopeni", "BERYL ONYAPIDI", "HEAD OFFICE"],
+  "KIMILILI": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "CHWELE": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "KAMKUYWA": ["KAMKUYWA", "MARION NELIMA", "BUNGOMA"],
+  "KAPSOKWONY": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "SIRISIA": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "KAPTAMA": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "KIPSIGON": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "CHEPTAIS": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "NAMWELA": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "KOPSIRO": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "KUYWA": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "KAPKATENY": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "LWAKHAKHA": ["LWAKHAKHA", "MARION NELIMA", "BUNGOMA"],
+  "MISIKHU": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "CHEPYUK": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "CHEBUKUBE": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "LUGULU": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "KONGIT": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "WESTERN - BUNGOMA": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "LWANDANYI": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "CHEBUKWABI": ["KIMILILI", "MARION NELIMA", "BUNGOMA"],
+  "BUNGOMA CBD": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "WEBUYE": ["WEBUYE", "TESLYNE SIMIYU", "BUNGOMA"],
+  "KANDUYI": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "BUKEMBE": ["WEBUYE", "TESLYNE SIMIYU", "BUNGOMA"],
+  "HARAMBEE": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "KIBABII": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "MUSAMBA": ["HARAMBEE", "TESLYNE SIMIYU", "BUNGOMA"],
+  "BUMULA": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "MAYANJA": ["KIMAETI", "TESLYNE SIMIYU", "BUNGOMA"],
+  "NALONDO": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "KABULA": ["KABULA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "KABUCHAI": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "MATEKA": ["BUNGOMA", "TESLYNE SIMIYU", "BUNGOMA"],
+  "BUSIA CBD": ["BUSIA", "GIDEON RAGAMA", "BUSIA"],
+  "NAMBALE": ["NAMBALE", "GIDEON RAGAMA", "BUSIA"],
+  "MUNDIKA": ["BUSIA", "GIDEON RAGAMA", "BUSIA"],
+  "MUNGATSI": ["MATUNGU", "GIDEON RAGAMA", "BUSIA"],
+  "ALUPE": ["LUKOLIS", "GIDEON RAGAMA", "BUSIA"],
+  "MATAYOS": ["MATAYOS", "GIDEON RAGAMA", "BUSIA"],
+  "MALANGA - BUSIA": ["BUSIA", "GIDEON RAGAMA", "BUSIA"],
+  "BUHUI": ["BUSIA", "GIDEON RAGAMA", "BUSIA"],
+  "LUBANGA": ["NAMBALE", "GIDEON RAGAMA", "BUSIA"],
+  "PORT VICTORIA": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "OGALO": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "BUDALANGI": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "BUTULA": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "BUMALA": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "FUNYULA": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "SIO PORT": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "BUNYALA": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "MULUKHONI": ["PORT VICTORIA", "AARON OMONG'IN", "BUSIA"],
+  "MALABA": ["MALABA CBD", "NO FCRO", "BUSIA"],
+  "AMAGORO": ["MALABA CBD", "NO FCRO", "BUSIA"],
+  "AMUKURA": ["AMUKURA", "NO FCRO", "BUSIA"],
+  "KIMAETI": ["KIMAETI", "TESLYNE SIMIYU", "BUNGOMA"],
+  "LUKOLIS": ["MALABA", "NO FCRO", "BUSIA"],
+  "ANGURAI": ["ANGURAI", "NO FCRO", "BUSIA"],
+  "UGUNJA": ["SIAYA", "MERCY OYUGI", "BUSIA"],
+  "UKWALA": ["SIAYA", "MERCY OYUGI", "BUSIA"],
+  "LIGEGA": ["SIAYA", "MERCY OYUGI", "BUSIA"],
+  "SIDINDI": ["SIAYA", "MERCY OYUGI", "BUSIA"],
+  "RWAMBWA": ["SIAYA", "MERCY OYUGI", "BUSIA"],
+  "SEGA": ["SIAYA", "MERCY OYUGI", "BUSIA"],
+  "RANGALA": ["SIAYA", "MERCY OYUGI", "BUSIA"],
+  "RATADO SIAYA": ["SIAYA", "MERCY OYUGI", "BUSIA"],
+  "TURBO": ["turbo kipkaren", "LEWIS KIPNGETICH", "ELDORET"],
+  "MATUNDA - ELDORET": ["soy matunda", "LEWIS KIPNGETICH", "ELDORET"],
+  "SOY - ELDORET": ["soy matunda", "LEWIS KIPNGETICH", "ELDORET"],
+  "PANPAPER": ["PANPAPER", "LEWIS KIPNGETICH", "ELDORET"],
+  "MUSEMBE": ["TURBO", "LEWIS KIPNGETICH", "ELDORET"],
+  "NANGILI": ["SOY", "LEWIS KIPNGETICH", "ELDORET"],
+  "SANGO": ["SOY", "LEWIS KIPNGETICH", "ELDORET"],
+  "LIKUYANI": ["LIKUYANI", "LEWIS KIPNGETICH", "ELDORET"],
+  "FUFARAL": ["SOY", "LEWIS KIPNGETICH", "ELDORET"],
+  "LUGARI": ["TURBO", "LEWIS KIPNGETICH", "ELDORET"],
+  "LUMAKANDA": ["TURBO", "LEWIS KIPNGETICH", "ELDORET"],
+  "MLIMANI - ELDORET": ["ELDORET", "LEWIS KIPNGETICH", "ELDORET"],
+  "MUHONJE": ["TURBO", "LEWIS KIPNGETICH", "ELDORET"],
+  "CHEKALINI": ["TURBO", "LEWIS KIPNGETICH", "ELDORET"],
+  "KIPKAREN RIVER": ["TURBO", "LEWIS KIPNGETICH", "ELDORET"],
+  "MAGUT": ["MAGUT", "LEWIS KIPNGETICH", "ELDORET"],
+  "MWAMBA": ["MWAMBA", "LEWIS KIPNGETICH", "ELDORET"],
+  "MOSORIOT": ["mosoriot kurgung", "SALOME CHEPKEEMOI", "ELDORET"],
+  "NDALAT": ["ndalat selia", "SALOME CHEPKEEMOI", "ELDORET"],
+  "HURUMA - ELDORET": ["huruma maili nne", "SALOME CHEPKEEMOI", "ELDORET"],
+  "BURNT FOREST": ["burnt forest", "SALOME CHEPKEEMOI", "ELDORET"],
+  "KABIYET": ["burnt forest", "SALOME CHEPKEEMOI", "ELDORET"],
+  "KAPSERET": ["kapsabet", "SALOME CHEPKEEMOI", "ELDORET"],
+  "KIPKAREN": ["langas kapseret", "SALOME CHEPKEEMOI", "ELDORET"],
+  "JUAKALI - ELDORET": ["TURBO", "SALOME CHEPKEEMOI", "ELDORET"],
+  "KIPKENYO": ["ndalat selia", "SALOME CHEPKEEMOI", "ELDORET"],
+  "KIPKAREN ESTATE": ["ndalatselia", "SALOME CHEPKEEMOI", "ELDORET"],
+  "KAIBOI": ["NDALAT", "SALOME CHEPKEEMOI", "ELDORET"],
+  "KURGUNG": ["NDALAT", "SALOME CHEPKEEMOI", "ELDORET"],
+  "MAILI NNE - ELDORET": ["huruma maili nne", "SALOME CHEPKEEMOI", "ELDORET"],
+  "TIMBOROA": ["BURNT FOREST", "SALOME CHEPKEEMOI", "ELDORET"],
+  "MATHARU": ["BURNT FOREST", "SALOME CHEPKEEMOI", "ELDORET"],
+  "BLOCK 4": ["mosoriot kurgung", "SALOME CHEPKEEMOI", "ELDORET"],
+  "KABISAGA": ["NDALAT", "SALOME CHEPKEEMOI", "ELDORET"],
+  "CHEPTERWAI": ["NDALAT", "SALOME CHEPKEEMOI", "ELDORET"],
+  "HILL TEA": ["huruma maili nne", "SALOME CHEPKEEMOI", "ELDORET"],
+  "SEGUTON": ["BURNT FOREST", "SALOME CHEPKEEMOI", "ELDORET"],
+  "BAHARINI": ["huruma maili nne", "SALOME CHEPKEEMOI", "ELDORET"],
+  "BAYETE": ["BURNT FOREST", "SALOME CHEPKEEMOI", "ELDORET"],
+  "CHEREBER": ["CHEREBER", "SALOME CHEPKEEMOI", "ELDORET"],
+  "LODWAR": ["lodwar", "ISSAC SHAMOLA", "ELDORET"],
+  "KAKUMA": ["kakuma", "ISSAC SHAMOLA", "ELDORET"],
+  "LOKICHAR": ["lodwar", "ISSAC SHAMOLA", "ELDORET"],
+  "LOKICHOGIO": ["lodwar", "ISSAC SHAMOLA", "ELDORET"],
+  "KANAAM": ["KANAAM", "ISSAC SHAMOLA", "ELDORET"],
+  "KAPSABET": ["kapsabet", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "KAPTUMO": ["Nandihills", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "NANDI HILLS": ["Nandihills", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "HIMAKI": ["LESSOS", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "KAMOBO": ["kapsabet", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "BARATON": ["KAPSABET", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "LESSOS - ELDORET": ["LESSOS", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "KIMWANI": ["NANDI HILLS", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "NAMGOI": ["NAMGOI JUNCTION", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "YALA - ELDORET": ["KAPSABET", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "CHEPTERIT": ["KAPSABET", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "KOBUJOI": ["NANDI HILLS", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "TULON": ["NANDI HILLS", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "CHEPSONOI": ["KAPSABET", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "KIPSIGAK": ["NANDI HILLS", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "TINDERET": ["Nandihills", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "KAPSASUR": ["KAPSABET", "MARTHA KOINANGE& FRED TANUI", "ELDORET"],
+  "LANGAS - ELDORET": ["langas kapseret", "JEREMIAH MOMANYI", "ELDORET"],
+  "ROAD BLOCK": ["MAILI NNE", "JEREMIAH MOMANYI", "ELDORET"],
+  "MUNYAKA - ELDORET": ["KIMUMU", "JEREMIAH MOMANYI", "ELDORET"],
+  "KESSES": ["kesses", "JEREMIAH MOMANYI", "ELDORET"],
+  "CHEPTIRET": ["KESSES", "JEREMIAH MOMANYI", "ELDORET"],
+  "KIPLOMBE": ["KIMUMU", "JEREMIAH MOMANYI", "ELDORET"],
+  "NGERIA": ["KESSES", "JEREMIAH MOMANYI", "ELDORET"],
+  "ANNEX": ["kesses", "JEREMIAH MOMANYI", "ELDORET"],
+  "MOI - ELDORET": ["KESSES", "JEREMIAH MOMANYI", "ELDORET"],
+  "JERUSALEM": ["JERUSALEM", "JEREMIAH MOMANYI", "ELDORET"],
+  "MWANZO": ["MWANZO", "JEREMIAH MOMANYI", "ELDORET"],
+  "KIMUMU": ["kimumu", "JEREMIAH MOMANYI", "ELDORET"],
+  "TAIRI MBILI": ["TAIRI MBILI", "JEREMIAH MOMANYI", "ELDORET"],
+  "KAPSOYA": ["kimumu", "JEREMIAH MOMANYI", "ELDORET"],
+  "SINAI - ELDORET": ["SINAI", "JEREMIAH MOMANYI", "ELDORET"],
+  "HAWAII": ["kimumu", "JEREMIAH MOMANYI", "ELDORET"],
+  "TELEVIEW": ["LANGAS", "JEREMIAH MOMANYI", "ELDORET"],
+  "KISUMU NDOGO - ELDORET": ["langas kapseret", "JEREMIAH MOMANYI", "ELDORET"],
+  "ELDORET CBD": ["Eldoret cbd", "NANCY NDANU", "ELDORET"],
+  "PIONEER - ELDORET": ["CBD", "NANCY NDANU", "ELDORET"],
+  "KABARNET": ["kabarnet", "IRINE JEROP", "ELDORET"],
+  "ITEN": ["iten highway", "IRINE JEROP", "ELDORET"],
+  "ZIWA - ELDORET": ["ziwa moiben", "IRINE JEROP", "ELDORET"],
+  "KABARTONJO": ["iten highway", "IRINE JEROP", "ELDORET"],
+  "BIRETWO": ["KABARNET", "IRINE JEROP", "ELDORET"],
+  "MOIBEN": ["ZIWA", "IRINE JEROP", "ELDORET"],
+  "FLAX": ["flax", "IRINE JEROP", "ELDORET"],
+  "MEREWET": ["iten highway", "IRINE JEROP", "ELDORET"],
+  "CHEPKOILEL": ["ZIWA", "IRINE JEROP", "ELDORET"],
+  "CHEPTONGEI": ["KAPSOWAR", "IRINE JEROP", "ELDORET"],
+  "KAPSOWAR": ["KAPSOWAR", "IRINE JEROP", "ELDORET"],
+  "KUINET": ["ZIWA", "IRINE JEROP", "ELDORET"],
+  "CHEPKANGA": ["ITEN", "IRINE JEROP", "ELDORET"],
+  "KABENES": ["ZIWA", "IRINE JEROP", "ELDORET"],
+  "KIPKORGOT": ["FLAX", "IRINE JEROP", "ELDORET"],
+  "MARURA": ["MARURA", "IRINE JEROP", "ELDORET"],
+  "KASOYO": ["KASOYO", "IRINE JEROP", "ELDORET"],
+  "KATALEL": ["KATALEL", "IRINE JEROP", "ELDORET"],
+  "NYARU": ["NYARU", "IRINE JEROP", "ELDORET"],
+  "MARAKWET": ["MARAKWET", "IRINE JEROP", "ELDORET"],
+  "EMBU": ["EMBU", "EDWARD MATHU", "EMBU"],
+  "MUTUNDURI": ["EMBU", "EDWARD MATHU", "EMBU"],
+  "PI": ["MWEA", "EDWARD MATHU", "EMBU"],
+  "MURURI": ["MWEA", "EDWARD MATHU", "EMBU"],
+  "SIAKAGO": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "ISHIARA": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "KIRITIRI": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "MASINGA": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "BONDONI": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "MURARU": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "KANYUAMBORA": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "KAEWA - EMBU": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "KARURUMO": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "KAMUMU": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "KIVAA - EMBU": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "UGWERI": ["EMBU", "ERIC KAVIU", "EMBU"],
+  "KIAMUTUGU": ["MWEA", "PAMELA KAGEMI", "EMBU"],
+  "KIBUGU": ["MWEA", "PAMELA KAGEMI", "EMBU"],
+  "KITHURE": ["MWEA", "PAMELA KAGEMI", "EMBU"],
+  "MUTITHI": ["MWEA", "PAMELA KAGEMI", "EMBU"],
+  "KIMBIMBI": ["MWEA", "PAMELA KAGEMI", "EMBU"],
+  "MWEA": ["MWEA", "PAMELA KAGEMI", "EMBU"],
+  "KIANJOKOMA": ["EMBU", "PAMELA KAGEMI", "EMBU"],
+  "MANYATTA - EMBU": ["EMBU", "PAMELA KAGEMI", "EMBU"],
+  "KITHIMU": ["EMBU", "PAMELA KAGEMI", "EMBU"],
+  "KEVOTE": ["EMBU", "PAMELA KAGEMI", "EMBU"],
+  "CHUKA": ["CHUKA ROUTE", "STELLA NDWIGA", "EMBU"],
+  "CHOGORIA": ["CHUKA ROUTE", "STELLA NDWIGA", "EMBU"],
+  "NDAGANI": ["CHUKA", "STELLA NDWIGA", "EMBU"],
+  "KIGUMO": ["CHUKA", "STELLA NDWIGA", "EMBU"],
+  "KATHAGERI": ["CHUKA", "STELLA NDWIGA", "EMBU"],
+  "RUNYENJES": ["CHUKA", "STELLA NDWIGA", "EMBU"],
+  "CHEERA": ["CHUKA", "STELLA NDWIGA", "EMBU"],
+  "ENA": ["EMBU", "STELLA NDWIGA", "EMBU"],
+  "KAHAWA WEST": ["KAHAWA WEST", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "KASARANI": ["KASARANI", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "ZIMMERMAN": ["ZIMMERMAN", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "ROYSAMBU": ["KASARANI", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "MARURUI": ["ZIMMERMAN", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "MAZIWA": ["MAZIWA", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "KENYATTA MARKET": ["KENYATTA MARKET", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "ROASTERS": ["KASARANI", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "NGUMBA": ["ZIMMERMAN", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "NGOMONGO - GITHURAI": ["ZIMMERMAN", "KIRICHU MARY WANGECHI", "GITHURAI"],
+  "GITHURAI 45": ["GITHURAI 45", "LILIAN KIRAGU WAWIRA", "GITHURAI"],
+  "MWIHOKO": ["MWIHOKO", "LILIAN KIRAGU WAWIRA", "GITHURAI"],
+  "PROGRESSIVE": ["PROGRESSIVE", "LILIAN KIRAGU WAWIRA", "GITHURAI"],
+  "EASTERN BYPASS": ["BYPASS", "NO FCRO", "GITHURAI"],
+  "MATANGI": ["RUIRU", "NO FCRO", "GITHURAI"],
+  "MURERA": ["MURERA", "NO FCRO", "GITHURAI"],
+  "KIHUNGURO": ["BYPASS", "NO FCRO", "GITHURAI"],
+  "KAMAKIS": ["KAMAKIS", "NO FCRO", "GITHURAI"],
+  "MUMBI": ["MUMBI", "NO FCRO", "GITHURAI"],
+  "KAHAWA WENDANI": ["KAHAWA WENDANI", "NO FCRO", "GITHURAI"],
+  "KAHAWA SUKARI": ["KAHAWA SUKARI", "NO FCRO", "GITHURAI"],
+  "KIAMBU": ["KIAMBU", "PATRICK THIGA", "GITHURAI"],
+  "RUIRU TOWN": ["RUIRU", "PATRICK THIGA", "GITHURAI"],
+  "GITHUNGURI": ["GITHUNGURI", "PATRICK THIGA", "GITHURAI"],
+  "NDUMBERI": ["NDUMBERI", "PATRICK THIGA", "GITHURAI"],
+  "KIRIGITI": ["KIRIGITI", "PATRICK THIGA", "GITHURAI"],
+  "KWAMAIKO": ["KWAMAIKO", "PATRICK THIGA", "GITHURAI"],
+  "KIBICHOI": ["KIBICHOI", "PATRICK THIGA", "GITHURAI"],
+  "IKINU": ["IKINU", "PATRICK THIGA", "GITHURAI"],
+  "GITHIGA": ["GITHIGA", "PATRICK THIGA", "GITHURAI"],
+  "GITHOGORO": ["GITHOGORO", "PATRICK THIGA", "GITHURAI"],
+  "TINGANGA": ["TINGANGA", "PATRICK THIGA", "GITHURAI"],
+  "THINDIGUA": ["THINDIGUA", "PATRICK THIGA", "GITHURAI"],
+  "GITHURAI 44": ["GITHURAI 44", "JAMES MWANGI", "GITHURAI"],
+  "KIMBO": ["KIMBO", "JAMES MWANGI", "GITHURAI"],
+  "MEMBLEY": ["MEMBLEY", "JAMES MWANGI", "GITHURAI"],
+  "WATAALUM": ["WATAALUM", "JAMES MWANGI", "GITHURAI"],
+  "PRISON": ["PRISON", "JAMES MWANGI", "GITHURAI"],
+  "MWIKI": ["MWIKI", "VICTOR MOGENDI", "GITHURAI"],
+  "MAJI MAZURI": ["MAJI MAZURI", "VICTOR MOGENDI", "GITHURAI"],
+  "SUNTON": ["SUNTON", "VICTOR MOGENDI", "GITHURAI"],
+  "HUNTERS": ["HUNTERS", "VICTOR MOGENDI", "GITHURAI"],
+  "DELIVERANCE GITHURAI": ["DELIVERANCE", "VICTOR MOGENDI", "GITHURAI"],
+  "KAGIO": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "SAGANA": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "MAKUTANO - KARATINA": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KIBINGOTI": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "GATEGI": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "PI KARABA": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KIBURU": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KIVIRIGWI": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KANDONGU": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "BARICHO": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KIANIA": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KIANGWACI": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KIMICHA": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "CIAGINI": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "NTHINGINI": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KIMUNYE": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KAMUGUNDA": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KAMORO": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KANGOCHO": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KAVUTI": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KIANJEGE": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KARUMANDI": ["SAGANA", "JOEL KIMEMIA", "KARATINA"],
+  "KARATINA": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KERUGOYA": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "MUKINDURI": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KAGUMO": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KIANGAI": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KIVINGO": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "GATHAMBI": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KANGAITA": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KIANGUENYI": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KIRIAINI": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "ITHARE": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "GATWE": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KIAMWATHI": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KIANGOMBE": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KAHARA": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KARIA - KARATINA": ["KARATINA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KIANYAGA": ["MWEA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "KUTUS": ["MWEA", "NJOROGE MARY WAIRIMU", "KARATINA"],
+  "NYERI": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "KIAWARA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "MWEIGA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "NGOBIT": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "NDARAGWA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "JIKAZE": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "NAIRUTIA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "GATITU": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "SKUTA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "KIANDU": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "WATUKA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "NYARIBO": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "GICHIRA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "MUTHINGA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "ENDARASHA": ["NYERI", "MWAURA MOSES KARIUKI", "KARATINA"],
+  "MURANG'A": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KANGEMA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "MUKUYU": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "MARAGWA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KAHATIA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "MURIRANJAS": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KANYENYAINI": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KAHURO": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KAGANDA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "RWATHIA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KABUTA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KARURI": ["GIAKANJA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KIHOYA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "GACHIRIRO": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "KAGAA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "MATHIOYA": ["MURANGA", "ELIZABETH WANJIKU", "KARATINA"],
+  "SABASABA": ["KARATINA", "ELIZABETH WANJIKU", "KARATINA"],
+  "MUKURWEINI": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "GAKINDU": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "TUMUTUMU": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "MUTHUTHINI": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "OTHAYA": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "GIAKANJA": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "MAHIGA": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "KIAMARIGA": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "WALAZO": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "KIMAHURI": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "CHAKA": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "NARUMORU": ["OTHAYA", "RUTH WANGUI", "NANYUKI"],
+  "GIAKAIBEI": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "KAIRUTHI": ["OTHAYA", "RUTH WANGUI", "KARATINA"],
+  "GACHIE": ["GACHIE", "LYDIA WANGUI", "KAWANGWARE"],
+  "RUAKA": ["RUAKA", "LYDIA WANGUI", "KAWANGWARE"],
+  "WANGIGE": ["WANGIGE", "LYDIA WANGUI", "KAWANGWARE"],
+  "BANANA": ["BANANA", "LYDIA WANGUI", "KAWANGWARE"],
+  "NDENDERU": ["NDENDERU", "LYDIA WANGUI", "KAWANGWARE"],
+  "LOWER KABETE": ["KABETE", "LYDIA WANGUI", "KAWANGWARE"],
+  "MWIMUTO": ["MWIMUTO", "LYDIA WANGUI", "KAWANGWARE"],
+  "MUCHATHA": ["RUAKA", "LYDIA WANGUI", "KAWANGWARE"],
+  "KARURA": ["KARURA", "LYDIA WANGUI", "KAWANGWARE"],
+  "NGECHA": ["NGECHA", "LYDIA WANGUI", "KAWANGWARE"],
+  "GIKUNI": ["GIKUNI", "LYDIA WANGUI", "KAWANGWARE"],
+  "KABETE": ["KABETE", "LYDIA WANGUI", "KAWANGWARE"],
+  "GATHIGA": ["GATHIGA", "LYDIA WANGUI", "KAWANGWARE"],
+  "GEKUNI": ["WANGIGE", "LYDIA WANGUI", "KAWANGWARE"],
+  "KAMTUINI": ["KAMTUINI", "LYDIA WANGUI", "KAWANGWARE"],
+  "UTHIRU": ["UTHIRU", "NANCY KERORE", "KAWANGWARE"],
+  "NDUNYU": ["NDUNYU", "NANCY KERORE", "KAWANGWARE"],
+  "WAITHAKA": ["WAITHAKA", "NANCY KERORE", "KAWANGWARE"],
+  "ZAMBEZI": ["ZAMBEZI", "NANCY KERORE", "KAWANGWARE"],
+  "THAMANDA": ["THAMANDA", "NANCY KERORE", "KAWANGWARE"],
+  "REGEN": ["LIMURU", "NANCY KERORE", "KAWANGWARE"],
+  "MUTHIGA": ["LIMURU", "NANCY KERORE", "KAWANGWARE"],
+  "KAREN - KAWANGWARE": ["KAREN", "NANCY KERORE", "KAWANGWARE"],
+  "NDERI": ["NDERI", "NANCY KERORE", "KAWANGWARE"],
+  "LIMURU": ["LIMURU", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "KIKUYU": ["KIKUYU", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "GIKAMBURA": ["GIKAMBURA", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "KINOO": ["KINOO", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "KAMANGU": ["KAMANGU", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "THOGOTO": ["THOGOTO", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "KIAMBAA": ["KIAMBAA", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "RUTHIGITI": ["RUTHIGITI", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "GITARU": ["GITARU", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "KWAMBERA": ["KWAMBIRA", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "MBOROTI": ["MBOROTI", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "NYAMBARI": ["NYAMBARI", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "KABUKU": ["KABUKU", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "NGARARIGA": ["NGARARIGA", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "NDEIYA": ["NDEIYA", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "RUSIGITI": ["RUTHIGITI", "AGRIPINA LIKHALE", "KAWANGWARE"],
+  "KIBERA": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "HAYANI": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "JAMHURI": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "OLYMPIC": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "NGONG ROAD": ["NGONG RD", "EDITH OKUMU", "KAWANGWARE"],
+  "GATWEKERA": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "KATWEKERA": ["KIBERA", "NO FCRO", "KAWANGWARE"],
+  "MAKINA": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "LINDI": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "MASHIMONI": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "LINE SABA": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "DARAJANI": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "NGUMO": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "SOWETO - KAWANGWARE": ["KIBERA", "NO FCRO", "KAWANGWARE"],
+  "SILANGA": ["KIBERA", "EDITH OKUMU", "KAWANGWARE"],
+  "KAWANGWARE": ["KAWANGWARE", "DAN MUTUNGA", "KAWANGWARE"],
+  "LAVINGTON": ["LAVINGTON", "DAN MUTUNGA", "KAWANGWARE"],
+  "KANGEMI": ["KANGEMI", "DAN MUTUNGA", "KAWANGWARE"],
+  "KILIMANI": ["KILIMANI", "DAN MUTUNGA", "KAWANGWARE"],
+  "WESTLANDS - KAWANG": ["WESTLANDS", "DAN MUTUNGA", "KAWANGWARE"],
+  "YAYA": ["YAYA", "DAN MUTUNGA", "KAWANGWARE"],
+  "HURLIGHAM": ["HURLIGHAM", "DAN MUTUNGA", "KAWANGWARE"],
+  "KILELESHWA": ["KILELESHWA", "DAN MUTUNGA", "KAWANGWARE"],
+  "KABIRIA": ["KABIRIA", "VALERIE AYIERA", "KAWANGWARE"],
+  "NAIVASHA ROAD": ["NAIVASHA RD", "VALERIE AYIERA", "KAWANGWARE"],
+  "NGANDO": ["NGANDO", "VALERIE AYIERA", "KAWANGWARE"],
+  "KINYANJUI": ["KINYANJUI", "VALERIE AYIERA", "KAWANGWARE"],
+  "DAGORETTI": ["DAGORETTI", "VALERIE AYIERA", "KAWANGWARE"],
+  "NGINA ROAD": ["NGINA ROAD", "VALERIE AYIERA", "KAWANGWARE"],
+  "WANYEE": ["WANYEE", "VALERIE AYIERA", "KAWANGWARE"],
+  "SATELLITE": ["SATELLITE", "VALERIE AYIERA", "KAWANGWARE"],
+  "DELIVERANCE KAWANGWARE": ["DELIVERENCE", "VALERIE AYIERA", "KAWANGWARE"],
+  "MUTHAMA": ["MUTHAMA", "VALERIE AYIERA", "KAWANGWARE"],
+  "NDWARU": ["NDWARU", "VALERIE AYIERA", "KAWANGWARE"],
+  "MTEGO": ["MTEGO", "VALERIE AYIERA", "KAWANGWARE"],
+  "MBALE": ["MBALE", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "CHEPTULU": ["CHEPTULU", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "VIHIGA": ["VIHIGA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "MAJENGO - KAKAMEGA": ["HAMISI", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "CHAVAKALI": ["MBALE", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "SEREM": ["CHEPTULU", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "HAMISI": ["HAMISI", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "MAGO": ["CHEPTULU", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "MUDETE": ["CHEPTULU", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "EREGI": ["MBALE CBD", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "SHAMAKHOKHO": ["CHEPTULU", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "MAHANGA": ["EMUHAYA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "JEBROK": ["HAMISI", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "KILINGILI": ["KHOMUSALABA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "VUYALO": ["KHOMUSALABA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "ESHIBANGA": ["EMUHAYA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "ESIBUYE": ["EMUHAYA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "ESIRULO": ["KHOMUSALABA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "VOKOLI": ["CHEPTULU", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "GISAMBAI": ["HAMISI", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "MAGADA": ["EMUHAYA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "KEGONDI": ["EMUHAYA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "KAIMOSI": ["KAIMOSI", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "KHUMSALABA": ["KHUMSALABA", "BRIDGIT YVETTE LUNGWE", "KAKAMEGA"],
+  "MUMIAS CBD": ["MUMIAS", "LILIAN MWANJE", "KAKAMEGA"],
+  "BUTERE": ["BUTERE", "LILIAN MWANJE", "KAKAMEGA"],
+  "SHIANDA": ["SHIANDA", "LILIAN MWANJE", "KAKAMEGA"],
+  "MATUNGU": ["MATUNGU", "LILIAN MWANJE", "KAKAMEGA"],
+  "BUKURA": ["BUKURA", "LILIAN MWANJE", "KAKAMEGA"],
+  "MUSANDA": ["MUSANDA", "LILIAN MWANJE", "KAKAMEGA"],
+  "SHIBALE": ["MUMIAS", "LILIAN MWANJE", "KAKAMEGA"],
+  "BUHURU": ["MUSANDA", "LILIAN MWANJE", "KAKAMEGA"],
+  "MAONDO": ["SHINYALU", "LILIAN MWANJE", "KAKAMEGA"],
+  "EKERO": ["MUMIAS", "LILIAN MWANJE", "KAKAMEGA"],
+  "MANYULIA": ["BUTERE", "LILIAN MWANJE", "KAKAMEGA"],
+  "KAMASHIA": ["BUKURA", "LILIAN MWANJE", "KAKAMEGA"],
+  "LUNZA": ["BUKURA", "LILIAN MWANJE", "KAKAMEGA"],
+  "SHIATSALA": ["BUTERE", "LILIAN MWANJE", "KAKAMEGA"],
+  "KOYONZO": ["MATUNGU", "LILIAN MWANJE", "KAKAMEGA"],
+  "INAYA": ["MATUNGU", "LILIAN MWANJE", "KAKAMEGA"],
+  "MAYONI": ["MUMIAS", "LILIAN MWANJE", "KAKAMEGA"],
+  "MANYALA": ["BUTERE", "LILIAN MWANJE", "KAKAMEGA"],
+  "IMANGA": ["MUSANDA", "LILIAN MWANJE", "KAKAMEGA"],
+  "SABATIA BUTERE": ["BUTERE", "LILIAN MWANJE", "KAKAMEGA"],
+  "KAKAMEGA CBD": ["KAKAMEGA CBD", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "AMALEMBA": ["KHAYEGA", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "KAMBI YA MWANZA": ["WEST KENYA", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "MALAVA": ["MALAVA", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "ESHISIRU": ["LURAMBI", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "KHAYEGA": ["KHAYEGA", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "LURAMBI": ["KAKAMEGA CBD", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "MAKUNGA - KAKAMEGA": ["SHIANDA", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "SHIBULI": ["SHIBULI", "MWANJE MOURINE SHITANDI", "KAKAMEGA"],
+  "NAVAKHOLO": ["NAMBACHA", "REUBEN SAKALA", "KAKAMEGA"],
+  "MATETE": ["WEBUYE", "REUBEN SAKALA", "KAKAMEGA"],
+  "SHINYALU": ["SHINYALU", "REUBEN SAKALA", "KAKAMEGA"],
+  "MUSOLI": ["MUSOLI", "REUBEN SAKALA", "KAKAMEGA"],
+  "MALAHA": ["SHIANDA", "REUBEN SAKALA", "KAKAMEGA"],
+  "KHWISERO": ["MUSOLI", "REUBEN SAKALA", "KAKAMEGA"],
+  "MALINYA": ["MUSOLI", "REUBEN SAKALA", "KAKAMEGA"],
+  "BOMET CBD": ["BOMET", "LISBON KIMUTAI", "KERICHO"],
+  "SILBWET": ["SILIBWET", "LISBON KIMUTAI", "KERICHO"],
+  "SOTIK": ["SOTIK", "LISBON KIMUTAI", "KERICHO"],
+  "CHEBUNYO": ["CHEBUNYO", "LISBON KIMUTAI", "KERICHO"],
+  "DIKIR - KERICHO": ["BOMET", "LISBON KIMUTAI", "KERICHO"],
+  "NDANAI": ["SOTIK", "LISBON KIMUTAI", "KERICHO"],
+  "MAKIMENY": ["CHEBUNYO", "LISBON KIMUTAI", "KERICHO"],
+  "KAPKWEN": ["KAPLONG", "LISBON KIMUTAI", "KERICHO"],
+  "KAPLONG": ["KAPLONG", "LISBON KIMUTAI", "KERICHO"],
+  "CHEBOLE": ["KAPLONG", "LISBON KIMUTAI", "KERICHO"],
+  "KAMUREITO": ["KAPLONG", "LISBON KIMUTAI", "KERICHO"],
+  "TEMBWO": ["SOTIK", "LISBON KIMUTAI", "KERICHO"],
+  "SIONGIROI": ["CHEBUNYO", "LISBON KIMUTAI", "KERICHO"],
+  "LONGISA": ["LONGISA", "COLLINS KETER", "KERICHO"],
+  "MULOT": ["MULOT", "COLLINS KETER", "KERICHO"],
+  "SIGOR - KERICHO": ["SIGOR", "COLLINS KETER", "KERICHO"],
+  "SUNSET": ["MULOT", "COLLINS KETER", "KERICHO"],
+  "MERIGI": ["MERIGI", "COLLINS KETER", "KERICHO"],
+  "KEMBU": ["LONGISA", "COLLINS KETER", "KERICHO"],
+  "YOUTH FARMERS": ["MERIGI", "COLLINS KETER", "KERICHO"],
+  "SOGOO": ["SOGOO", "COLLINS KETER", "KERICHO"],
+  "CHEMANER": ["LONGISA", "COLLINS KETER", "KERICHO"],
+  "OLBUTYO": ["SIGOR", "COLLINS KETER", "KERICHO"],
+  "BAKOYOT": ["SOGOO", "COLLINS KETER", "KERICHO"],
+  "KIPSUTER": ["SIGOR", "COLLINS KETER", "KERICHO"],
+  "KABOSON": ["SIGOR", "COLLINS KETER", "KERICHO"],
+  "KIMOGORO": ["SOGOO", "COLLINS KETER", "KERICHO"],
+  "KAPKOMBUN": ["MERIGI", "COLLINS KETER", "KERICHO"],
+  "KISITO": ["SIGOR", "COLLINS KETER", "KERICHO"],
+  "LITEIN": ["LITEIN", "DENNIS KIBET", "KERICHO"],
+  "MOGOGOSIEK": ["KOIWA", "DENNIS KIBET", "KERICHO"],
+  "CHEBORGEY": ["LITEIN", "DENNIS KIBET", "KERICHO"],
+  "KOIWA": ["KOIWA", "DENNIS KIBET", "KERICHO"],
+  "KAPKATET": ["KAPKATET", "DENNIS KIBET", "KERICHO"],
+  "SIGOWET": ["RORET", "DENNIS KIBET", "KERICHO"],
+  "NGOINA RD": ["RORET", "DENNIS KIBET", "KERICHO"],
+  "KAPGWEN": ["KAPSET", "DENNIS KIBET", "KERICHO"],
+  "RORET": ["RORET", "DENNIS KIBET", "KERICHO"],
+  "KAPSET": ["KAPSET", "DENNIS KIBET", "KERICHO"],
+  "CHEBOIN": ["LITEIN", "DENNIS KIBET", "KERICHO"],
+  "BOITO": ["KOIWA", "DENNIS KIBET", "KERICHO"],
+  "KERICHO CBD": ["KERICHO", "RAYMOND KIPNGETICH", "KERICHO"],
+  "KAPSOIT": ["KAPSOIT", "RAYMOND KIPNGETICH", "KERICHO"],
+  "KIPSITET": ["KIPSITET", "RAYMOND KIPNGETICH", "KERICHO"],
+  "BROOKE": ["BROOKE", "RAYMOND KIPNGETICH", "KERICHO"],
+  "CHEPNYOGAA": ["KAPSOIT", "RAYMOND KIPNGETICH", "KERICHO"],
+  "KURESOI - KERICHO": ["KURESOI", "RAYMOND KIPNGETICH", "KERICHO"],
+  "LONDIANI": ["KURESOI", "RAYMOND KIPNGETICH", "KERICHO"],
+  "FORT TENAN": ["KIPSITET", "RAYMOND KIPNGETICH", "KERICHO"],
+  "KIPKELION": ["KURESOI", "RAYMOND KIPNGETICH", "KERICHO"],
+  "KABIANGA": ["KAPSOIT", "RAYMOND KIPNGETICH", "KERICHO"],
+  "KIPTERE": ["KAPSOIT", "RAYMOND KIPNGETICH", "KERICHO"],
+  "AINAMOI": ["BROOKE", "RAYMOND KIPNGETICH", "KERICHO"],
+  "CHEPSEON": ["KURESOI", "RAYMOND KIPNGETICH", "KERICHO"],
+  "KIPSOLU": ["KAPSOIT", "RAYMOND KIPNGETICH", "KERICHO"],
+  "SOSIOT": ["KAPSOIT", "RAYMOND KIPNGETICH", "KERICHO"],
+  "GARISSA CBD": ["CBD", "PETER KIMANZI", "KENDIA"],
+  "MADOGO": ["MADOGO", "PETER KIMANZI", "KENDIA"],
+  "BANGAL": ["BANGAL", "PETER KIMANZI", "KENDIA"],
+  "BURA - KENDIA": ["MADOGO", "PETER KIMANZI", "KENDIA"],
+  "HABASWENI": ["HABASWEIN", "OSMAN", "KENDIA"],
+  "MADOGASHE": ["MADOGASHE", "OSMAN", "KENDIA"],
+  "MASALANI": ["MASALANI", "OSMAN", "KENDIA"],
+  "IJARA": ["IJARA", "OSMAN", "KENDIA"],
+  "SANGAILU": ["SANGAILU", "OSMAN", "KENDIA"],
+  "ABAKORE": ["ABAKORE", "OSMAN", "KENDIA"],
+  "DAGAHLEY": ["DAGAHLEY", "SAMIR", "KENDIA"],
+  "IFO": ["IFO", "SAMIR", "KENDIA"],
+  "HAGARDERA": ["HAGARDERA", "SAMIR", "KENDIA"],
+  "DADAAB": ["DADAAB", "SAMIR", "KENDIA"],
+  "DOBLEY": ["DOBLEY", "SAMIR", "KENDIA"],
+  "MANDERA": ["MANDERA", "NO CRO", "KENDIA"],
+  "WAJIR": ["WAJIR", "ABDIFATAR", "KENDIA"],
+  "Bula Ifftin": ["KENDIA", "PETER KIMANZI", "KENDIA"],
+  "MLOLONGO": ["MLOLONGO", "DANIEL WAMBUA", "KITENGELA"],
+  "SYOKIMAU": ["SYOKIMAU", "DANIEL WAMBUA", "KITENGELA"],
+  "KATANI": ["KATANI", "DANIEL WAMBUA", "KITENGELA"],
+  "KITENGELA MAIN STAGE": ["KITENGELA", "TITUS TAUTA", "KITENGELA"],
+  "KIMALAT": ["KIMALAT", "TITUS TAUTA", "KITENGELA"],
+  "DELIVERANCE KITENGELA": ["DELIVERANCE", "TITUS TAUTA", "KITENGELA"],
+  "MACHAKOS - KITENGELA": ["MACHAKOS", "EVERLINE", "KITENGELA"],
+  "MALILI": ["MALILI", "EVERLINE", "KITENGELA"],
+  "KATHIANI": ["KATHIANI", "EVERLINE", "KITENGELA"],
+  "WETAA MARKET": ["WETAA MARKET", "EVERLINE", "KITENGELA"],
+  "KAJIADO": ["KAJIADO", "TITUS TAUTA", "KITENGELA"],
+  "ISINYA": ["ISINYA", "TITUS TAUTA", "KITENGELA"],
+  "NAMANGA": ["NAMANGA", "TITUS TAUTA", "KITENGELA"],
+  "BISIL": ["BISIL", "TITUS TAUTA", "KITENGELA"],
+  "OLTOROTO": ["OLTOROTO", "TITUS TAUTA", "KITENGELA"],
+  "NGATATEK": ["NGATATEK", "TITUS TAUTA", "KITENGELA"],
+  "KISAJU": ["KISAJU", "TITUS TAUTA", "KITENGELA"],
+  "KOROMPOI": ["KOROMPOI", "TITUS TAUTA", "KITENGELA"],
+  "KUMPA": ["KUMPA", "TITUS TAUTA", "KITENGELA"],
+  "SABAKI - KITENGELA": ["SABAKI", "AUMA BRENDA", "KITENGELA"],
+  "TUFFOAM": ["TUFFOAM", "AUMA BRENDA", "KITENGELA"],
+  "ATHI RIVER": ["ATHI RIVER", "AUMA BRENDA", "KITENGELA"],
+  "TEXAS": ["TEXAS", "AUMA BRENDA", "KITENGELA"],
+  "KITUI CBD": ["CBD", "FAITH MWANGANGI", "KITUI"],
+  "KABATI - KITUI": ["KABATI", "FAITH MWANGANGI", "KITUI"],
+  "MUTOMO": ["MUTUMO", "FAITH MWANGANGI", "KITUI"],
+  "WAMUNYU": ["WAMUNYU", "FAITH MWANGANGI", "KITUI"],
+  "KWA VONZA": ["WAMUNYU", "FAITH MWANGANGI", "KITUI"],
+  "ZOMBE": ["ZOMBE", "FAITH MWANGANGI", "KITUI"],
+  "MBITINI": ["MBITINI", "FAITH MWANGANGI", "KITUI"],
+  "KALUNDU": ["CBD", "FAITH MWANGANGI", "KITUI"],
+  "IKUTHA": ["IKUTHA", "FAITH MWANGANGI", "KITUI"],
+  "KAVISUNI": ["KAVISUNI", "FAITH MWANGANGI", "KITUI"],
+  "KATANGI": ["WAMUNYU", "FAITH MWANGANGI", "KITUI"],
+  "KUNDAKINDU": ["CBD", "FAITH MWANGANGI", "KITUI"],
+  "IKANGA": ["MUTOMO", "FAITH MWANGANGI", "KITUI"],
+  "ENDAU": ["ZOMBE", "FAITH MWANGANGI", "KITUI"],
+  "KISASI": ["MUTOMO", "FAITH MWANGANGI", "KITUI"],
+  "MUTITO": ["MUTITO", "FAITH MWANGANGI", "KITUI"],
+  "MIAMBANI": ["MIAMBANI", "FAITH MWANGANGI", "KITUI"],
+  "MUTHALE": ["KABATI", "FAITH MWANGANGI", "KITUI"],
+  "MUTHA": ["MBITINI", "FAITH MWANGANGI", "KITUI"],
+  "KATULANI": ["CBD", "FAITH MWANGANGI", "KITUI"],
+  "MULUTU": ["CBD", "FAITH MWANGANGI", "KITUI"],
+  "MWALA": ["MWALA", "FAITH MWANGANGI", "KITUI"],
+  "KAKEANI": ["KABATI", "FAITH MWANGANGI", "KITUI"],
+  "KAEWA - KITUI": ["KITUI", "DANFUS MULEI", "KITUI"],
+  "MWINGI": ["MWINGI", "DANFUS MUTISYA", "KITUI"],
+  "MATUU": ["MATUU", "DANFUS MUTISYA", "KITUI"],
+  "EKALAKALA": ["MATUU", "DANFUS MUTISYA", "KITUI"],
+  "MIGWANI": ["MIGWANI", "DANFUS MUTISYA", "KITUI"],
+  "NUU": ["MWINGI", "DANFUS MUTISYA", "KITUI"],
+  "KISIIKI": ["MATUU", "DANFUS MUTISYA", "KITUI"],
+  "KITHYOKO": ["MWINGI", "DANFUS MUTISYA", "KITUI"],
+  "KANYONYOO": ["MATUU", "DANFUS MUTISYA", "KITUI"],
+  "IIANI": ["KIVAA/CBD", "DANFUS MUTISYA", "KITUI"],
+  "KIKUUMINI": ["KIVAA", "DANFUS MUTISYA", "KITUI"],
+  "NYAMIRA": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "MARANI": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "MOSOBETI": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "KEMERA": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "MIRUKA": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "KEGOGI": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "TINGA": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "EKERENYO": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "GESIMA": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "NYAMUSI": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "KEBIRIGO": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "MOKOMONI": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "RIOMA": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "MANGA": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "IKONGE": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "TOMBE": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "OMOGONCHORO": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "ITIBO": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "BONYUNYU": ["NYAMIRA", "JOSHUA MAGETO", "KISII"],
+  "MIGORI": ["MIGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "KEHANCHA": ["MIGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "MABERA": ["SIRARE", "PHELIX ODHIAMBO", "MIGORI"],
+  "KEGONGA": ["MIGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "SIRARE": ["SIRARE", "PHELIX ODHIAMBO", "MIGORI"],
+  "MASARA": ["MASARA", "PHELIX ODHIAMBO", "MIGORI"],
+  "MUHURU": ["MOGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "NYAKWERI": ["MOGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "OSIRI": ["MOGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "ONGER": ["MOGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "NYATIKE": ["MUHURU", "PHELIX ODHIAMBO", "MIGORI"],
+  "OTHOO": ["MOGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "URIRI": ["URIRI", "PHELIX ODHIAMBO", "MIGORI"],
+  "MIKEI": ["MOGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "GIRIBE": ["GIRIBE MIGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "NTIMARU": ["NTIMARU", "PHELIX ODHIAMBO", "MIGORI"],
+  "MASABA": ["MASABA", "PHELIX ODHIAMBO", "MIGORI"],
+  "BONDO": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "ORUBA": ["MIGORI", "PHELIX ODHIAMBO", "MIGORI"],
+  "NAMBA": ["NAMBA", "PHELIX ODHIAMBO", "MIGORI"],
+  "KISII CBD": ["KISII CBD", "ABEDNEGO MAROA", "KISII"],
+  "OGEMBO": ["OGEMBO", "ABEDNEGO MAROA", "KISII"],
+  "SUNEKA": ["SUNEKA", "ABEDNEGO MAROA", "KISII"],
+  "NYANCHWA": ["NYANCHWA", "ABEDNEGO MAROA", "KISII"],
+  "NYAKOE": ["NYAKOE", "ABEDNEGO MAROA", "KISII"],
+  "MAGENA": ["NYANGUSU", "ABEDNEGO MAROA", "KISII"],
+  "MOSOCHO": ["MOSOCHO", "ABEDNEGO MAROA", "KISII"],
+  "NYANGUSU": ["NYANGUSU", "ABEDNEGO MAROA", "KISII"],
+  "MOGONGA": ["MOGONGA", "ABEDNEGO MAROA", "KISII"],
+  "MWEMBE": ["MWEMBE", "ABEDNEGO MAROA", "KISII"],
+  "NYAMATARO": ["NYAMATARO", "ABEDNEGO MAROA", "KISII"],
+  "MENYINKWA": ["KISII CBD", "ABEDNEGO MAROA", "KISII"],
+  "RIANA": ["SUNEKA", "ABEDNEGO MAROA", "KISII"],
+  "ITUMBE": ["OGEMBO", "ABEDNEGO MAROA", "KISII"],
+  "GETARE": ["KISII CBD", "ABEDNEGO MAROA", "KISII"],
+  "SAMETA": ["OGEMBO", "ABEDNEGO MAROA", "KISII"],
+  "KIOGORO": ["OGEMBO", "ABEDNEGO MAROA", "KISII"],
+  "NYABIOTO": ["NYAMIRA/KISII CBD", "ABEDNEGO MAROA", "KISII"],
+  "EKERORANO": ["SUNEKA", "ABEDNEGO MAROA", "KISII"],
+  "IGONGA": ["SUNEKA", "ABEDNEGO MAROA", "KISII"],
+  "IYABE": ["SUNEKA", "ABEDNEGO MAROA", "KISII"],
+  "KEROKA": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "NYAMACHE": ["NYAMACHENYAMACHE", "KEFA AKUORO", "KISII"],
+  "MASIMBA - KISII": ["MASIMBA", "KEFA AKUORO", "KISII"],
+  "CHEPILAT": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "KIJAURI": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "IGARE": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "GESUSU": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "KEUMBU": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "NYACHEKI": ["NYACHEKI", "KEFA AKUORO", "KISII"],
+  "BIRONGO": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "NYABISABO": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "IBACHO": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "KIAMOKAMA": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "KEGATI": ["KEROKA", "KEFA AKUORO", "KISII"],
+  "HOMABAY": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "NYANDIWA": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "SORI": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "SINDO": ["SINDO", "SILAS OTIENO", "KISII"],
+  "NDHIWA": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "MAGUNGA": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "KENDUBAY": ["KENDUBAY", "SILAS OTIENO", "KISII"],
+  "RODI": ["RODI", "SILAS OTIENO", "KISII"],
+  "MBITA": ["MBITA", "SILAS OTIENO", "KISII"],
+  "RUSINGA": ["MBITA", "SILAS OTIENO", "KISII"],
+  "PALA": ["PALA", "SILAS OTIENO", "KISII"],
+  "KOBODO": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "MFANGANO": ["RUSINGA", "SILAS OTIENO", "KISII"],
+  "KOYANI": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "RIAT - KISII": ["RODI", "SILAS OTIENO", "KISII"],
+  "ADIEDO": ["KENDUBAY", "SILAS OTIENO", "KISII"],
+  "KIABUYA": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "LWANDA MAGWAR": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "MIROGI": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "KABUOCHI": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "NYADENDA": ["SINDO", "SILAS OTIENO", "KISII"],
+  "DHOK MIT": ["HOMABAY", "SILAS OTIENO", "KISII"],
+  "OTARO": ["KENDUBAY", "SILAS OTIENO", "KISII"],
+  "Konyango": ["KISII", "SILAS OTIENO", "KISII"],
+  "OYUGIS": ["OYUGIS", "FAITH ATIENO", "KISII"],
+  "NDIRU": ["NDIRU", "FAITH ATIENO", "KISII"],
+  "SONDU": ["SONDU", "FAITH ATIENO", "KISII"],
+  "MAWEGO": ["MAGEGO", "FAITH ATIENO", "KISII"],
+  "RANDUNG": ["RANDUNG", "FAITH ATIENO", "KISII"],
+  "MISAMBI": ["MISAMBI", "FAITH ATIENO", "KISII"],
+  "CHABERA": ["SONDU", "FAITH ATIENO", "KISII"],
+  "OBOKE": ["RANDUNG", "FAITH ATIENO", "KISII"],
+  "CHIRO KOWUOR": ["OYUGIS", "FAITH ATIENO", "KISII"],
+  "SIKRI": ["SIKRI", "FAITH ATIENO", "KISII"],
+  "RAMBA": ["RAMBA", "FAITH ATIENO", "KISII"],
+  "ONJINYO": ["OYUGIS", "FAITH ATIENO", "KISII"],
+  "RANGWE": ["OYUGIS", "FAITH ATIENO", "KISII"],
+  "RONGO": ["RONGO", "NO FCRO", "KISII"],
+  "AWENDO": ["AWENDO", "NO FCRO", "MIGORI"],
+  "TABAKA": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "RAPOGI": ["RAPOGI", "NO FCRO", "MIGORI"],
+  "KENYENYA": ["KENYENYA", "NO FCRO", "KISII"],
+  "RANEN": ["AWENDO", "NO FCRO", "KISII"],
+  "OGWEDHI": ["OGWEDHI", "NO FCRO", "MIGORI"],
+  "KANGA": ["RONGO", "NO FCRO", "KISII"],
+  "IKOBA": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "NYAKURU": ["NYAKURU", "NO FCRO", "KISII"],
+  "NYAMARAMBE": ["NYAMARAMBE", "NO FCRO", "KISII"],
+  "NYATAMBE": ["AWENDO", "NO FCRO", "KISII"],
+  "ULANDA": ["AWENDO", "NO FCRO", "MIGORI"],
+  "NYAKEMBENE": ["NYAKEMBENE", "NO FCRO", "KISII"],
+  "RIOKINDO": ["ENOOSAEN", "NO FCRO", "KISII"],
+  "NYABIORE": ["NYANGUSU", "NO FCRO", "KISII"],
+  "SUGUTA": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "NYABITUNWA": ["NYANGUSU", "NO FCRO", "KISII"],
+  "ETAGO": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "EKONA": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "KAMAGAMBO": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "NYACHENGE": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "OYANI": ["OYANI", "NO FCRO", "MIGORI"],
+  "KITERE": ["RONGO", "NO FCRO", "KISII"],
+  "MAGENCHE": ["NYANGUSU", "NO FCRO", "KISII"],
+  "MOCHENGO": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "SENGERA": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "ETONO": ["NGARARO", "NO FCRO", "KISII"],
+  "RIOSIRI": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "KOBADO": ["RONGO", "NO FCRO", "KISII"],
+  "SIBUOCHE": ["RAPOGI", "NO FCRO", "MIGORI"],
+  "EBEREGE": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "IBENCHO": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "DEDE": ["NYAKURU", "NO FCRO", "KISII"],
+  "OPAPO": ["OPAPO", "NO FCRO", "KISII"],
+  "RAKWARO": ["RONGO", "NO FCRO", "KISII"],
+  "BARANNE": ["SOUTH MUGIRANGO", "NO FCRO", "KISII"],
+  "KILGORIS": ["KILGORIS", "DUKE NGOKO", "KISII"],
+  "LOLGORIAN": ["LOLGORIAN", "DUKE NGOKO", "KISII"],
+  "ENOOSAEN": ["LOLGORIAN", "DUKE NGOKO", "KISII"],
+  "OLDONYOROK": ["LOLGORIAN", "DUKE NGOKO", "KISII"],
+  "MURGAN": ["MURGAN", "DUKE NGOKO", "KISII"],
+  "ANGATA": ["LOLGORIAN", "DUKE NGOKO", "KISII"],
+  "ENGARARO": ["NGARARO", "DUKE NGOKO", "KISII"],
+  "ESOKONI": ["LOLGORIAN", "DUKE NGOKO", "KISII"],
+  "MUTENKUAR": ["MUTENKUAR", "DUKE NGOKO", "KISII"],
+  "KIANGO": ["LOLGORIAN", "DUKE NGOKO", "KISII"],
+  "DIKIR - KISII": ["NCHIPSHIP", "DUKE NGOKO", "KISII"],
+  "KONTAMET": ["LOLGORIAN", "DUKE NGOKO", "KISII"],
+  "KONA": ["LOLGORIAN", "DUKE NGOKO", "KISII"],
+  "KATITO": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "AHERO - KISUMU": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "AWASI": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "MUHORONI": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "BUOYE": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "CHEMELIL": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "NYAMASARIA": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "RABUOR": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "MIWANI": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "MOWLEM - KISUMU": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "MASOGO": ["AHERO", "Julius Odhiambo", "KISUMU"],
+  "KISUMU CBD": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "KIBUYE": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "NYALENDA": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "KONDELE": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "MANYATTA - KISUMU": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "JUBILEE MARKET": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "CHIGA": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "KIBOS": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "KASAWINO": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "KALOLENI - KISUMU": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "KONALEGIO": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "OGANGO": ["KISUMU CBD", "NO FCRO", "KISUMU"],
+  "USENGE": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "NDORI": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "RERU": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "LWAK": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "AKALA": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "UHANYA": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "NANGO BONDO": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "BOYA MKT": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "KAMBARE": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "MIGINGO": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "RERA": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "ARAM MARKET": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "MANYWANDA MKT": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "RAGEGNE BONDO": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "KOLENYO": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "MAHAYA": ["BONDO", "WINNIE AKOTH", "KISUMU"],
+  "MAMBOLEO": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "MASENO": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "LUANDA": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "OBUNGA": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "KIBOSWA": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "KOMBEDU": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "AIRPORT": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "MIGOSI": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "KOMBEWA": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "OBAMBO": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "HOLO": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "LOLWE": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "DAGO": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "DARAJA MBILI": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "EKWANDA": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "KISIAN": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "BANDANI": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "RAUNDA MKT": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "LELA": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "OTONGLO": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "WATHOREGO": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "RIAT - KISUMU": ["MASENO", "MERCY RAJULA", "KISUMU"],
+  "SIAYA CBD": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "NGIYA": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "KODIAGA": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "YALA - KISUMU": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "SEGERE": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "NYANGONDO": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "WAGAI": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "MUTUMBU": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "NYANGOMA": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "NYANGWESO": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "NYANDORERA": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "KARAPUL, KOBAI": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "KAREMO": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "URANGA": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "MWER": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "AWELO": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "DUDI": ["SIAYA", "IRINE ADHIAMBO", "KISUMU"],
+  "MTITO ANDEI": ["Mtito Andei", "ONESMUS KIOKO", "MAKINDU"],
+  "KIBWEZI": ["KIBWEZI", "ONESMUS KIOKO", "MAKINDU"],
+  "LOITOKTOK": ["LOITOKTOK", "NICHOLAS MUMO", "MAKINDU"],
+  "KAMBU": ["KAMBU", "ONESMUS KIOKO", "MAKINDU"],
+  "MACHINERY": ["MACHINERY", "ONESMUS KIOKO", "MAKINDU"],
+  "KIMANA": ["LOITOKTOK", "NICHOLAS MUMO", "MAKINDU"],
+  "ILLASIT": ["LOITOKTOK", "NICHOLAS MUMO", "MAKINDU"],
+  "ISINET": ["LOITOKTOK", "NICHOLAS MUMO", "MAKINDU"],
+  "ROMBO": ["LOITOKTOK", "NICHOLAS MUMO", "MAKINDU"],
+  "KIUNDWANI": ["KIUNDWANI", "ONESMUS KIOKO", "MAKINDU"],
+  "MASIMBA - MAKINDU": ["MASIMBA", "ONESMUS KIOKO", "MAKINDU"],
+  "WOTE": ["WOTE", "EMMANUEL MUUO", "WOTE"],
+  "MAKINDU": ["MAKINDU", "ONESMUS KIOKO", "MAKINDU"],
+  "SULTAN HAMUD": ["Sultan Hamud", "NICHOLAS MUMO", "MAKINDU"],
+  "EMALI": ["EMALI", "NICHOLAS MUMO", "MAKINDU"],
+  "KATHONZWENI": ["Mombasa Road", "EMMANUEL MUUO", "WOTE"],
+  "NUNGUNI": ["NUNGUNI", "NICHOLAS MUMO", "MAKINDU"],
+  "KASIKEU": ["Mombasa Road", "NICHOLAS MUMO", "MAKINDU"],
+  "MALINDI CBD": ["GARSEN", "BENARD MOKHAMBA", "MALINDI"],
+  "WATAMU": ["WATAMU", "BENARD MOKHAMBA", "MALINDI"],
+  "TANA RIVER": ["TANA RIVER", "BENARD MOKHAMBA", "MALINDI"],
+  "GARSEN": ["GARSEN", "BENARD MOKHAMBA", "MALINDI"],
+  "MINJILA": ["MINJILA", "BENARD MOKHAMBA", "MALINDI"],
+  "GEDE": ["GEDE", "BENARD MOKHAMBA", "MALINDI"],
+  "KWA CHOCHA": ["MALINDI CBD", "BENARD MOKHAMBA", "MALINDI"],
+  "MAWENI - MALINDI": ["MALINDI CBD", "BENARD MOKHAMBA", "MALINDI"],
+  "PB": ["MALINDI CBD", "BENARD MOKHAMBA", "MALINDI"],
+  "MSABAHA": ["MALINDI CBD", "BENARD MOKHAMBA", "MALINDI"],
+  "MPEKETONI": ["MPEKETONI", "JOHN MIGUI", "MALINDI"],
+  "LAMU": ["LAMU", "JOHN MIGUI", "MALINDI"],
+  "GONGONI": ["GONGONI", "JOHN MIGUI", "MALINDI"],
+  "WITU": ["WITU", "JOHN MIGUI", "MALINDI"],
+  "MAJENGO - MALINDI": ["MALINDI CBD", "JOHN MIGUI", "MALINDI"],
+  "MARERENI": ["MARERENI", "JOHN MIGUI", "MALINDI"],
+  "HINDI": ["LAMU", "JOHN MIGUI", "MALINDI"],
+  "MJANAHERI": ["GONGONI", "JOHN MIGUI", "MALINDI"],
+  "MOKOWE": ["LAMU", "JOHN MIGUI", "MALINDI"],
+  "FURUNZI": ["Kisumundogo", "JOHN MIGUI", "MALINDI"],
+  "METRO": ["CBD", "JOHN MIGUI", "MALINDI"],
+  "KAKONENI": ["kakoneni", "JOHN MIGUI", "MALINDI"],
+  "SHAKAHOLA": ["Langombaya", "JOHN MIGUI", "MALINDI"],
+  "MARAFA": ["Marereni", "JOHN MIGUI", "MALINDI"],
+  "MALANGA - MALINDI": ["Malanga", "JOHN MIGUI", "MALINDI"],
+  "BAOLALA": ["BAOLALA", "JOHN MIGUI", "MALINDI"],
+  "LANGOMBAYA": ["Langombaya", "JOHN MIGUI", "MALINDI"],
+  "KIRAHO": ["Kisumundogo", "JOHN MIGUI", "MALINDI"],
+  "KOSOVO": ["MALINDI CBD", "JOHN MIGUI", "MALINDI"],
+  "KIJIWETANGA": ["KIJIWETANGA", "JOHN MIGUI", "MALINDI"],
+  "MATSANGONI": ["MATSANGONI", "NO FCRO", "MALINDI"],
+  "KISUMU NDOGO - MALINDI": ["CBD", "NO FCRO", "MALINDI"],
+  "KWA NDOMO": ["KWA NDOMO", "NO FCRO", "MALINDI"],
+  "TEZO": ["TEZO", "NO FCRO", "MALINDI"],
+  "KAKUYUNI": ["Kakuyuni", "NO FCRO", "MALINDI"],
+  "GANDA": ["Kakuyuni", "NO FCRO", "MALINDI"],
+  "SABAKI - MALINDI": ["GONGONI", "NO FCRO", "MALINDI"],
+  "SOWETO - MALINDI": ["CBD", "NO FCRO", "MALINDI"],
+  "MAMBURUI": ["Gongoni", "NO FCRO", "MALINDI"],
+  "MTONDIA": ["MTONDIA", "NO FCRO", "MALINDI"],
+  "KASUFINI": ["KASUFINI", "NO FCRO", "MALINDI"],
+  "MUYEYE": ["CBD", "NO FCRO", "MALINDI"],
+  "TAKAYE": ["CBD", "NO FCRO", "MALINDI"],
+  "CHUMANI": ["CHUMANI", "NO FCRO", "MALINDI"],
+  "MAUA": ["MAUA ROUTE", "CHRISTINE NKIROTE", "MERU"],
+  "LAARE": ["MAUA ROUTE", "CHRISTINE NKIROTE", "MERU"],
+  "KIENGU": ["MAUA ROUTE", "CHRISTINE NKIROTE", "MERU"],
+  "MIKINDURI": ["MERU CBD ROUTE", "WILLIAM LEKUKU", "MERU"],
+  "MUGAE": ["ISIOLO ROUTE", "WILLIAM LEKUKU", "MERU"],
+  "KIANJAI": ["MAUA ROUTE", "WILLIAM LEKUKU", "MERU"],
+  "KANGETA": ["MAUA ROUTE", "WILLIAM LEKUKU", "MERU"],
+  "ISIOLO": ["ISIOLO ROUTE", "GEORGE THURANI", "MERU"],
+  "MARSABIT": ["ISIOLO ROUTE", "GEORGE THURANI", "MERU"],
+  "MOYALE": ["ISIOLO ROUTE", "GEORGE THURANI", "MERU"],
+  "SOLOLO": ["ISIOLO ROUTE", "GEORGE THURANI", "MERU"],
+  "KULAMAWE": ["ISIOLO ROUTE", "GEORGE THURANI", "MERU"],
+  "WAMBA": ["ISIOLO ROUTE", "GEORGE THURANI", "MERU"],
+  "ARCHERS": ["ISIOLO ROUTE", "GEORGE THURANI", "MERU"],
+  "LAISAMIS": ["ISIOLO ROUTE", "GEORGE THURANI", "MERU"],
+  "MERU CBD": ["MERU CBD ROUTE", "EMILLY KINYA", "MERU"],
+  "MAKUTANO - MERU": ["MERU CBD ROUTE", "EMILLY KINYA", "MERU"],
+  "MARIMANTI": ["MERU CBD ROUTE", "EMILLY KINYA", "MERU"],
+  "GITHONGO": ["MERU CBD ROUTE", "EMILLY KINYA", "MERU"],
+  "NANYUKI": ["NANYUKI ROUTE", "STELLA KINYA", "NANYUKI"],
+  "TIMAU": ["NANYUKI ROUTE", "STELLA KINYA", "NANYUKI"],
+  "KIBIRICHIA": ["NANYUKI ROUTE", "STELLA KINYA", "NANYUKI"],
+  "MATANYA": ["NANYUKI ROUTE", "STELLA KINYA", "NANYUKI"],
+  "NKUBU": ["NKUBU ROUTE", "DENNIS MAKORI", "MERU"],
+  "MITUNGUU": ["NKUBU ROUTE", "DENNIS MAKORI", "MERU"],
+  "IGOJI": ["NKUBU ROUTE", "DENNIS MAKORI", "MERU"],
+  "KIONYO": ["NKUBU ROUTE", "DENNIS MAKORI", "MERU"],
+  "KINORO": ["NKUBU ROUTE", "DENNIS MAKORI", "MERU"],
+  "EQUATOR - MERU": ["NKUBU ROUTE", "DENNIS MAKORI", "MERU"],
+  "KEERIA": ["NKUBU ROUTE", "DENNIS MAKORI", "MERU"],
+  "KILIFI": ["KILIFI", "MWANGANGI MAINGI", "MOMBASA"],
+  "MTWAPA": ["MTWAPA", "MWANGANGI MAINGI", "MOMBASA"],
+  "SHANZU": ["MTWAPA", "MWANGANGI MAINGI", "MOMBASA"],
+  "KANAMAI": ["MTWAPA", "MWANGANGI MAINGI", "MOMBASA"],
+  "VIPINGO": ["MTWAPA", "MWANGANGI MAINGI", "MOMBASA"],
+  "KIKAMBALA": ["MTWAPA", "MWANGANGI MAINGI", "MOMBASA"],
+  "MAJAONI": ["MTWAPA", "MWANGANGI MAINGI", "MOMBASA"],
+  "MAVUENI": ["KILIFI", "MWANGANGI MAINGI", "MOMBASA"],
+  "SHARIANI": ["MTWAPA", "MWANGANGI MAINGI", "MOMBASA"],
+  "MSHOMORONI": ["MSHOMORONI", "PHILISTER KENYATTA", "MOMBASA"],
+  "KIEMBENI": ["MSHOMORONI", "PHILISTER KENYATTA", "MOMBASA"],
+  "JUNDA": ["MSHOMORONI", "PHILISTER KENYATTA", "MOMBASA"],
+  "MTOPANGA": ["BAMBURI", "PHILISTER KENYATTA", "MOMBASA"],
+  "KWA BULO": ["KWA BULO", "PHILISTER KENYATTA", "MOMBASA"],
+  "VIKWATANV": ["VIKWATANI", "PHILISTER KENYATTA", "MOMBASA"],
+  "MWAKIRUNGE": ["MSHOMORONI", "PHILISTER KENYATTA", "MOMBASA"],
+  "VIRUNGANI": ["MSHOMORONI", "PHILISTER KENYATTA", "MOMBASA"],
+  "KAJIWENI": ["MSHOMORONI", "PHILISTER KENYATTA", "MOMBASA"],
+  "MOMBASA CBD": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "TUDOR": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "MAJENGO - MOMBASA": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "KINGORANI": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "GANJONI": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "OLD TOWN": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "BONDENI - MOMBASA": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "SPARKI": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "MAKUPA": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "TONONOKA": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "LEBANON": ["MOMBASA CBD", "JANE ATIENO", "MOMBASA"],
+  "LIKONI": ["LIKONI", "SAMUEL JEFWA", "MOMBASA"],
+  "LUNGALUNGA - MOMBASA": ["LUNGA LUNGA", "JOHN OGOLA", "MOMBASA"],
+  "MTONGWE": ["LIKONI", "JOHN OGOLA", "MOMBASA"],
+  "SHIMONI": ["SHIMONI", "JOHN OGOLA", "MOMBASA"],
+  "SHIMBAHILLS": ["SIMBA HILLS", "JOHN OGOLA", "MOMBASA"],
+  "PERANI": ["LUNGA LUNGA", "JOHN OGOLA", "MOMBASA"],
+  "UJAMAA": ["UKUNDA", "JOHN OGOLA", "MOMBASA"],
+  "BAMBURI": ["BAMBURI", "DAVID OMOLLO", "MOMBASA"],
+  "KISAUNI": ["KISAUNI", "DAVID OMOLLO", "MOMBASA"],
+  "FISHERIES": ["FISHERIES", "DAVID OMOLLO", "MOMBASA"],
+  "MWEMBENI": ["BAMBURI", "DAVID OMOLLO", "MOMBASA"],
+  "BAKARANI": ["BAMBURI", "DAVID OMOLLO", "MOMBASA"],
+  "UTANGE": ["BAMBURI", "DAVID OMOLLO", "MOMBASA"],
+  "MLALEO": ["KISAUNI", "DAVID OMOLLO", "MOMBASA"],
+  "LAKE VIEW ESTATE": ["LAKE VIEW ESTATE", "DAVID OMOLLO", "MOMBASA"],
+  "MTAMBO": ["BAMBURI", "DAVID OMOLLO", "MOMBASA"],
+  "MWANDONI": ["MWANDONI", "DAVID OMOLLO", "MOMBASA"],
+  "BARSHEBA": ["KISAUNI", "DAVID OMOLLO", "MOMBASA"],
+  "BOMBOLULU": ["BOMBOLULU", "GEORGE CLINTON MASIWO", "MOMBASA"],
+  "NYALI": ["NYALI", "GEORGE CLINTON MASIWO", "MOMBASA"],
+  "KONGOWEA": ["KONGOWEA", "GEORGE CLINTON MASIWO", "MOMBASA"],
+  "MAWENI - MOMBASA": ["MAWENI", "GEORGE CLINTON MASIWO", "MOMBASA"],
+  "KARAMA": ["KONGOWEA", "GEORGE CLINTON MASIWO", "MOMBASA"],
+  "VOK": ["VOK", "GEORGE CLINTON MASIWO", "MOMBASA"],
+  "KISIMANI": ["BOMBOLULU", "GEORGE CLINTON MASIWO", "MOMBASA"],
+  "UKUNDA": ["UKUNDA", "MILICA MBEKE", "MOMBASA"],
+  "MSAMBWENI": ["LUNGA LUNGA", "MILICA MBEKE", "MOMBASA"],
+  "KOMBANI": ["UKUNDA", "MILICA MBEKE", "MOMBASA"],
+  "KWALE": ["KWALE", "MILICA MBEKE", "MOMBASA"],
+  "KINANGO": ["KINANGO", "MILICA MBEKE", "MOMBASA"],
+  "TIRIBE": ["KWALE", "MILICA MBEKE", "MOMBASA"],
+  "DIANI": ["UKUNDA", "MILICA MBEKE", "MOMBASA"],
+  "MAGONGO": ["MAGONGO", "SAMUEL MBATHA", "MOMBASA"],
+  "MIRITNI": ["MIRITINI", "SAMUEL MBATHA", "MOMBASA"],
+  "MIKINDANI": ["MIKINDANI", "SAMUEL MBATHA", "MOMBASA"],
+  "JOMVU": ["MAGONGO", "SAMUEL MBATHA", "MOMBASA"],
+  "MIGADINI": ["MAGONGO", "SAMUEL MBATHA", "MOMBASA"],
+  "CHANGAMWE": ["MAGONGO", "SAMUEL MBATHA", "MOMBASA"],
+  "ALDINA": ["MAGONGO", "SAMUEL MBATHA", "MOMBASA"],
+  "CHAANI": ["MAGONGO", "SAMUEL MBATHA", "MOMBASA"],
+  "VIKOBANI": ["VIKOBNI", "SAMUEL MBATHA", "MOMBASA"],
+  "JITONI": ["MAGONGO", "SAMUEL MBATHA", "MOMBASA"],
+  "MARIAKANI - MOMBASA": ["MARIAKANI", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "KALOLENI - MOMBASA": ["KALOLENI", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "MAZERAS": ["MAZERAS", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "BAMBA": ["MARIAKANI", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "MATANO MANNE": ["MARIAKANI", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "CHASIMBA": ["CHASIMBA", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "KOKOTONI": ["UKUNDA", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "GANZE": ["MARIAKANI", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "RABAI": ["RABAI", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "VITENGENI": ["MSHOMORONI", "JOSEPH BOB KAYAGO", "MOMBASA"],
+  "ENGINEER": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "NDUNYU NJERU": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "KIMENDE": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "NJAMBINI": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "FLYOVER": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "MWENDANDU": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "KWA HARAKA": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "RWANYAMBO": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "GWAKANYWA": ["Naivasha route", "JOHN MACHARIA", "NAIVASHA"],
+  "NAIVASHA": ["Naivasha CBD", "AMOS MACHIRA", "NAIVASHA"],
+  "GILGIL": ["GILGIL", "AMOS MACHIRA", "NAIVASHA"],
+  "KIKOPEY": ["KIKOPEY", "AMOS MACHIRA", "NAIVASHA"],
+  "MIHARATI": ["GILGIL", "AMOS MACHIRA", "OL KALOU"],
+  "RIRONI": ["GILGIL", "AMOS MACHIRA", "OL KALOU"],
+  "BUSH": ["GILGIL", "AMOS MACHIRA", "OL KALOU"],
+  "WANJOHI": ["GILGIL", "AMOS MACHIRA", "OL KALOU"],
+  "MAAI MAHIU": ["MAAI MAHIU", "GEORGE NJUGUNA", "NAIVASHA"],
+  "KAYOLE - NAIVASHA": ["Naivasha route", "GEORGE NJUGUNA", "NAIVASHA"],
+  "SUSWA": ["SUSWA ROUTE", "GEORGE NJUGUNA", "NAIVASHA"],
+  "KINANGOP": ["Naivasha route", "GEORGE NJUGUNA", "NAIVASHA"],
+  "KARAGITA": ["Naivasha route", "GEORGE NJUGUNA", "NAIVASHA"],
+  "KINAMBA - NAIVASHA": ["Naivasha route", "GEORGE NJUGUNA", "NAIVASHA"],
+  "DUKA MOJA": ["SUSWA ROUTE", "GEORGE NJUGUNA", "NAIVASHA"],
+  "KAMERE": ["Naivasha route", "GEORGE NJUGUNA", "NAIVASHA"],
+  "NAKURU CBD": ["NAKURU CBD", "ERICK NYAMWEYA", "NAKURU"],
+  "WHITE HOUSE": ["HESHIMA ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "LONDON": ["SHOWGROUND ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "KITI": ["KITI", "ERICK NYAMWEYA", "NAKURU"],
+  "KIRATINA": ["LANET ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "KIAMUNYI": ["KIAMUNYI/KABARAK ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "HESHIMA": ["HESHIMA/BAHATI", "ERICK NYAMWEYA", "NAKURU"],
+  "FREE AREA": ["PIPELINE ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "RAVINE": ["EDAMARAVINE ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "MOGOTIO CENTRE": ["RAVINE ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "KABARAK": ["KABARAK/KAMPI MOTO ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "EMINING": ["MARIGAT ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "MARIGAT": ["MARIGAT ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "KAMBI YA MOTO": ["RAVINE ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "MANGU": ["MANGU/KABARAK", "ERICK NYAMWEYA", "NAKURU"],
+  "RAFIKI - NAKURU": ["KABARAK KAMPI MOTO ROUTE", "ERICK NYAMWEYA", "NAKURU"],
+  "KABIMOI": ["KABIMOI", "ERICK NYAMWEYA", "NAKURU"],
+  "MILE SITA": ["BAHATI ROUTE", "FAITH MBINYA", "NAKURU"],
+  "SOLAI CENTER": ["SOLAI ROUTE", "FAITH MBINYA", "NAKURU"],
+  "MAILI KUMI": ["BAHATI ROUTE", "FAITH MBINYA", "NAKURU"],
+  "MAWANGA": ["HESHIMA ROUTE", "FAITH MBINYA", "NAKURU"],
+  "MARIAKANI - NAKURU": ["HESHIMA ROUTE", "FAITH MBINYA", "NAKURU"],
+  "KWA AMOS": ["KWA AMOS", "FAITH MBINYA", "NAKURU"],
+  "WANYORORO": ["SOLAI ROUTE", "FAITH MBINYA", "NAKURU"],
+  "KABATINI": ["HESHIMA/BAHATI ROUTE", "FAITH MBINYA", "NAKURU"],
+  "AHERO - NAKURU": ["BAHATI ROUTE", "FAITH MBINYA", "NAKURU"],
+  "NAROK CBD": ["NAROK ROUTE", "GEOFFREY OSEKO", "Arms Narok Wholesale"],
+  "OLOLUNGA": ["NAROK ROUTE", "GEOFFREY OSEKO", "Arms Narok Wholesale"],
+  "NTULELE": ["NAROK ROUTE", "GEOFFREY OSEKO", "Arms Narok Wholesale"],
+  "NAROOSURA": ["NAROK ROUTE", "GEOFFREY OSEKO", "Arms Narok Wholesale"],
+  "OLEKIRKIRAI": ["NAROK ROUTE", "GEOFFREY OSEKO", "Arms Narok Wholesale"],
+  "MONGARE": ["NAROK ROUTE", "GEOFFREY OSEKO", "Arms Narok Wholesale"],
+  "MOLO CENTRE": ["MOLO ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "NJORO CENTRE": ["MOLO ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "KERINGET": ["OLENGURUONE ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "OLENGURUONE": ["OLENGURUONE ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "SALGAA CENTRE": ["SALGAA ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "MAU NAROK": ["MAU NAROK", "MOLINTA ONYANGO", "NAKURU"],
+  "KIHINGO": ["MOLO", "MOLINTA ONYANGO", "NAKURU"],
+  "TIPIS": ["TIPIS", "GEOFFREY OSEKO", "NAKURU"],
+  "SEKUTON": ["MOLO ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "MAUCHE": ["MOLO ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "EGERTON-KIINGO": ["MOLO", "MOLINTA ONYANGO", "NAKURU"],
+  "KIPTAGICH": ["OLENGURUONE ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "SOBEA": ["SALGAA ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "ELBURGON": ["MOLO ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "MATHANGAUTA": ["MATHANGAUTA", "MOLINTA ONYANGO", "NAKURU"],
+  "MAKUTANO - NAKURU": ["TOTAL ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "LIKIA": ["LIKIA", "MOLINTA ONYANGO", "NAKURU"],
+  "KURESOI - NAKURU": ["OLENGURUONE ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "TURI": ["TURI", "MOLINTA ONYANGO", "NAKURU"],
+  "NESSUIT": ["MOLO ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "SACHORA": ["SACHORA", "MOLINTA ONYANGO", "NAKURU"],
+  "RONGAI - NAKURU": ["RONGAI", "MOLINTA ONYANGO", "NAKURU"],
+  "MWISHO WA LAMI": ["MAU NAROK ROUTE", "MOLINTA ONYANGO", "NAKURU"],
+  "KAPTEMBWA": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "NGAMBO": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "SHARBAB": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "LANGALANGA": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "NGATA": ["NGATA ROUTE", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "RHONDA": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "KENLANDS": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "BONDENI - NAKURU": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "MANYANI": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "BANGLADESH": ["KABARAK ROUTE", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "WEAVERS": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "PONDAMALI": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "KOLEN": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "KIPANGA": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "SEWAGE": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "RACE COURSE": ["NAKURU CBD", "JOY KALOKI/BEATRICE KIOKO", "NAKURU"],
+  "NYAHURURU CBD": ["NYAHURURU ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "MARALAL CENTRE": ["MARALAL ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "KINAMBA - NAKURU": ["MARALAL ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "SUBUKIA": ["NYAHURURU ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "RUMURUTI": ["MARALAL ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "MAILI NNE - NAKURU": ["MARALAL ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "OLJORO-OROK": ["OLJORO-OROK ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "KABAZI": ["NYAHURURU ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "SIPILI": ["NYAHURURU ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "RURII": ["RURII", "ROSE CHEPKORIR", "OL KALOU"],
+  "KANYOTU": ["NYAHURURU ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "KWA KUNGU": ["MARALAL ROUTE", "ROSE CHEPKORIR", "OL KALOU"],
+  "KIVORONJO": ["KIVORONJO", "ROSE CHEPKORIR", "OL KALOU"],
+  "OLKALOU CENTRE": ["LANET ROUTE", "SYLVIA LASOI", "OL KALOU"],
+  "DONDORI": ["OLKALAU ROUTE", "SYLVIA LASOI", "OL KALOU"],
+  "NDUNDORI": ["LANET ROUTES", "SYLVIA LASOI", "OL KALOU"],
+  "GWAKIONGO": ["BAHATI ROUTE", "SYLVIA LASOI", "OL KALOU"],
+  "PASSENGA": ["PASSENGA", "SYLVIA LASOI", "OL KALOU"],
+  "KIONDO": ["LANET ROUTE", "SYLVIA LASOI", "NAKURU"],
+  "LANET": ["LANET ROUTE", "SYLVIA LASOI", "NAKURU"],
+  "PIPELINE - NAKURU": ["WANYANA ROUTE", "SYLVIA LASOI", "NAKURU"],
+  "BARNABAS": ["PIPELINE ROUTE", "SYLVIA LASOI", "NAKURU"],
+  "KIPTANGWANY": ["NAKURU CBD", "SYLVIA LASOI", "NAKURU"],
+  "WANYAMA CENTER": ["WANYANA ROUTE", "SYLVIA LASOI", "NAKURU"],
+  "KONGASIS": ["NAKURU CBD", "SYLVIA LASOI", "NAKURU"],
+  "TEE": ["NAKURU CBD", "SYLVIA LASOI", "NAKURU"],
+  "KITALE CBD": ["KITALE CBD", "JOHN MWAI", "PHILTON"],
+  "KIMININI": ["KIMININI", "JOHN MWAI", "PHILTON"],
+  "KIBOMET": ["KITALE CBD", "JOHN MWAI", "PHILTON"],
+  "SIKHENDU": ["KIMININI", "JOHN MWAI", "PHILTON"],
+  "KIUNGANI": ["KIMININI", "JOHN MWAI", "PHILTON"],
+  "MALIKI": ["KIMININI", "JOHN MWAI", "PHILTON"],
+  "BIG TREE": ["KIMININI", "JOHN MWAI", "PHILTON"],
+  "MUCHARAGE": ["KIMININI", "JOHN MWAI", "PHILTON"],
+  "CHALICHA": ["KIMININI", "JOHN MWAI", "PHILTON"],
+  "NOREK": ["KITALE CBD", "JOHN MWAI", "PHILTON"],
+  "MAKUNGA - PHILTON": ["KITALE CBD", "JOHN MWAI", "PHILTON"],
+  "BARBATON": ["KIMININI", "JOHN MWAI", "PHILTON"],
+  "KAPCHEROP": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "SIBANGA": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "MAILI SABA": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "KAPSARA": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "MARAKWET - PHILTON": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "KAPLAMAI": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "KAPSAINA": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "TUIGOIN": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "CHEBARUS": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "KAPYEGO": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "ZIWA - PHILTON": ["KAPCHEROP", "DOUGLAS MUTURI", "PHILTON"],
+  "KOLONGOLO": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "ENDEBESS": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "MATISI": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "VETERINARY": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "KAPKOI": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "KWANZA": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "CHEPCHOINA": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "SABOTI": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "BIRUNDA": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "BONDENI - KITALE": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "KIPSONGO": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "GITWAMBA": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "TUWAN": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "MUROKI": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "MOLEM": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "LESSOS - PHILTON": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "LUKHOME": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "RAFIKI - PHILTON": ["KOLONGOLO", "WINNIE CHEPKWEMOI", "PHILTON"],
+  "MAKUTANO - PHILTON": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "ORTUM": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "KACHELIBA": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "SIGOR - PHILTON": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "UGANDA": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "LOMUT": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "BENDERA": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "CHEPARERIA": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "KASEI": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "ALALE": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "KAPENGURIA": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "KONYAO": ["MAKUTANO", "WESLEY KIPKOECH", "PHILTON"],
+  "MOIS BRIDGE": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "NAITIRI": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "BRIGADIER": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "NDALU": ["MOIS BRIDGE", "NJERI MARGARET WAIRU", "PHILTON"],
+  "PWANI": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "KONA MBAYA": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "TONGAREN": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "BIKEKE": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "SIRENDE": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "MUKUYUNI": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "GATUA": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "NYANGE": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "MATUNDA - PHILTON": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "KARIMA": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "NDIVISI": ["MOIS BRIDGE", "NJERI MARGARET WAIRIMU", "PHILTON"],
+  "KISERIAN": ["kiserian", "GLORIA KITIABI", "RONGAI"],
+  "NGONG - RONGAI WHOLESALE": ["NGONG", "GLORIA KITIABI", "RONGAI"],
+  "KWARE - RONGAI": ["NGONG", "GLORIA KITIABI", "RONGAI"],
+  "EMBULBUL": ["kiserian", "GLORIA KITIABI", "RONGAI"],
+  "GATAKA": ["rongai", "GLORIA KITIABI", "RONGAI"],
+  "RONGAI - RONGAI WHOLESALE": ["rongai", "VIVIAN AKIRU", "RONGAI"],
+  "LANGATA": ["langata", "VIVIAN AKIRU", "RONGAI"],
+  "SOUTH C": ["south c", "VIVIAN AKIRU", "RONGAI"],
+  "TWALA": ["rongai", "VIVIAN AKIRU", "RONGAI"],
+  "OLEKASASI": ["rongai", "VIVIAN AKIRU", "RONGAI"],
+  "KAREN - RONGAI": ["karen", "VIVIAN AKIRU", "RONGAI"],
+  "MAASAI LODGE": ["rongai", "VIVIAN AKIRU", "RONGAI"],
+  "NAIROBI WEST": ["nairobi west", "VIVIAN AKIRU", "RONGAI"],
+  "MAKONGENI": ["MAKONGENI ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "KIGANJO - THIKA": ["THIKA ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "MUGUGA": ["THIKA/KENOL ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "KISII - THIKA": ["THIKA/KENOL ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "LANDLESS": ["THIKA/KENOL ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "NDITHINI": ["WEITEITHIE ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "ITHANGA": ["WEITEITHIE ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "NGOLIBA": ["MAKONGENI ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "OLDONYO": ["MAKONGENI ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "KILIMAMBOGO": ["MAKONGENI ROUTE", "ELIZABETH WANJOGU", "THIKA"],
+  "THIKA": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "MAKUYU": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "KANGARI": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "KAYOLE - THIKA": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "MUNUNGA": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "KAMAHUHA": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "MUTHITHI": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "KIRERE": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "GACHOCHO": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "MANANJA": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "KINYONA": ["THIKA/KENOL ROUTE", "NANCY GAKII", "THIKA"],
+  "GATUNDU": ["GATUNDU", "NO FCRO", "THIKA"],
+  "JUJA": ["JUJA ROUTE", "NO FCRO", "THIKA"],
+  "KENYATTA ROAD": ["KENYATTA ROAD", "NO FCRO", "THIKA"],
+  "GATUKUYU": ["JUJA ROUTE", "NO FCRO", "THIKA"],
+  "GACHORORO": ["JUJA ROUTE", "NO FCRO", "THIKA"],
+  "KAMWANGI": ["JUJA ROUTE", "NO FCRO", "THIKA"],
+  "MANG'U - THIKA": ["JUJA ROUTE", "NO FCRO", "THIKA"],
+  "KENOL": ["THIKA/KENOL ROUTE", "LINET MORAA", "THIKA"],
+  "WITEITHIE": ["WEITEITHIE ROUTE", "LINET MORAA", "THIKA"],
+  "GITHUMU": ["WEITEITHIE ROUTE", "LINET MORAA", "THIKA"],
+  "KANDARA": ["WEITEITHIE ROUTE", "LINET MORAA", "THIKA"],
+  "KABATI - THIKA": ["THIKA/KENOL ROUTE", "LINET MORAA", "THIKA"],
+  "GATURA": ["KENOL ROUTE", "LINET MORAA", "THIKA"],
+  "GACHARAGE": ["WEITEITHIE ROUTE", "LINET MORAA", "THIKA"]
+};
+
+// Keep ORIGINAL_TEMPLATE untouched so overrides always know the source values.
+const ORIGINAL_TEMPLATE = JSON.parse(JSON.stringify(masterTemplate));
+
+// Override compatibility: if you manage overrides in the daily Routewise dashboard
+// (localStorage key "routeOverrides"), they are applied here automatically so the
+// monthly view always matches your current route assignments.
+(function applyStoredOverrides() {
+  let routeOverrides = {};
+  try { routeOverrides = JSON.parse(localStorage.getItem('routeOverrides') || '{}'); } catch (e) {}
+  let applied = 0;
+  for (const route in routeOverrides) {
+    if (!ORIGINAL_TEMPLATE[route]) continue;
+    const ov = routeOverrides[route];
+    if (ov.mainRoute && ov.mainRoute.override) { masterTemplate[route][0] = ov.mainRoute.override; applied++; }
+    if (ov.sp && ov.sp.override) { masterTemplate[route][1] = ov.sp.override; applied++; }
+    if (ov.branch && ov.branch.override) { masterTemplate[route][2] = ov.branch.override; applied++; }
+  }
+  if (applied > 0) console.log(`[Overrides] Applied ${applied} field override(s) from localStorage.`);
+})();
+
+// Branch ID reference (used only as fallback labels for API rows that don't match the template).
+const branchNames = {
+  "orgbranch-683976e3994a072a600cbd7a": "Head Office",
+  "orgbranch-684558f576bd774c32f00d8e": "Naivasha",
+  "orgbranch-68455bea76bd774c32f031cc": "Kitengela",
+  "orgbranch-68458a4b76bd774c32f10527": "Githurai",
+  "orgbranch-684593b176bd774c32f150c6": "Kawangware Wholesale",
+  "orgbranch-685001107d3c6f75c8c1d42e": "Karatina",
+  "orgbranch-685001217d3c6f75c8c1d491": "Meru",
+  "orgbranch-6850012f7d3c6f75c8c1d557": "Busia",
+  "orgbranch-685001387d3c6f75c8c1d557": "Mombasa Wholesale",
+  "orgbranch-685001457d3c6f75c8c1d5ba": "Kisii",
+  "orgbranch-685001557d3c6f75c8c1d61d": "Philton",
+  "orgbranch-6850015d7d3c6f75c8c1d680": "Kitui Wholesale",
+  "orgbranch-685001667d3c6f75c8c1d6e3": "Philmed Malindi",
+  "orgbranch-685001967d3c6f75c8c1d746": "Kericho",
+  "orgbranch-6850019e7d6f75c8c1d7a9": "Nakuru",
+  "orgbranch-685001a77d3c6f75c8c1d80c": "Kisumu",
+  "orgbranch-685001b17d3c6f75c8c1d86f": "Philmed Eldoret",
+  "orgbranch-685001c17d3c6f75c8c1d8d2": "Philmed Thika",
+  "orgbranch-685001ce7d3c6f75c8c1d935": "Voi Branch",
+  "orgbranch-685001e27d3c6f75c8c1d998": "Kendia",
+  "orgbranch-685001f37d3c6f75c8c1d9fb": "Kakamega",
+  "orgbranch-685001ff7d3c6f75c8c1da5e": "Bungoma",
+  "orgbranch-685002097d3c6f75c8c1dac1": "Makindu",
+  "orgbranch-685002137d3c6f75c8c1db4f": "Rongai Wholesale",
+  "orgbranch-685002247d3c6f75c8c1dc25": "Embu",
+  "orgbranch-69df9dc58418a65253e015a6": "Arms Narok Wholesale",
+  "orgbranch-69f7511b83ba28b7dda7ccd1": "Ol Kalou",
+  "orgbranch-6a14177260c3a453acb56ceb": "Nanyuki",
+  "orgbranch-6a8c509e44cec8b9b30ec559": "Wote",
+  "orgbranch-6a840bfb1936a960f8ec3e7a": "Migori"
+};
+
+const MONTH_LABELS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const AUTO_REFRESH_MS = 600000, PAGE_SIZE = 100000, CHUNK_DAYS = 15, FETCH_CONCURRENCY = 3;
+const MAX_LOOKBACK_MONTHS = 72, EMPTY_STOP = 3, ROLLOVER_CHECK_MS = 60000;
+
+const S = {
+  yearFilter: "all",
+  branch: "",
+  search: "",
+  sort: { key: "avg", dir: "desc" },
+  routes: [],
+  fetchedMonths: new Set(),   // "YYYY-MM" keys that returned data
+  emptyMonths: new Set(),     // "YYYY-MM" keys probed but empty (no rows on the portal)
+  loading: false,
+  abort: null,
+  matrix: []                  // routes with cellMap keyed by "YYYY-MM"
+};
+
+const $ = id => document.getElementById(id);
+const num = v => {
+  if (v == null || v === "") return 0;
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  const n = Number(String(v).replace(/,/g, "").replace(/%/g, "").trim());
+  return Number.isFinite(n) ? n : 0;
+};
+const fmtDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const parseDate = v => {
+  if (!v) return null;
+  const m = String(v).match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : null;
+};
+const norm = n => String(n || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const normBranch = name => String(name || "").toUpperCase().replace(/BRANCH|WHOLESALE|PHILMED|ARMS/g, "").trim();
+const getWorkingDaysExcludingSaturday = (s, e) => {
+  let count = 0;
+  const start = new Date(s + "T00:00:00"), end = new Date(e + "T00:00:00");
+  if (isNaN(start) || isNaN(end)) return 26;
+  let current = new Date(start);
+  while (current <= end) {
+    if (current.getDay() !== 6) { count++; }
+    current.setDate(current.getDate() + 1);
+  }
+  return Math.max(1, count);
+};
+const getRecordDate = r => parseDate(r.reportingDate || r.reportDate || r.salesDate || r.date || r.createdAt || r.updatedAt);
+const getRouteName = r => String(r.routeName || r.route_name || r.name || r.route || r.routeCode || r.route_code || "").trim();
+const getMainRoute = r => String(r.mainRoute || r.routeGroup || r.routeCategory || r.branchName || "").trim();
+const getSP = r => String(r.salesPersonName || r.salespersonName || r.salesPerson || r.salesRepName || r.salesRep || r.repName || r.fcroName || r.fcro || r.FCRO || r.agentName || r.routeOwner || r.routeSalesPerson || r.salesAgent || r.userName || r.createdBy || r.user || r.rep || r.owner || "Unassigned").trim();
+const getMonthlyTarget = r => num(r.monthlySalesTarget ?? r.monthlyTarget ?? r.target ?? r.salesTarget ?? (r.dailySalesTarget ? r.dailySalesTarget * 30 : 0));
+const getNetSales = r => num(r.dailyNetSales ?? r.daysNetSales ?? r.netDailySales ?? r.dayNetSales ?? r.netSales ?? r.branchNetSales ?? r.routeNetSales);
+const getBranchNameFromRow = r => String(r.branchName || r.orgBranchName || branchNames[r.orgBranchId] || "").trim();
+const pad2 = n => String(n).padStart(2, "0");
+const currentMonthKey = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`; };
+const isFutureMonth = k => k > currentMonthKey(); // zero-padded "YYYY-MM" — safe string compare
+const monthKeyOf = dateStr => dateStr.slice(0, 7);
+const keyLabel = k => { const [y, m] = k.split("-"); return `${MONTH_LABELS[Number(m) - 1]} ${y.slice(2)}`; };
+const keyLabelLong = k => { const [y, m] = k.split("-"); return `${MONTH_FULL[Number(m) - 1]} ${y}`; };
+const monthStartOfKey = k => `${k}-01`;
+const monthEndOfKey = k => { const [y, m] = k.split("-").map(Number); return fmtDate(new Date(y, m, 0)); };
+const badgeClass = pct => pct >= 80 ? "pct-high" : pct >= 50 ? "pct-medium" : "pct-low";
+
+let toastTimer = null;
+const showToast = (msg, type) => {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast" + (type ? " toast-" + type : "");
+  void t.offsetWidth;
+  t.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 4500);
+};
+
+const abortPrev = () => {
+  if (S.abort) {
+    S.abort.abort();
+    S.abort = null;
+  }
+  S.abort = new AbortController();
+  return S.abort.signal;
+};
+
+const setLoading = (loading, silent = false) => {
+  S.loading = loading;
+  if (silent) return;
+  const ov = $("headerLoading");
+  ["yearSelect", "branchSelect"].forEach(id => $(id).disabled = loading);
+  ov.classList.toggle("active", loading);
+};
+
+const showTableLoading = msg => {
+  $("tableBody").innerHTML = `<tr class="loading-row"><td colspan="99"><span class="loading-spinner"></span> ${msg || "Fetching portal history..."}</td></tr>`;
+};
+
+async function fetchWithRetry(url, opts, retries = 3) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const r = await fetch(url, opts);
+      if ((r.status === 429 || r.status === 409) && i < retries) {
+        const d = Math.pow(2, i) * 1000 + Math.random() * 500;
+        showToast(`Rate limited — retrying in ${Math.round(d / 1000)}s...`, "retry");
+        await new Promise(r => setTimeout(r, d));
+        continue;
+      }
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    } catch (err) {
+      if (err.name === "AbortError") throw err;
+      if (i < retries) {
+        await new Promise(r => setTimeout(r, Math.pow(2, i) * 700 + Math.random() * 300));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+async function fetchAllByDateChunks(path, signal, startDate, endDate) {
+  const all = [];
+  let currentStart = new Date(startDate + "T00:00:00");
+  const end = new Date(endDate + "T00:00:00");
+  while (currentStart <= end) {
+    let currentEnd = new Date(currentStart);
+    currentEnd.setDate(currentEnd.getDate() + (CHUNK_DAYS - 1));
+    if (currentEnd > end) currentEnd = new Date(end);
+    const sDateStr = fmtDate(currentStart);
+    const eDateStr = fmtDate(currentEnd);
+    let page = 1, chunkFirstRecord = null;
+    while (true) {
+      const url = `${window.API_CONFIG.API_URL}${path}?page=${page}&pageSize=${PAGE_SIZE}&startDate=${encodeURIComponent(sDateStr)}&endDate=${encodeURIComponent(eDateStr)}`;
+      const json = await fetchWithRetry(url, {
+        signal,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      let chunk = Array.isArray(json) ? json : (json.data || []);
+      if (chunk.length === 0) break;
+      const currentFirst = JSON.stringify(chunk[0]);
+      if (page > 1 && currentFirst === chunkFirstRecord) break;
+      if (page === 1) chunkFirstRecord = currentFirst;
+      all.push(...chunk);
+      if (chunk.length < PAGE_SIZE) break;
+      page++;
+      if (page > 10) break;
+    }
+    currentStart = new Date(currentEnd);
+    currentStart.setDate(currentStart.getDate() + 1);
+  }
+  return all;
+}
+
+// Merge fetched rows into the store, deduped by record id (same convention as the daily dashboard).
+function mergeRows(rows) {
+  const getRowId = r => r._id || r.id || `${getRouteName(r)}_${getRecordDate(r)}_${r.orgBranchId || r.branchId}`;
+  const map = new Map();
+  S.routes.forEach(r => map.set(getRowId(r), r));
+  rows.forEach(r => map.set(getRowId(r), r));
+  S.routes = Array.from(map.values());
+}
+
+// Walk backwards from the current month, fetching every month the portal can give
+// (i.e. until several consecutive months come back completely empty).
+async function loadAllHistory(silent = false) {
+  if (S.loading) return;
+  const signal = abortPrev();
+  setLoading(true, silent);
+  if (!silent) showTableLoading("Fetching portal history — aligning months...");
+  try {
+    const ck = currentMonthKey();
+    S.fetchedMonths.delete(ck); // the current month keeps accumulating sales — always refetch it
+    S.emptyMonths.delete(ck);   // ...even if an earlier probe found it empty (e.g. the month just began)
+
+    // Build the probe queue: newest → oldest, skipping already-known months.
+    let [y, m] = [Number(ck.slice(0, 4)), Number(ck.slice(5, 7)) - 1];
+    const queue = [];
+    for (let i = 0; i < MAX_LOOKBACK_MONTHS; i++) {
+      const k = `${y}-${pad2(m + 1)}`;
+      if (!S.fetchedMonths.has(k) && !S.emptyMonths.has(k)) queue.push(k);
+      m--; if (m < 0) { m = 11; y--; }
+    }
+
+    let consecutiveEmpty = 0, done = 0;
+    const total = queue.length;
+    while (queue.length > 0 && consecutiveEmpty < EMPTY_STOP && !signal.aborted) {
+      const batch = queue.splice(0, FETCH_CONCURRENCY);
+      const results = await Promise.all(batch.map(async k => {
+        const rows = await fetchAllByDateChunks("routewise-sales-performance-reports", signal, monthStartOfKey(k), monthEndOfKey(k));
+        if (signal.aborted) return { k, n: 0, rows: [] };
+        mergeRows(rows);
+        return { k, n: rows.length, rows };
+      }));
+      if (signal.aborted) return;
+      for (const { k, n } of results) {
+        if (n > 0) { S.fetchedMonths.add(k); consecutiveEmpty = 0; }
+        else { S.emptyMonths.add(k); consecutiveEmpty++; }
+        done++;
+      }
+      if (!silent) showTableLoading(`Fetching portal history — ${done}/${total} months probed · ${S.fetchedMonths.size} with data...`);
+    }
+
+    if (signal.aborted) return;
+    S.lastFetch = new Date();
+    buildAndRender();
+    $("lastUpdated").textContent = S.lastFetch.toLocaleTimeString();
+  } catch (err) {
+    if (err.name === "AbortError") { console.log("[Aborted]"); return; }
+    console.error(err);
+    if (!silent) {
+      showToast("Failed to load data: " + err.message, "warn");
+      $("tableBody").innerHTML = `<tr class="no-data-row"><td colspan="99">Failed to load data. <a href="#" onclick="loadAllHistory(false);return false;" style="color:#38bdf8;font-weight:700;text-decoration:underline;">Retry now</a></td></tr>`;
+    } else {
+      showToast("Background refresh failed: " + err.message, "warn");
+    }
+  } finally {
+    if (!signal.aborted) setLoading(false, silent);
+  }
+}
+
+// Sorted list of months that actually returned data from the portal (oldest → newest).
+function allMonthKeys() {
+  return [...S.fetchedMonths].sort();
+}
+
+// JAN→DEC alignment: every year is always rendered as the full 12-month span so the
+// trend columns stay fixed as the months roll forward (months without data show "—").
+function alignedMonthKeys() {
+  const curYear = currentMonthKey().slice(0, 4);
+  if (S.yearFilter !== "all") return MONTH_LABELS.map((_, i) => `${S.yearFilter}-${pad2(i + 1)}`);
+  const keys = allMonthKeys();
+  const firstYear = keys.length ? keys[0].slice(0, 4) : curYear;
+  const out = [];
+  for (let y = Number(firstYear); y <= Number(curYear); y++)
+    for (let m = 1; m <= 12; m++) out.push(`${y}-${pad2(m)}`);
+  return out;
+}
+
+function buildMatrix() {
+  const todayStr = fmtDate(new Date());
+  const curKey = currentMonthKey();
+  const monthKeys = allMonthKeys();
+  const monthKeySet = new Set(monthKeys);
+  const groups = new Map();
+
+  const ensureGroup = (routeKey, routeName, mainRoute, sp, branch) => {
+    if (!groups.has(routeKey)) {
+      groups.set(routeKey, {
+        routeName, mainRoute, sp, branch,
+        cellMap: new Map() // "YYYY-MM" → { net, mt }
+      });
+    }
+    return groups.get(routeKey);
+  };
+
+  // Seed every route in the master template so routes without sales still appear (— cells).
+  for (const [tpl, [main, sp, branch]] of Object.entries(masterTemplate)) {
+    ensureGroup(norm(tpl), tpl, main, sp, branch);
+  }
+
+  const tplKeys = Object.keys(masterTemplate);
+
+  for (const row of S.routes) {
+    const d = getRecordDate(row);
+    if (!d) continue;
+    const k = monthKeyOf(d);
+    if (!monthKeySet.has(k)) continue;
+
+    let routeName = getRouteName(row);
+    if (!routeName) continue;
+
+    // Match API route names to the master template (same logic as the daily dashboard).
+    const rk = norm(routeName);
+    let mk = tplKeys.find(t => norm(t) === rk);
+    if (!mk) {
+      const sn = rk.replace(/HQ$|HEADOFFICE$|PHILTON$|KENDIA$|BRANCH$/g, "");
+      mk = tplKeys.find(t => {
+        const sk = norm(t).replace(/HQ$|HEADOFFICE$|PHILTON$|KENDIA$|BRANCH$/g, "");
+        return sk === sn || sk.includes(sn) || sn.includes(sk);
+      });
+    }
+
+    let g;
+    if (mk) {
+      const t = masterTemplate[mk];
+      g = ensureGroup(norm(mk), mk, t[0], t[1], t[2]);
+    } else {
+      // Route not in the template — fall back to the API-provided assignment.
+      const branch = getBranchNameFromRow(row) || "Unassigned Branch";
+      const sp = getSP(row);
+      const mainRoute = getMainRoute(row) || routeName;
+      g = ensureGroup(rk, routeName, mainRoute, sp, branch);
+    }
+
+    if (!g.cellMap.has(k)) g.cellMap.set(k, { net: 0, mt: 0 });
+    const c = g.cellMap.get(k);
+    const mt = getMonthlyTarget(row);
+    if (mt > 0) c.mt = Math.max(c.mt, mt);
+    c.net += getNetSales(row);
+  }
+
+  // Build per-month percentage cells (targets carry forward to later months missing an explicit target).
+  const matrix = [...groups.values()].map(g => {
+    let carry = 0;
+    for (const k of monthKeys) {
+      if (!g.cellMap.has(k)) g.cellMap.set(k, { net: 0, mt: 0 });
+      const c = g.cellMap.get(k);
+      if (c.mt > 0) carry = c.mt;
+      const mtEff = carry;
+      let pct = null, target = 0;
+      if (mtEff > 0) {
+        const end = (k === curKey) ? todayStr : monthEndOfKey(k);
+        const wDays = getWorkingDaysExcludingSaturday(monthStartOfKey(k), end);
+        target = (mtEff / 30) * wDays; // Daily Target × Working Days (excl Saturdays) — same convention as the daily dashboard
+        if (target > 0) pct = (c.net / target) * 100;
+      }
+      c.pct = pct;
+      c.target = target;
+    }
+    return { routeName: g.routeName, mainRoute: g.mainRoute, sp: g.sp, branch: g.branch, cellMap: g.cellMap };
+  });
+
+  if (S.branch) {
+    const nb = normBranch(S.branch);
+    matrix = matrix.filter(r => normBranch(r.branch) === nb);
+  }
+
+  matrix.sort((a, b) => a.routeName.localeCompare(b.routeName));
+  S.matrix = matrix;
+}
+
+// Weighted percentage for a set of rows on one month key (net ÷ target — never money displayed).
+const weightedPctKey = (rows, k) => {
+  let n = 0, t = 0;
+  rows.forEach(r => { const c = r.cellMap.get(k); if (c) { n += c.net; t += c.target; } });
+  return t > 0 ? (n / t) * 100 : null;
+};
+const weightedAvgKeys = (rows, keys) => {
+  let n = 0, t = 0;
+  rows.forEach(r => keys.forEach(k => { const c = r.cellMap.get(k); if (c) { n += c.net; t += c.target; } }));
+  return t > 0 ? (n / t) * 100 : null;
+};
+
+function getSortVal(item, key) {
+  if (key === "name") return (item.routeName || "").toLowerCase();
+  if (key === "avg") return item.avgVis;
+  if (key.startsWith("m:")) { const c = item.cellMap.get(key.slice(2)); return c ? c.pct : null; }
+  return 0;
+}
+
+function sortRows(rows, keys) {
+  const { key, dir } = S.sort;
+  const nullLast = dir === "desc" ? -Infinity : Infinity;
+  return [...rows].sort((a, b) => {
+    if (key === "name") {
+      const va = (a.routeName || "").toLowerCase(), vb = (b.routeName || "").toLowerCase();
+      return dir === "asc" ? va.localeCompare(vb) : -va.localeCompare(vb);
+    }
+    const va = getSortVal(a, key), vb = getSortVal(b, key);
+    const na = (va == null) ? nullLast : va, nb = (vb == null) ? nullLast : vb;
+    return dir === "asc" ? na - nb : nb - na;
+  });
+}
+
+// Sort labels for the hint line
+const sortKeyLabel = key => {
+  if (key === "name") return "Route";
+  if (key === "avg") return "Average %";
+  if (key.startsWith("m:")) return keyLabelLong(key.slice(2));
+  return key;
+};
+
+function badgeHTML(pct) {
+  if (pct == null) return `<span class="pct-na">—</span>`;
+  return `<span class="pct-badge ${badgeClass(pct)}">${pct.toFixed(1)}%</span>`;
+}
+
+function routeRowHTML(r) {
+  let cells = "";
+  r.cellsVis.forEach(c => { cells += `<td${c.future ? ` class="future-cell"` : ""}>${badgeHTML(c.pct)}</td>`; });
+  return `<tr class="route-row" title="${r.routeName} — Sales Person: ${r.sp} — Branch: ${r.branch}">
+    <td class="rowhead"><div class="route-name">${r.routeName}</div></td>
+    <td class="cell-main">${r.mainRoute || "—"}</td>
+    <td class="cell-sp">${r.sp || "—"}</td>
+    ${cells}
+    <td class="avg-cell">${badgeHTML(r.avgVis)}</td>
+  </tr>`;
+}
+
+function spSubtotalRowHTML(sp, rows, months) {
+  let cells = "";
+  months.forEach(k => { cells += `<td${isFutureMonth(k) ? ` class="future-cell"` : ""}>${badgeHTML(weightedPctKey(rows, k))}</td>`; });
+  return `<tr class="sp-subtotal">
+    <td class="rowhead"><span class="sub-label">TOTAL (<span class="sp-name">${sp}</span>)</span><span class="sub-note">${rows.length} route${rows.length === 1 ? "" : "s"}</span></td>
+    <td class="cell-main"></td><td class="cell-sp"></td>
+    ${cells}
+    <td class="avg-cell">${badgeHTML(weightedAvgKeys(rows, months))}</td>
+  </tr>`;
+}
+
+function companyRowHTML(rows, months) {
+  let cells = "";
+  months.forEach(k => { cells += `<td${isFutureMonth(k) ? ` class="future-cell"` : ""}>${badgeHTML(weightedPctKey(rows, k))}</td>`; });
+  return `<tr class="company-row">
+    <td class="rowhead"><span class="sub-label">COMPANY AVG</span><span class="sub-note">all sales persons &amp; branches</span></td>
+    <td class="cell-main"></td><td class="cell-sp"></td>
+    ${cells}
+    <td class="avg-cell">${badgeHTML(weightedAvgKeys(rows, months))}</td>
+  </tr>`;
+}
+
+function buildShell(months) {
+  const table = $("matrixTable");
+  const ROUTE_W = 190, MAIN_W = 160, SP_W = 160, MONTH_W = 78, AVG_W = 80;
+  const total = Math.max(ROUTE_W + MAIN_W + SP_W + MONTH_W * months.length + AVG_W, 1180);
+  table.style.width = total + "px"; // exact width keeps the sticky-left offsets pixel-perfect
+  table.style.minWidth = total + "px";
+  table.style.setProperty("--sw1", ROUTE_W + "px");
+  table.style.setProperty("--sw2", (ROUTE_W + MAIN_W) + "px");
+  let cols = `<col style="width:${ROUTE_W}px"><col style="width:${MAIN_W}px"><col style="width:${SP_W}px">` + months.map(() => `<col style="width:${MONTH_W}px">`).join("") + `<col style="width:${AVG_W}px">`;
+  if (table.querySelector("colgroup")) table.querySelector("colgroup").remove();
+  table.insertAdjacentHTML("afterbegin", `<colgroup>${cols}</colgroup>`);
+
+  const { key, dir } = S.sort;
+  const thSort = (k, label, extra, title) => {
+    const active = key === k;
+    const cls = `sortable ${extra || ""}${active ? " active-sort " + (dir === "asc" ? "sort-asc" : "sort-desc") : ""}`;
+    return `<th class="${cls}" data-sort="${k}"${title ? ` title="${title}"` : ""}>${label} <span class="sort-icon">▲</span></th>`;
+  };
+  const curKey = currentMonthKey();
+  $("theadRow").innerHTML =
+    thSort("name", "ROUTE", "corner") +
+    `<th class="h-main">MAIN ROUTE</th><th class="h-sp">SALES PERSON</th>` +
+    months.map(k => {
+      const cls = isFutureMonth(k) ? "future-month" : (k === curKey ? "current-month" : "");
+      const title = keyLabelLong(k) + (isFutureMonth(k) ? " — not started yet" : "");
+      return thSort("m:" + k, keyLabel(k), cls, title);
+    }).join("") +
+    thSort("avg", "AVG %", "");
+}
+
+function renderStats(routes, months) {
+  const monthly = months.map(k => weightedPctKey(routes, k));
+  const overall = weightedAvgKeys(routes, months);
+  const loadedMonthly = monthly.filter(v => v != null);
+  const monthlyAvg = loadedMonthly.length ? loadedMonthly.reduce((s, v) => s + v, 0) / loadedMonthly.length : null;
+  const withAvg = routes.filter(r => r.avgVis != null);
+  const onTrack = withAvg.filter(r => r.avgVis >= 80).length;
+
+  const overallEl = $("statOverall");
+  if (overall == null) { overallEl.textContent = "—"; overallEl.className = "stat-value"; $("statOverallSub").textContent = "no data loaded yet"; }
+  else {
+    overallEl.textContent = overall.toFixed(1) + "%";
+    overallEl.className = "stat-value " + (overall >= 80 ? "perf-high" : overall >= 50 ? "perf-medium" : "perf-low");
+    $("statOverallSub").textContent = months.length ? `all sales persons · ${keyLabel(months[0])} – ${keyLabel(months[months.length - 1])}` : "all sales persons · all loaded months";
+  }
+
+  const maEl = $("statMonthlyAvg");
+  if (monthlyAvg == null) { maEl.textContent = "—"; maEl.className = "stat-value"; $("statMonthlyAvgSub").textContent = "company average across months"; }
+  else {
+    maEl.textContent = monthlyAvg.toFixed(1) + "%";
+    maEl.className = "stat-value " + (monthlyAvg >= 80 ? "perf-high" : monthlyAvg >= 50 ? "perf-medium" : "perf-low");
+    $("statMonthlyAvgSub").textContent = `across ${loadedMonthly.length} month${loadedMonthly.length === 1 ? "" : "s"} with data`;
+  }
+
+  $("statOnTrack").textContent = withAvg.length ? onTrack : "—";
+  $("statOnTrackSub").textContent = withAvg.length ? `of ${withAvg.length} routes at 80%+ (average)` : "no routes with data";
+
+  let bestIdx = -1, bestVal = -1;
+  monthly.forEach((v, i) => { if (v != null && v > bestVal) { bestVal = v; bestIdx = i; } });
+  const bestEl = $("statBest");
+  if (bestIdx === -1) { bestEl.textContent = "—"; bestEl.className = "stat-value"; $("statBestSub").textContent = "company average in that month"; }
+  else {
+    bestEl.textContent = keyLabel(months[bestIdx]);
+    bestEl.className = "stat-value " + (bestVal >= 80 ? "perf-high" : bestVal >= 50 ? "perf-medium" : "perf-low");
+    $("statBestSub").textContent = bestVal.toFixed(1) + "% company average";
+  }
+}
+
+function renderTable() {
+  const tbody = $("tableBody");
+  // JAN→DEC aligned: every year always shows the full 12-month trend — no gaps.
+  const months = alignedMonthKeys();
+  const curKey = currentMonthKey();
+
+  buildShell(months);
+
+  if (!S.matrix.length || months.length === 0) {
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="99">No data available from the portal APIs for this selection yet.</td></tr>`;
+    $("tableCount").textContent = "0 routes";
+    renderStats([], months);
+    return;
+  }
+
+  // Attach per-route visible cells + visible average.
+  const routes = S.matrix.map(r => {
+    const cellsVis = months.map(k => {
+      const c = r.cellMap.get(k) || { pct: null, net: 0, target: 0 };
+      return { ...c, future: k > curKey }; // months that haven't begun yet are dimmed
+    });
+    let n = 0, t = 0;
+    cellsVis.forEach(c => { n += c.net; t += c.target; });
+    return { ...r, cellsVis, avgVis: t > 0 ? (n / t) * 100 : null };
+  });
+
+  const q = S.search;
+  let visible = routes;
+  if (q) visible = visible.filter(r => r.routeName.toLowerCase().includes(q) || (r.sp || "").toLowerCase().includes(q) || (r.branch || "").toLowerCase().includes(q) || (r.mainRoute || "").toLowerCase().includes(q));
+
+  // Branch → Sales Person → routes
+  const byBranch = new Map();
+  visible.forEach(r => {
+    const b = r.branch || "Unassigned Branch";
+    if (!byBranch.has(b)) byBranch.set(b, new Map());
+    const spMap = byBranch.get(b);
+    const sp = r.sp || "Unassigned";
+    if (!spMap.has(sp)) spMap.set(sp, []);
+    spMap.get(sp).push(r);
+  });
+
+  const { key, dir } = S.sort;
+  const nullLast = dir === "desc" ? -Infinity : Infinity;
+  const groupVal = rows => {
+    if (key === "name") return null;
+    if (key === "avg") { const v = weightedAvgKeys(rows, months); return v == null ? nullLast : v; }
+    if (key.startsWith("m:")) { const v = weightedPctKey(rows, key.slice(2)); return v == null ? nullLast : v; }
+    return null;
+  };
+  const branches = [...byBranch.keys()].sort((a, b) => {
+    if (key === "name") return dir === "asc" ? a.localeCompare(b) : -a.localeCompare(b);
+    const va = groupVal([...byBranch.get(a).values()].flat()), vb = groupVal([...byBranch.get(b).values()].flat());
+    return dir === "asc" ? va - vb : vb - va;
+  });
+
+  let html = "";
+  let routeCount = 0;
+  branches.forEach(b => {
+    const spMap = byBranch.get(b);
+    let allBranchRoutes = [];
+    spMap.forEach(rows => { allBranchRoutes = allBranchRoutes.concat(rows); });
+    html += `<tr class="branch-header"><td colspan="3">${b} <span class="bh-count">· ${allBranchRoutes.length} route${allBranchRoutes.length === 1 ? "" : "s"}</span></td><td colspan="96"></td></tr>`;
+    const spNames = [...spMap.keys()].sort((a, b) => {
+      if (key === "name") return dir === "asc" ? a.localeCompare(b) : -a.localeCompare(b);
+      const va = groupVal(spMap.get(a)), vb = groupVal(spMap.get(b));
+      return dir === "asc" ? va - vb : vb - va;
+    });
+    spNames.forEach(sp => {
+      const rows = sortRows(spMap.get(sp));
+      rows.forEach(r => { html += routeRowHTML(r); routeCount++; });
+      html += spSubtotalRowHTML(sp, rows, months);
+    });
+  });
+  html += companyRowHTML(visible, months);
+
+  tbody.innerHTML = html;
+  $("tableCount").textContent = `${routeCount} route${routeCount === 1 ? "" : "s"} · ${branches.length} branch${branches.length === 1 ? "" : "es"}`;
+  renderStats(visible, months);
+}
+
+function buildAndRender() {
+  buildMatrix();
+  renderTable();
+  refreshYearFilter();
+}
+
+function refreshYearFilter() {
+  const sel = $("yearSelect");
+  const years = [...new Set([...allMonthKeys().map(k => k.slice(0, 4)), currentMonthKey().slice(0, 4)])].sort().reverse();
+  const prev = S.yearFilter;
+  sel.innerHTML = `<option value="all">All Years</option>` + years.map(y => `<option value="${y}">${y}</option>`).join("");
+  if (prev !== "all" && !years.includes(prev)) { S.yearFilter = "all"; sel.value = "all"; }
+  else sel.value = prev;
+}
+
+function updateSortHint() {
+  const { key, dir } = S.sort;
+  let label = sortKeyLabel(key);
+  if (key === "name") label = "Route";
+  $("sortHint").textContent = `Sorted by ${label} ${dir === "asc" ? "↑" : "↓"}`;
+}
+
+$("theadRow").addEventListener("click", e => {
+  const th = e.target.closest("th.sortable");
+  if (!th) return;
+  const k = th.dataset.sort;
+  if (S.sort.key === k) S.sort.dir = S.sort.dir === "desc" ? "asc" : "desc";
+  else {
+    S.sort.key = k;
+    S.sort.dir = (k === "name") ? "asc" : "desc";
+  }
+  updateSortHint();
+  renderTable();
+});
+
+let searchDebounce = null;
+$("searchBox").addEventListener("input", e => {
+  if (searchDebounce) clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    S.search = e.target.value.toLowerCase().trim();
+    renderTable();
+  }, 150);
+});
+
+$("branchSelect").addEventListener("change", () => {
+  S.branch = $("branchSelect").value;
+  buildAndRender();
+});
+
+$("yearSelect").addEventListener("change", () => {
+  S.yearFilter = $("yearSelect").value;
+  // If the sorted month column is no longer visible (e.g. year filter changed), fall back to AVG.
+  if (S.sort.key.startsWith("m:") && S.yearFilter !== "all" && !S.sort.key.slice(2).startsWith(S.yearFilter)) {
+    S.sort = { key: "avg", dir: "desc" };
+    updateSortHint();
+  }
+  renderTable();
+});
+
+(async () => {
+  // Populate branch selector from the master template branch codes.
+  [...new Set(Object.values(masterTemplate).map(t => String(t[2]).trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b)).forEach(b => {
+    const o = document.createElement("option");
+    o.value = b;
+    o.textContent = b;
+    $("branchSelect").appendChild(o);
+  });
+
+  updateSortHint();
+  buildShell(alignedMonthKeys()); // show the aligned JAN–DEC skeleton while the first fetch runs
+  await loadAllHistory(false);
+
+  // Periodic updates: data refreshes every 10 mins, and the moment the calendar rolls
+  // into a new month the JAN–DEC trend re-aligns and the new month is pulled in automatically.
+  let lastSeenMonth = currentMonthKey();
+  setInterval(() => {
+    if (S.loading) return;
+    const ck = currentMonthKey();
+    if (ck !== lastSeenMonth) {
+      const prevKey = lastSeenMonth;
+      lastSeenMonth = ck;
+      S.fetchedMonths.delete(prevKey); // one final catch-up fetch of the month that just closed
+      S.emptyMonths.delete(ck);
+      showToast(`${keyLabelLong(ck)} started — JAN–DEC trend re-aligned`, "success");
+      loadAllHistory(true);
+      return;
+    }
+    if (S.lastFetch && Date.now() - S.lastFetch.getTime() >= AUTO_REFRESH_MS) {
+      loadAllHistory(true); // only the current month is re-fetched — everything else is cached
+    }
+  }, ROLLOVER_CHECK_MS);
+})();
+</script>
+</body>
+</html>
