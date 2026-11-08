@@ -3155,5 +3155,351 @@ let searchDebounce = null;
   setInterval(() => { if (!S.loading) loadAllData(true); }, AUTO_REFRESH_MS);
 })();
 </script>
+<!-- ===================== COMPARATIVE (TRENDS) VIEW — ADD-ON v2 ===================== -->
+<style>
+#compView{flex:1;display:none;flex-direction:column;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#334155 transparent}
+.cmp-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 24px 0;flex-shrink:0}
+.cmp-ctl{display:flex;align-items:center;gap:8px}
+.cmp-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:#ba9305}
+#compView .custom-date-range{max-width:none}
+#compView .date-range-input-wrap input[type="date"]{padding-left:8px}
+.cmp-status{font-size:11px;color:#64748b}
+#compView .branch-summary-row{flex-shrink:0}
+#compView .table-section{flex:1 1 0;min-height:320px}
+#cmpTable{table-layout:auto;width:max-content;min-width:100%}
+#cmpTable th,#cmpTable td{width:auto;display:table-cell;text-align:left;white-space:nowrap}
+#cmpTable thead th{white-space:normal;vertical-align:bottom;min-width:96px}
+#cmpTable thead th:first-child{min-width:170px}
+#cmpTable th.num,#cmpTable td.num{text-align:right}
+#cmpTable th.ctr,#cmpTable td.ctr{text-align:center}
+#cmpTable .stick{position:sticky;left:0;z-index:1;background:#0f172a;box-shadow:1px 0 0 #334155}
+#cmpTable thead th.stick{z-index:3;background:#1e293b}
+#cmpTable tr.group-subtotal td.stick{background:#be185d}
+#cmpTable tr.group-subtotal .cmp-val{color:#fff;font-weight:900;font-size:13px}
+#cmpTable tr.group-subtotal .cmp-na{color:#fbcfe8}
+#cmpTable tr.group-subtotal .cmp-spark span{color:#fff!important}
+.cmp-bh{position:sticky;left:12px;display:inline-block}
+.cmp-na{color:#475569}
+.cmp-val{font-weight:700;color:#e2e8f0;font-size:12px;font-variant-numeric:tabular-nums}
+.cmp-spark{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700}
+.cmp-note{font-size:10px;color:#64748b;padding:6px 24px 10px;flex-shrink:0}
+</style>
+
+<script>
+(function(){
+const $c=id=>document.getElementById(id);
+const MONTHS=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const pd=s=>new Date(s+'T00:00:00');
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const dm=d=>String(d.getDate()).padStart(2,'0')+' '+MON[d.getMonth()];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const rowId=r=>r._id||r.id||`${r.routeName}_${getRecordDate(r)}_${r.orgBranchId||r.branchId}`;
+
+const CS={trend:'monthly',metric:'ach',from:'',to:'',sort:{key:'total',dir:'desc'},
+  store:new Map(),ranges:[],abort:null,seq:0,periods:null,wd:[],totWd:1,ents:[]};
+
+function defaultRange(trend){
+  const t=new Date();let s=new Date(t);
+  if(trend==='daily')s.setDate(t.getDate()-13);
+  else if(trend==='weekly')s.setDate(t.getDate()-55);
+  else s=new Date(t.getFullYear(),t.getMonth()-5,1);
+  return{from:fmtDate(s),to:fmtDate(t)};
+}
+
+/* ---------- inject UI ---------- */
+const btn=document.createElement('button');
+btn.id='btnComparative';btn.textContent='Comparative';
+btn.onclick=()=>window.switchView('comparative');
+document.querySelector('.view-toggle').appendChild(btn);
+
+const host=document.createElement('div');host.id='compView';
+host.innerHTML=`
+<div class="cmp-controls">
+  <div class="cmp-ctl"><span class="cmp-lbl">Trend</span><div class="filter-select"><select id="cmpTrend"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly" selected>Monthly</option></select></div></div>
+  <div class="cmp-ctl"><span class="cmp-lbl">Show</span><div class="filter-select"><select id="cmpMetric"><option value="ach">Achievement %</option><option value="actual">Actual Sales</option></select></div></div>
+  <div class="custom-date-range visible">
+    <div class="date-range-group"><span class="date-range-label">From</span><div class="date-range-input-wrap"><input type="date" id="cmpFrom"></div></div>
+    <div class="date-range-group"><span class="date-range-label">To</span><div class="date-range-input-wrap"><input type="date" id="cmpTo"></div></div>
+  </div>
+  <button class="btn btn-primary" id="cmpApply">Apply / Refresh</button>
+  <span class="cmp-status" id="cmpStatus"></span>
+</div>
+<div class="branch-summary-row" id="cmpStats"></div>
+<div class="table-section">
+  <div class="table-header">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span class="table-title">Comparative Performance (Clustered by Sales Person)</span>
+      <span class="table-count" id="cmpCount">0 routes</span>
+      <span class="sort-hint">Click column headers to sort</span>
+    </div>
+    <input type="text" class="search-box" id="cmpSearch" placeholder="Search route, branch, or sales person...">
+  </div>
+  <div class="table-wrap"><table id="cmpTable"><thead id="cmpHead"></thead><tbody id="cmpBody"></tbody></table></div>
+</div>
+<div class="cmp-note" id="cmpNote"></div>`;
+document.querySelector('footer').before(host);
+
+/* ---------- switchView wrapper (original left untouched) ---------- */
+const origSwitch=window.switchView;
+window.switchView=function(view){
+  const dsel=document.querySelector('.date-selector'),cdr=$c('customDateRange');
+  if(view==='comparative'){
+    S.view='comparative';
+    $c('routeView').style.display='none';$c('branchView').style.display='none';
+    $c('btnRoutes').classList.remove('active');$c('btnBranches').classList.remove('active');
+    btn.classList.add('active');host.style.display='flex';
+    $c('branchSelectorWrap').style.display='';
+    dsel.style.display='none';cdr.style.display='none';
+    $c('headerTitle').textContent='Comparative Trends Dashboard';
+    $c('headerSubtitle').textContent='Performance trends over time — Daily / Weekly / Monthly';
+    refresh(true);
+    return;
+  }
+  host.style.display='none';btn.classList.remove('active');
+  dsel.style.display='';cdr.style.display='';
+  origSwitch(view);
+};
+
+/* ---------- periods ---------- */
+function buildPeriods(start,end,trend){
+  const sd=pd(start),ed=pd(end),out=[];
+  if(trend==='daily'){
+    for(let d=new Date(sd);d<=ed;d=addD(d,1))out.push({ps:fmtDate(d),pe:fmtDate(d),label:dm(d),short:dm(d),partial:false});
+  }else if(trend==='weekly'){
+    let cur=addD(sd,-((sd.getDay()+6)%7));
+    while(cur<=ed){
+      const we=addD(cur,6),ps=cur<sd?sd:cur,pe=we>ed?ed:we;
+      out.push({ps:fmtDate(ps),pe:fmtDate(pe),label:dm(ps)+' – '+dm(pe),short:dm(ps),partial:cur<sd||we>ed});
+      cur=addD(cur,7);
+    }
+  }else{
+    const multi=sd.getFullYear()!==ed.getFullYear();
+    let cur=new Date(sd.getFullYear(),sd.getMonth(),1);
+    while(cur<=ed){
+      const me=new Date(cur.getFullYear(),cur.getMonth()+1,0),ps=cur<sd?sd:cur,pe=me>ed?ed:me;
+      out.push({ps:fmtDate(ps),pe:fmtDate(pe),label:MONTHS[cur.getMonth()]+(multi?' '+cur.getFullYear():''),
+        short:MON[cur.getMonth()]+(multi?" '"+String(cur.getFullYear()).slice(2):''),partial:cur<sd||me>ed});
+      cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+    }
+  }
+  return out;
+}
+
+/* ---------- data ---------- */
+async function ensureData(start,end,force){
+  const s=pd(start).getTime(),e=pd(end).getTime();
+  const covered=isRangeCached(start,end)||CS.ranges.some(r=>s>=r.s&&e<=r.e);
+  const stale=force&&end>=fmtDate(new Date());
+  if(covered&&!stale)return;
+  if(CS.abort)CS.abort.abort();
+  CS.abort=new AbortController();
+  const sig=CS.abort.signal;
+  const data=await fetchAllByDateChunks("routewise-sales-performance-reports",sig,start,end);
+  if(sig.aborted)return;
+  data.forEach(r=>CS.store.set(rowId(r),r));
+  CS.ranges.push({s,e});
+}
+
+function build(){
+  const periods=buildPeriods(CS.from,CS.to,CS.trend),P=periods.length;
+  const idx=new Map();
+  periods.forEach((p,i)=>{for(let d=pd(p.ps),e=pd(p.pe);d<=e;d=addD(d,1))idx.set(fmtDate(d),i);});
+  const wd=periods.map(p=>getWorkingDaysExcludingSaturday(p.ps,p.pe));
+  const tplKeys=Object.keys(masterTemplate);
+  const normMap=new Map();tplKeys.forEach(k=>{const n=norm(k);if(!normMap.has(n))normMap.set(n,k);});
+  const memo=new Map();
+  const strip=s=>s.replace(/HQ$|HEADOFFICE$|PHILTON$|KENDIA$|BRANCH$/g,"");
+  const match=rn=>{
+    const rk=norm(rn);if(memo.has(rk))return memo.get(rk);
+    let mk=normMap.get(rk);
+    if(!mk){const sn=strip(rk);mk=tplKeys.find(k=>{const sk=strip(norm(k));return sk===sn||sk.includes(sn)||sn.includes(sk);});}
+    memo.set(rk,mk||null);return mk||null;
+  };
+  const mkEnt=(route,main,sp,branch)=>({route,main,sp,branch,dt:0,dtDate:'',actual:new Array(P).fill(0)});
+  const ents=new Map();
+  for(const tpl of tplKeys){const t=masterTemplate[tpl];ents.set(tpl.toLowerCase(),mkEnt(tpl,t[0],t[1],t[2]));}
+  const all=new Map();
+  S.routes.forEach(r=>all.set(rowId(r),r));
+  CS.store.forEach((r,k)=>all.set(k,r));
+  all.forEach(row=>{
+    const d=getRecordDate(row);const pi=idx.get(d);
+    if(pi===undefined)return;
+    const rn=getRouteName(row);if(!rn)return;
+    const mk=match(rn);
+    const key=(mk||rn).toLowerCase();
+    let e=ents.get(key);
+    if(!e){e=mkEnt(rn,getMainRoute(row),getSP(row),getBranchNameFromRow(row)||'Unknown');ents.set(key,e);}
+    e.actual[pi]+=getNetSales(row);
+    const dt=getDailyTarget(row);
+    if(dt>0&&(!e.dtDate||d>=e.dtDate)){e.dt=dt;e.dtDate=d;}
+  });
+  CS.periods=periods;CS.wd=wd;CS.totWd=wd.reduce((a,b)=>a+b,0)||1;CS.ents=[...ents.values()];
+}
+
+/* ---------- maths / drawing helpers ---------- */
+function reg(vals){
+  const pts=[];vals.forEach((v,i)=>{if(v!=null)pts.push([i,v]);});
+  const n=pts.length;if(n<2)return null;
+  let sx=0,sy=0,sxx=0,sxy=0;
+  pts.forEach(([x,y])=>{sx+=x;sy+=y;sxx+=x*x;sxy+=x*y;});
+  const den=n*sxx-sx*sx;if(!den)return null;
+  const m=(n*sxy-sx*sy)/den,b=(sy-m*sx)/n;
+  return{m,b,first:pts[0][0],last:pts[n-1][0]};
+}
+const pctCls=v=>v>=80?'pct-high':v>=50?'pct-medium':'pct-low';
+const slopeTxt=(m,metric)=>(m>=0?'+':'−')+(metric==='ach'?Math.abs(m).toFixed(1)+' pts':fmt(Math.abs(m)));
+
+function spark(vals,metric){
+  const r=reg(vals),nums=vals.filter(v=>v!=null);
+  if(!r||nums.length<2)return '<span class="cmp-na">—</span>';
+  const w=84,h=24,n=vals.length,mn=Math.min(...nums),mx=Math.max(...nums),rg=(mx-mn)||1;
+  const X=i=>2+(w-4)*(n>1?i/(n-1):.5),Y=v=>Math.max(1,Math.min(h-1,(h-3)-(h-6)*(v-mn)/rg));
+  const pts=[];vals.forEach((v,i)=>{if(v!=null)pts.push(X(i).toFixed(1)+','+Y(v).toFixed(1));});
+  const eps=metric==='ach'?0.05:1,up=r.m>eps,dn=r.m<-eps,col=up?'#22c55e':dn?'#ef4444':'#94a3b8';
+  return `<span class="cmp-spark"><svg width="${w}" height="${h}"><polyline points="${pts.join(' ')}" fill="none" stroke="#38bdf8" stroke-width="1.5"/><line x1="${X(r.first)}" y1="${Y(r.b+r.m*r.first)}" x2="${X(r.last)}" y2="${Y(r.b+r.m*r.last)}" stroke="${col}" stroke-width="1.5" stroke-dasharray="3 2"/></svg><span style="color:${col}">${up?'▲':dn?'▼':'▬'} ${slopeTxt(r.m,metric)}</span></span>`;
+}
+
+/* ---------- view (cluster + render) ---------- */
+function view(){
+  if(!CS.periods)return;
+  const P=CS.periods.length,wd=CS.wd,totWd=CS.totWd,metric=CS.metric;
+  const selId=branchSelect.value,selName=selId?(branchNames[selId]||''):'';
+  let ents=CS.ents.filter(e=>e.dt>0||e.actual.some(v=>v!==0));
+  if(selName){const ns=normBranch(selName);ents=ents.filter(e=>normBranch(e.branch)===ns);}
+  const q=$c('cmpSearch').value.toLowerCase().trim();
+  if(q)ents=ents.filter(e=>(e.route+' '+e.branch+' '+e.main+' '+e.sp).toLowerCase().includes(q));
+
+  const fin=g=>{
+    g.mt=g.dt*30;g.totA=g.actual.reduce((a,b)=>a+b,0);g.totT=g.dt*totWd;
+    g.totAch=g.totT>0?g.totA/g.totT*100:null;
+    g.vals=g.actual.map((a,i)=>{
+      if(metric==='ach'){const t=g.dt*wd[i];return t>0?a/t*100:null;}
+      return(wd[i]===0&&a===0)?null:a;
+    });
+    return g;
+  };
+  const sumG=(name,list)=>fin({name,main:'',sp:'',dt:list.reduce((s,g)=>s+g.dt,0),
+    actual:CS.periods.map((_,i)=>list.reduce((s,g)=>s+g.actual[i],0))});
+
+  /* cluster: branch -> sales person -> routes */
+  const tree=new Map();
+  ents.forEach(e=>{
+    const g=fin({name:e.route,main:e.main,sp:e.sp,dt:e.dt,actual:e.actual});
+    const b=e.branch||'Unknown Branch',s=e.sp||'Unassigned';
+    if(!tree.has(b))tree.set(b,new Map());
+    if(!tree.get(b).has(s))tree.get(b).set(s,[]);
+    tree.get(b).get(s).push(g);
+  });
+
+  /* sort (within each sales-person cluster, like Routes view) */
+  const {key,dir}=CS.sort;
+  const gv=g=>{
+    if(key==='name')return g.name.toLowerCase();
+    if(key==='main')return String(g.main).toLowerCase();
+    if(key==='sp')return String(g.sp).toLowerCase();
+    if(key==='mt')return g.mt;
+    if(key==='total'){const v=metric==='ach'?g.totAch:g.totA;return v==null?-1e18:v;}
+    if(key[0]==='p'){const v=g.vals[+key.slice(1)];return v==null?-1e18:v;}
+    return 0;
+  };
+  const sortG=arr=>arr.sort((a,b)=>{const x=gv(a),y=gv(b);
+    if(typeof x==='string')return dir==='asc'?x.localeCompare(y):y.localeCompare(x);
+    return dir==='asc'?x-y:y-x;});
+
+  /* stats (overall of everything currently shown) */
+  const allG=[];tree.forEach(m=>m.forEach(l=>allG.push(...l)));
+  const ov=sumG('OVERALL',allG);
+  const pairs=ov.vals.map((v,i)=>[v,i]).filter(a=>a[0]!=null);
+  const best=pairs.length?pairs.reduce((a,b)=>b[0]>a[0]?b:a):null,worst=pairs.length?pairs.reduce((a,b)=>b[0]<a[0]?b:a):null;
+  const fv=v=>metric==='ach'?v.toFixed(1)+'%':'KES '+fmt(v);
+  const ovr=reg(ov.vals),eps=metric==='ach'?0.05:1;
+  const up=ovr&&ovr.m>eps,dn=ovr&&ovr.m<-eps;
+  const oc=ov.totAch==null?'':ov.totAch>=80?'perf-high':ov.totAch>=50?'perf-medium':'perf-low';
+  $c('cmpStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Overall Achievement (Range)</div><div class="stat-value ${oc}">${ov.totAch==null?'—':ov.totAch.toFixed(1)+'%'}</div><div class="stat-sub">${fmtFull(ov.totA)} of ${fmtFull(ov.totT)}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Net Sales</div><div class="stat-value">KES ${fmt(ov.totA)}</div><div class="stat-sub">${allG.length} routes · ${P} ${CS.trend==='daily'?'days':CS.trend==='weekly'?'weeks':'months'}</div></div>
+    <div class="stat-card"><div class="stat-label">Best Period</div><div class="stat-value perf-high">${best?fv(best[0]):'—'}</div><div class="stat-sub">${best?esc(CS.periods[best[1]].label):'no data'}</div></div>
+    <div class="stat-card"><div class="stat-label">Trend (Linear)</div><div class="stat-value ${up?'perf-high':dn?'perf-low':''}">${ovr?(up?'▲ ':dn?'▼ ':'▬ ')+slopeTxt(ovr.m,metric):'—'}</div><div class="stat-sub">per period${worst?' · weakest: '+esc(CS.periods[worst[1]].label)+' ('+fv(worst[0])+')':''}</div></div>`;
+
+  /* header */
+  const mL=metric==='ach'?'ACHIEVEMENT':'SALES';
+  const cols=[['name','ROUTE','stick'],['main','MAIN ROUTE',''],['sp','SALES PERSON',''],['mt','MONTHLY TARGET','num']];
+  CS.periods.forEach((p,i)=>cols.push(['p'+i,mL+' ('+p.label+(p.partial?'*':'')+')','ctr']));
+  cols.push(['total',metric==='ach'?'RANGE ACHIEVEMENT':'RANGE SALES','ctr']);
+  cols.push(['trend','TREND','']);
+  $c('cmpHead').innerHTML='<tr>'+cols.map(([k,l,c])=>{
+    if(k==='trend')return `<th class="${c}">${l}</th>`;
+    const act=CS.sort.key===k?` active-sort sort-${CS.sort.dir}`:'';
+    return `<th class="sortable ${c}${act}" data-sort="${k}">${l} <span class="sort-icon">▲</span></th>`;
+  }).join('')+'</tr>';
+
+  /* body */
+  const cell=v=>metric==='ach'
+    ?(v==null?'<span class="cmp-na">—</span>':`<span class="pct-badge ${pctCls(v)}">${v.toFixed(1)}%</span>`)
+    :(v==null||v===0?'<span class="cmp-na">—</span>':`<span class="cmp-val">${fmt(v)}</span>`);
+  const totCell=g=>metric==='ach'?cell(g.totAch):`<span class="cmp-val">${fmt(g.totA)}</span>`;
+  const routeRow=g=>`<tr class="route-row">
+    <td class="stick route-name">${esc(g.name)}</td><td class="branch-cell">${esc(g.main)}</td><td class="sp-cell">${esc(g.sp)}</td>
+    <td class="num value-cell">${g.mt?fmt(g.mt):'—'}</td>${g.vals.map(v=>`<td class="ctr">${cell(v)}</td>`).join('')}
+    <td class="ctr">${totCell(g)}</td><td>${spark(g.vals,metric)}</td></tr>`;
+  const subRow=(g,sp)=>`<tr class="group-subtotal">
+    <td class="stick"><span class="sp-name">TOTAL (${esc(sp)})</span></td><td></td><td></td>
+    <td class="num value-cell">${g.mt?'<span class="kes">KES</span> '+fmt(g.mt):'—'}</td>${g.vals.map(v=>`<td class="ctr">${cell(v)}</td>`).join('')}
+    <td class="ctr">${totCell(g)}</td><td>${spark(g.vals,metric)}</td></tr>`;
+
+  let html='';
+  [...tree.keys()].sort().forEach(branch=>{
+    html+=`<tr class="group-header branch-header"><td colspan="${cols.length}"><span class="cmp-bh">${esc(branch)}</span></td></tr>`;
+    const m=tree.get(branch);
+    [...m.keys()].sort().forEach(sp=>{
+      const list=m.get(sp);
+      sortG(list).forEach(g=>{html+=routeRow(g);});
+      html+=subRow(sumG('TOTAL',list),sp);
+    });
+  });
+  $c('cmpBody').innerHTML=html||`<tr class="no-data-row"><td colspan="${cols.length}">No data found for the selected range / filters</td></tr>`;
+  $c('cmpCount').textContent=allG.length+(allG.length===1?' route':' routes');
+  const partial=CS.periods.some(p=>p.partial);
+  $c('cmpNote').textContent=(partial?'* Partial period (clipped to the selected range). ':'')+'Target = daily target × working days (Saturdays excluded). Routes with no target and no sales in the range are hidden. Monthly Target = daily target × 30.';
+  $c('cmpStatus').textContent='Updated '+new Date().toLocaleTimeString();
+}
+
+/* ---------- refresh ---------- */
+async function refresh(force){
+  const my=++CS.seq;
+  if(!CS.from||!CS.to){const d=defaultRange(CS.trend);CS.from=d.from;CS.to=d.to;}
+  if(CS.from>CS.to){[CS.from,CS.to]=[CS.to,CS.from];}
+  $c('cmpTrend').value=CS.trend;$c('cmpFrom').value=CS.from;$c('cmpTo').value=CS.to;
+  $c('cmpStatus').textContent='Loading…';
+  if(!CS.periods)$c('cmpBody').innerHTML='<tr class="loading-row"><td colspan="8"><span class="loading-spinner"></span> Loading trend data...</td></tr>';
+  try{await ensureData(CS.from,CS.to,force);}
+  catch(err){if(err.name==='AbortError')return;showToast('Comparative load failed: '+err.message,'warn');}
+  if(my!==CS.seq)return;
+  build();view();
+}
+
+/* ---------- events ---------- */
+let dbT=null;const debounce=(fn,ms)=>{clearTimeout(dbT);dbT=setTimeout(fn,ms);};
+$c('cmpTrend').addEventListener('change',e=>{
+  CS.trend=e.target.value;const d=defaultRange(CS.trend);CS.from=d.from;CS.to=d.to;CS.sort={key:'total',dir:'desc'};refresh(false);});
+['cmpFrom','cmpTo'].forEach(id=>$c(id).addEventListener('change',()=>{
+  CS.from=$c('cmpFrom').value||CS.from;CS.to=$c('cmpTo').value||CS.to;debounce(()=>refresh(false),300);}));
+$c('cmpApply').addEventListener('click',()=>refresh(true));
+$c('cmpMetric').addEventListener('change',e=>{CS.metric=e.target.value;view();});
+$c('cmpSearch').addEventListener('input',()=>debounce(view,200));
+branchSelect.addEventListener('change',()=>{if(S.view==='comparative')view();});
+$c('cmpHead').addEventListener('click',e=>{
+  const th=e.target.closest('th.sortable');if(!th)return;
+  const k=th.dataset.sort;
+  if(CS.sort.key===k)CS.sort.dir=CS.sort.dir==='desc'?'asc':'desc';
+  else{CS.sort.key=k;CS.sort.dir=['name','main','sp'].includes(k)?'asc':'desc';}
+  view();
+});
+
+const d0=defaultRange('monthly');CS.from=d0.from;CS.to=d0.to;
+})();
+</script>
+<!-- =================== END COMPARATIVE ADD-ON v2 =================== -->
 </body>
 </html>
