@@ -1491,6 +1491,7 @@
       return;
     }
     const { startDate, endDate } = getDateRange();
+    const isTodayFilter = document.getElementById("dateSelect").value === "today";
     const aggregated = aggregateBranches(startDate, endDate);
     const byName = new Map(aggregated.map(b => [b.name.toLowerCase().trim(), b]));
     const branchIdsToShow = currentBranchGroup === "retail" ? RETAIL_BRANCH_IDS : currentBranchGroup === "semi" ? SEMI_WHOLESALE_BRANCH_IDS : WHOLESALE_BRANCH_IDS;
@@ -1530,8 +1531,16 @@
       branches.forEach(b => {
         const tier = !b.hasData ? "none" : b.pct >= 80 ? "high" : b.pct >= 50 ? "medium" : "low";
         const barWidth = b.hasData ? Math.min(b.pct, 100).toFixed(1) : 0;
-        const apiScore = b.todayApiMetrics ? b.todayApiMetrics.score : null;
-        const apiTarget = b.todayApiMetrics ? b.todayApiMetrics.target : null;
+        // Today filter: show the API-published dailySalesScore / dailySalesTarget for today.
+        // Any other filter: mirror the big card percentage (raw netSales / raw API target for the selected range).
+        let apiScore, apiTarget;
+        if (isTodayFilter) {
+          apiScore = b.todayApiMetrics ? b.todayApiMetrics.score : null;
+          apiTarget = b.todayApiMetrics ? b.todayApiMetrics.target : null;
+        } else {
+          apiScore = b.hasData ? b.pct : null;
+          apiTarget = b.hasData ? b.originalApiTarget : null;
+        }
         const rawPctColor = apiScore === null ? "#64748b" : apiScore >= 80 ? "#22c55e" : apiScore >= 50 ? "#facc15" : "#ef4444";
         const displayMultiplier = getTargetMultiplier(formatDate(getToday()), getBranchIdByName(b.name));
         const isSpecialDay = b.hasData && displayMultiplier !== 1;
@@ -1571,7 +1580,7 @@
             <div class="b-card-detail">${b.hasData ? formatFullCurrency(b.netSales) + " of " + formatFullCurrency(b.effectiveTarget) : "No data available"}</div>
             ${b.hasData && isSpecialDay ? `<div class="b-card-detail" style="margin-top: 4px; font-size: 11px; color: ${isDouble ? '#ba9305' : '#38bdf8'}; font-weight:700;">${isDouble ? 'DOUBLE GIFTING' : 'SPECIAL TARGET'} ACTIVE</div>` : ""}
             <div style="font-size: 20px; font-weight: bold; color: ${rawPctColor}; margin-top: 6px;">
-              ${apiScore !== null ? `Actual Score: ${apiScore.toFixed(1)}% (Target: ${apiTarget !== null ? formatFullCurrency(apiTarget) : "Not provided by API"})` : "Actual Score: No today's API data"}
+              ${apiScore !== null ? `Actual Score: ${apiScore.toFixed(1)}% (Target: ${apiTarget !== null ? formatFullCurrency(apiTarget) : "Not provided by API"})` : (isTodayFilter ? "Actual Score: No today's API data" : "Actual Score: No data for selected range")}
             </div>
             ${deficitHTML}
             ${incrementHTML}
